@@ -84,7 +84,7 @@
   "sims": {
     "base": 200000,
     "per_trade": 30000,
-    "trades_to_sim": 40
+    "trades_to_sim": 60
   },
   "leagues": {
     "_help": "Per-league: players you'd never trade (core) and ESPN team ids you won't trade with.",
@@ -100,5 +100,13 @@
         12
       ]
     }
+  },
+  "waiver_rules": {
+    "_help": "Positions where you only ever roster one: a waiver add there must replace the one you have.",
+    "one_only": [
+      "TE",
+      "D",
+      "K"
+    ]
   }
 }

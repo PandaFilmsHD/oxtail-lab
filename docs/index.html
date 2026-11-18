@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a0b1e">
 <title>Oxtail Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=1794974674">
+<link rel="stylesheet" href="style.css?v=1794975195">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
 </head>
 <body>
@@ -92,6 +92,10 @@
     <h2>🛡️ Your squad in the playoffs</h2>
     <p class="sub">Projected points if active, opponent and its rank vs that position (32 = easiest), and the chance he plays when under 100%.</p>
     <div class="tiles" id="lusum" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:16px"></div>
+    <h2 style="font-size:20px">🎯 Ideal playoff lineups</h2>
+    <p class="sub">Your best lineup each playoff week if everyone who can play does. Opponent rank vs his position (green = easy, red = tough) and the chance he suits up.</p>
+    <div class="grid2" id="ideal" style="grid-template-columns:repeat(auto-fit,minmax(330px,1fr))"></div>
+    <h2 style="font-size:20px">📋 Whole roster</h2>
     <div class="tw"><table id="ptable"></table></div>
   </section>
 
@@ -118,6 +122,7 @@
   </section>
 </div>
 <div class="tip" id="tip" hidden></div>
-<script src="app.js?v=1794974674"></script>
+<script src="app.js?v=1794975195"></script>
+<script src="chat.js?v=1794975195"></script>
 </body>
 </html>

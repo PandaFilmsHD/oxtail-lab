@@ -7,14 +7,15 @@ const sgn = v => v == null ? '—' : (v > 0 ? '+' : '') + (+v).toFixed(1);
 const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
 let D, H, CARDS = null, LID = null, BASE = 'data/';
 const tierOf = v => v == null ? null : v >= 80 ? 'legendary' : v >= 55 ? 'epic' : v >= 30 ? 'rare' : v >= 12 ? 'uncommon' : 'common';
-const tierEl = v => { const t = tierOf(v); return t ? h('span', { class: 'tier ' + t, title: 'Trade value ' + v }, t.toUpperCase()) : ''; };
+let TIERS = {};
+const tierEl = n => { const t = typeof n === 'string' ? TIERS[n] : tierOf(n); return t ? h('span', { class: 'tier ' + t, title: 'Tier = rank at his position when healthy' }, t.toUpperCase()) : ''; };
 const TEAMC = { ARI: ['#97233F', '#FFB612'], ATL: ['#A71930', '#000000'], BAL: ['#241773', '#9E7C0C'], BUF: ['#00338D', '#C60C30'], CAR: ['#0085CA', '#101820'], CHI: ['#0B162A', '#C83803'], CIN: ['#FB4F14', '#000000'], CLE: ['#311D00', '#FF3C00'],
   DAL: ['#003594', '#869397'], DEN: ['#FB4F14', '#002244'], DET: ['#0076B6', '#B0B7BC'], GB: ['#203731', '#FFB612'], HOU: ['#03202F', '#A71930'], IND: ['#002C5F', '#A2AAAD'], JAX: ['#006778', '#D7A22A'], KC: ['#E31837', '#FFB81C'],
   LV: ['#000000', '#A5ACAF'], LAC: ['#0080C6', '#FFC20E'], LAR: ['#003594', '#FFA300'], MIA: ['#008E97', '#FC4C02'], MIN: ['#4F2683', '#FFC62F'], NE: ['#002244', '#C60C30'], NO: ['#101820', '#D3BC8D'], NYG: ['#0B2265', '#A71930'],
   NYJ: ['#125740', '#FFFFFF'], PHI: ['#004C54', '#A5ACAF'], PIT: ['#101820', '#FFB612'], SF: ['#AA0000', '#B3995D'], SEA: ['#002244', '#69BE28'], TB: ['#D50A0A', '#34302B'], TEN: ['#0C2340', '#4B92DB'], WSH: ['#5A1414', '#FFB612'] };
 const initials = n => n.replace(/ (Jr\.|Sr\.|II|III|IV|V)$/, '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 function avatar(name, nfl, pos, value, size = 28) {
-  const [a, b] = TEAMC[nfl] || ['#3f5bff', '#a66bff'], t = tierOf(value);
+  const [a, b] = TEAMC[nfl] || ['#3f5bff', '#a66bff'], t = TIERS[name] || tierOf(value);
   const glow = { legendary: '#ffb300', epic: '#b05bff', rare: '#33a6ff', uncommon: '#3ddc84' }[t] || '#ffffff33';
   const e = h('span', { class: 'av', title: `${name} · ${pos} · ${nfl}` }, initials(name));
   e.style.cssText = `width:${size}px;height:${size}px;font-size:${size * .4}px;background:linear-gradient(145deg,${a},${b});box-shadow:0 0 0 2px ${glow},0 ${size > 40 ? 6 : 3}px 0 #0007`;
@@ -96,7 +97,7 @@ function renderHome() {
   $('#kpis').replaceChildren(tile('t1', '🏁 Make the final', k.fi, prev && prev.final_pct), tile('t2', '✅ Make playoffs', k.po, prev && prev.playoffs_pct), tile('t3', '😴 First round bye', k.bye, prev && prev.bye_pct), tile('t4', '👑 1 seed', k.s1, prev && prev.seed1_pct));
   $('#take').replaceChildren(...s.take.map((t, i) => { const li = h('li', {}, t); li.style.animationDelay = i * 70 + 'ms'; return li; }));
   const tw = s.this_week; $('#tw-h').textContent = `🗓️ Week ${tw.week} best lineup`;
-  const lu = h('table', {}, h('tbody', {}, tw.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), x.slot, VAL(x.player), 26), pl(x.player), tierEl(VAL(x.player)))), h('td', {}, f1(x.pts))))));
+  const lu = h('table', {}, h('tbody', {}, tw.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), x.slot, VAL(x.player), 26), pl(x.player), tierEl((x.player)))), h('td', {}, f1(x.pts))))));
   $('#thisweek').replaceChildren(
     tw.opponent ? h('p', { style: 'margin:0 0 10px' }, `vs ${tw.opponent}: you win `, h('b', { style: 'color:var(--gold)' }, pct(tw.win_pct)), ` of sims. Projected ${f1(tw.total)} to ${f1(tw.opp_proj)}.`) : '',
     h('div', { class: 'tw' }, lu), h('p', { class: 'sub', style: 'margin:10px 0 0' }, 'Bench: ' + tw.bench.map(b => `${b.player} ${f1(b.pts)}`).join(', ')));
@@ -110,13 +111,14 @@ function renderTrades() {
   const hide = $('#hideblocked').checked;
   const rows = D.trades.filter(t => (TK === 'all' || t.kind === TK) && !(hide && t.blocked));
   const names = s => s.split(' + ');
-  const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 34), h('div', { class: 'pn' }, pl(n), h('div', {}, h('span', { class: 'pp2' }, POS(n) + ' · ' + (NFL(n) || '')), ' ', tierEl(VAL(n)))))));
-  $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, 12).map((r, i) => { const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
+  const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 34), h('div', { class: 'pn' }, pl(n), h('div', {}, h('span', { class: 'pp2' }, POS(n) + ' · ' + (NFL(n) || '')), ' ', tierEl((n)))))));
+  $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, 24).map((r, i) => { const why = h('div', { class: 'why', hidden: '' }); const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
       h('div', { class: 'who' }, h('span', {}, '🤝 ' + r.partner), h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'BLOCKED' : r.kind === 'realistic' ? 'REALISTIC' : 'STRETCH')),
       h('div', { class: 'swap' }, side('give', 'YOU GIVE', r.give), h('div', { class: 'arrow' }, '➜'), side('get', 'YOU GET', r.get)),
       h('div', { class: 'foot' }, h('div', { class: 'boost', style: r.change_pts < 0 ? 'color:var(--red)' : '' }, sgn(r.change_pts) + '%', h('small', {}, `title odds → ${pct(r.title_pct)}`)),
         h('div', { class: 'meta' }, `Their lineup ${sgn(r.partner_weekly_gain)}/wk`, h('br'), `Your Wk${D.tester.po[1]}/${D.tester.po[2]}: ${f1(r.wk16)} / ${f1(r.wk17)}`),
-        h('button', { class: 'btn small', onclick: () => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); } }, 'TEST IT'))); c.style.animationDelay = i * 40 + 'ms'; return c; })
+        h('div', { style: 'display:flex;gap:8px' }, h('button', { class: 'btn small blue', onclick: () => { why.hidden = !why.hidden; if (!why.hidden && !why.childNodes.length) why.append(...whyTrade(r)); } }, 'WHY?'),
+          h('button', { class: 'btn small', onclick: () => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); } }, 'TEST IT'))), why); c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; })
     : [h('div', { class: 'box mut' }, 'No trades in this group right now.')]));
   table($('#ttable'), [
     { k: 'give', h: 'You give', l: 1, f: r => h('span', {}, ...names(r.give).flatMap((n, i) => [i ? ' + ' : '', pl(n)])) },
@@ -132,11 +134,43 @@ function renderTrades() {
 }
 seg('tkind', v => { TK = v; renderTrades(); }); $('#hideblocked').addEventListener('change', renderTrades);
 
+function whyTrade(r) {
+  const wk = r.weeks || [], reg = wk.filter(x => !x.po), po = wk.filter(x => x.po);
+  const avg = (a, k) => a.length ? a.reduce((s, x) => s + x[k], 0) / a.length : 0;
+  const dReg = avg(reg, 'after') - avg(reg, 'before'), dPo = avg(po, 'after') - avg(po, 'before'), dThem = (r.their_after ?? 0) - (r.their_before ?? 0);
+  const mx = Math.max(1, ...wk.map(x => Math.abs(x.after - x.before)));
+  const bars = h('div', { class: 'wbars' }, wk.map(x => { const d = x.after - x.before; const b = h('div', { class: 'wb' + (x.po ? ' po' : '') }, h('div', { class: 'wbv ' + (d >= 0 ? 'up' : 'dn') }), h('div', { class: 'k' }, (x.po ? '🏆' : '') + 'W' + x.w), h('div', { class: 'k ' + cls(d) }, sgn(d))); b.firstChild.style.height = Math.max(4, Math.abs(d) / mx * 46) + 'px'; return b; }));
+  const L = [];
+  L.push(`📊 Your lineup gets ${sgn(dReg)} a week the rest of the regular season and ${sgn(dPo)} a week in your playoff games. Those playoff weeks count double, which is why this ${dPo > dReg ? 'trade is built for the playoffs' : 'helps now and later'}.`);
+  L.push(`🤝 ${r.partner}'s lineup ${dThem >= 0 ? 'gets better' : 'gets worse'} by ${f1(Math.abs(dThem))} a week (${f1(r.their_before)} → ${f1(r.their_after)}). They're ${r.their_po_pct >= 90 ? 'a playoff lock' : r.their_po_pct >= 8 ? `a bubble team at ${f1(r.their_po_pct)}% to make it, so wins now matter to them` : 'basically eliminated, so they should care about value, not this week'}.`);
+  L.push(`💎 Market value: you send ${f1(r.mv_send)} and get ${f1(r.mv_get)} (points per game over a replacement starter). ${r.value_ratio >= 1 ? 'You\'re giving fair or better value, so it\'s an easy sell.' : 'You\'re asking for more than you give, so expect pushback.'}`);
+  L.push(`🏆 Title odds ${pct(D.summary.kpis.ch)} → ${pct(r.title_pct)} (${sgn(r.change_pts)}).`);
+  return [bars, ...L.map(t => h('p', {}, t)), h('button', { class: 'btn small', onclick: () => window.askCoach && askCoach(`Explain this trade for me: I give ${r.give} and get ${r.get} from ${r.partner}. Why does it help me, would they actually accept, and what are the risks?`) }, '🤖 ASK COACH ABOUT IT')];
+}
+function openTeam(id) {
+  const t = (D.teams || {})[String(id)]; if (!t) return;
+  const lu = (L, title) => h('div', {}, h('h3', {}, title), h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), POS(x.player), VAL(x.player), 26), pl(x.player), tierEl((x.player)))), h('td', {}, f1(x.pts)))),
+    h('tr', {}, h('td', {}), h('td', { class: 'l' }, h('b', {}, 'TOTAL')), h('td', {}, h('b', {}, f1(L.total))))))));
+  const bench = t.roster.filter(x => !x.starter);
+  const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox' },
+    h('button', { class: 'x', onclick: () => m.remove() }, '×'),
+    h('h2', {}, (t.me ? '⭐ ' : '') + t.name),
+    h('div', { class: 'sub', style: 'margin:6px 0 14px;font-size:14px' }, `${t.record} · ${f1(t.pf)} points for · ${t.status}`),
+    h('div', { class: 'tiles', style: 'grid-template-columns:repeat(auto-fit,minmax(150px,1fr))' },
+      [['t2', '✅ Playoffs', t.odds.po], ['t3', '😴 Bye', t.odds.bye], ['t1', '🏁 Final', t.odds.fi], ['t4', '🏆 Title', t.odds.ch]].map(([c, k, v]) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, pct(v))))),
+    h('div', { class: 'grid2', style: 'margin-top:8px' }, lu(t.this_week, `🗓️ Week ${D.summary.week} best lineup`), lu(t.semis, `🏆 Semis (Wk ${t.semis.week}) lineup`)),
+    h('h3', {}, '🪑 Bench'), h('div', { class: 'chips2' }, bench.map(x => h('span', { class: 'chip2' }, pl(x.player), h('small', {}, ` ${x.pos} · ${f1(x.ros_pg)}/g`), x.status && x.status !== 'ACTIVE' ? h('small', { class: 'neg' }, ' ' + x.status.replace('_', ' ')) : ''))),
+    t.schedule.length ? [h('h3', {}, '📅 Their remaining games'), h('div', { class: 'chips2' }, t.schedule.map(g => h('span', { class: 'chip2' }, `Wk ${g.w}: ${g.opp}`)))] : '',
+    !t.me ? h('div', { class: 'bar', style: 'margin-top:16px' }, h('button', { class: 'btn small', onclick: () => { m.remove(); LAB.partner = t.id; LAB.get.clear(); tab('lab'); } }, '🧪 BUILD A TRADE WITH THEM'),
+      h('button', { class: 'btn small blue', onclick: () => { m.remove(); window.askCoach && askCoach(`What's the best trade I could realistically make with ${t.name}? Look at their roster, needs and odds.`); } }, '🤖 ASK COACH')) : ''));
+  document.body.append(m);
+}
+
 // ---------- trade lab ----------
 const LAB = { give: new Set(), get: new Set(), out: new Set(), partner: null, q: '' };
 function renderLab() {
   const T = D.tester, me = T.me, val = p => (p.e[T.weeks.indexOf(T.po[1])] || 0) + (p.e[T.weeks.indexOf(T.po[2])] || 0);
-  const pick = (box, list, set) => { box.replaceChildren(...list.sort((a, b) => val(b) - val(a)).map(p => { const cb = h('input', { type: 'checkbox' }); cb.checked = set.has(p.n); const lb = h('label', { class: cb.checked ? 'sel' : '' }, cb, h('span', {}, p.n + ' · ' + p.pos), tierEl(VAL(p.n)), h('span', { class: 'pp' }, f1(val(p)) + ' playoff pts')); cb.addEventListener('change', () => { cb.checked ? set.add(p.n) : set.delete(p.n); lb.classList.toggle('sel', cb.checked); }); return lb; })); };
+  const pick = (box, list, set) => { box.replaceChildren(...list.sort((a, b) => val(b) - val(a)).map(p => { const cb = h('input', { type: 'checkbox' }); cb.checked = set.has(p.n); const lb = h('label', { class: cb.checked ? 'sel' : '' }, cb, h('span', {}, p.n + ' · ' + p.pos), tierEl((p.n)), h('span', { class: 'pp' }, f1(val(p)) + ' playoff pts')); cb.addEventListener('change', () => { cb.checked ? set.add(p.n) : set.delete(p.n); lb.classList.toggle('sel', cb.checked); }); return lb; })); };
   pick($('#give'), T.players.filter(p => p.t === me && p.pos !== 'K'), LAB.give);
   const sel = $('#partner'); sel.replaceChildren(h('option', { value: '' }, 'Pick a team'), ...T.teams.filter(t => t.id !== me).map(t => h('option', { value: t.id }, t.name)), h('option', { value: '0' }, 'Free agents (add/drop)'));
   sel.value = LAB.partner == null ? '' : String(LAB.partner);
@@ -206,7 +240,7 @@ function renderRanks() {
   const rows = D.rankings.filter(r => (RK.pos === 'ALL' || r.pos === RK.pos) && (!RK.fa || r.owner === 'Free agent') && (!q || r.player.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q)));
   const sosC = v => v === 'Easy' ? 'pos' : v === 'Tough' ? 'neg' : '';
   table($('#rtable'), [
-    { k: 'player', h: 'Player', l: 1, f: r => h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(r.player, r.nfl, r.pos, r.value, 26), pl(r.player)) }, { k: 'tier', h: 'Tier', l: 1, sv: r => r.value ?? -1, f: r => tierEl(r.value) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'owner', h: 'Team', l: 1 },
+    { k: 'player', h: 'Player', l: 1, f: r => h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(r.player, r.nfl, r.pos, r.value, 26), pl(r.player)) }, { k: 'tier', h: 'Tier', l: 1, sv: r => ['common', 'uncommon', 'rare', 'epic', 'legendary'].indexOf(TIERS[r.player]), f: r => tierEl(r.player) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'owner', h: 'Team', l: 1 },
     { k: 'value', h: 'Trade value', t: '0-100. Points over a replacement starter for the rest of the season, adjusted for usage trend', f: r => r.value == null ? '—' : r.value },
     { k: 'my_value', h: 'Value to you', t: '0-100. Same idea but weighted to the playoff weeks you will actually play', f: r => r.my_value == null ? '—' : r.my_value },
     { k: 'po_n', h: 'Playoff rk', sv: r => -r.po_n, f: r => r.pos + r.po_n }, { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) },
@@ -226,9 +260,17 @@ function renderTeam() {
   const sm = D.summary, po = sm.playoff_weeks, hl = sm.healthy_lineup || {}, ex = sm.expected_lineup || {};
   const lt = (c, k, a, b) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(a)), h('div', { style: 'font-size:13px;font-weight:800' }, `${f1(b)} after injury odds`));
   $('#lusum').replaceChildren(lt('t1', `Wk ${po[1]} semis · full strength`, hl[po[1]], ex[po[1]]), lt('t3', `Wk ${po[2]} final · full strength`, hl[po[2]], ex[po[2]]));
+  const IL = sm.ideal_lineups || {};
+  $('#ideal').replaceChildren(...po.filter(w => IL[w]).map(w => { const L = IL[w];
+    return h('div', { class: 'box' }, h('h3', {}, (w === po[0] ? '😴 Wk ' + w + ' (bye if you get it)' : w === po[1] ? '⚔️ Wk ' + w + ' semis' : '🏆 Wk ' + w + ' final') + ` · ${f1(L.total)}`),
+      h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot),
+        h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), POS(x.player), VAL(x.player), 26), pl(x.player))),
+        h('td', { class: 'l mut', title: x.rank ? `defense rank vs his position: ${x.rank} (32 = easiest)` : '' }, x.opp, x.rank ? h('span', { class: x.rank >= 22 ? 'pos' : x.rank <= 11 ? 'neg' : '' }, ` #${x.rank}`) : ''),
+        h('td', {}, f1(x.pts), x.chance < 1 ? h('span', { class: 'opp ' + (x.chance < 0.7 ? 'neg' : '') }, Math.round(x.chance * 100) + '% to play') : '')))))),
+      L.next_up.length ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Next up: ' + L.next_up.map(b => `${b.player} ${f1(b.pts)}`).join(', ')) : ''); }));
   const wk = (r, k) => { const ch = r[k + '_chance']; return h('span', {}, f1(r[k + '_proj']) + (ch < 1 ? ` (${Math.round(ch * 100)}%)` : ''), h('span', { class: 'opp' }, `${r[k + '_opp']}${r[k + '_rank'] ? ' · ' + r[k + '_rank'] : ''}`)); };
   table($('#ptable'), [
-    { k: 'player', h: 'Player', l: 1, f: r => h('span', {}, pl(r.player), ' ', tierEl(VAL(r.player))) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'status', h: 'Status', l: 1 },
+    { k: 'player', h: 'Player', l: 1, f: r => h('span', {}, pl(r.player), ' ', tierEl((r.player))) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'status', h: 'Status', l: 1 },
     { k: 'season_avg', h: 'Season avg', f: r => f1(r.season_avg) }, { k: 'recent', h: 'Last 4', f: r => f1(r.recent) }, { k: 'ros_ppg', h: 'ROS ppg', f: r => f1(r.ros_ppg) },
     { k: 'wk15', h: `Wk ${po[0]}`, f: r => wk(r, 'wk15') }, { k: 'wk16', h: `Wk ${po[1]} semis`, f: r => wk(r, 'wk16') }, { k: 'wk17', h: `Wk ${po[2]} final`, f: r => wk(r, 'wk17') },
     { k: 'playoff_expected', h: 'Expected semis+final', f: r => f1(r.playoff_expected) }
@@ -239,14 +281,14 @@ function renderTeam() {
 function renderLeague() {
   hbar($('#lchart'), D.league.filter(r => r.champ_pct > 0.05), { label: r => r.team, value: r => r.champ_pct, fmt: v => v.toFixed(1) + '%', color: r => r.me ? '#ffc83d' : '#4cc9ff' });
   table($('#ltable'), [
-    { k: 'team', h: 'Team', l: 1 }, { k: 'record', h: 'Record' }, { k: 'pf', h: 'PF', f: r => f1(r.pf) }, { k: 'playoffs_pct', h: 'Playoffs', f: r => pct(r.playoffs_pct) }, { k: 'bye_pct', h: 'Bye', f: r => pct(r.bye_pct) },
+    { k: 'team', h: 'Team (tap one)', l: 1, f: r => h('b', {}, r.team + ' ›') }, { k: 'record', h: 'Record' }, { k: 'pf', h: 'PF', f: r => f1(r.pf) }, { k: 'playoffs_pct', h: 'Playoffs', f: r => pct(r.playoffs_pct) }, { k: 'bye_pct', h: 'Bye', f: r => pct(r.bye_pct) },
     { k: 'champ_pct', h: 'Title', f: r => pct(r.champ_pct) }, { k: 'final_pct', h: 'Final', f: r => pct(r.final_pct) }, { k: 'win_this_week_pct', h: 'Win this week', f: r => pct(r.win_this_week_pct) },
     { k: 'wk16_lineup', h: 'Semis lineup', f: r => f1(r.wk16_lineup) }, { k: 'wk17_lineup', h: 'Final lineup', f: r => f1(r.wk17_lineup) }
-  ], D.league, { rowClass: r => r.me ? 'me' : '' });
+  ], D.league, { rowClass: r => r.me ? 'me' : '', onRow: r => openTeam(r.id) });
   table($('#btable'), [
     { k: 'team', h: 'Team', l: 1 }, { k: 'record', h: 'Record' }, { k: 'playoffs_pct', h: 'Playoff %', f: r => pct(r.playoffs_pct) }, { k: 'needs', h: 'Weakest spot', l: 1 },
     { k: 'weakest_starter_pts', h: "That starter's pts", f: r => f1(r.weakest_starter_pts) }, { k: 'has_extra', h: 'Bench pieces they could move', l: 1 }
-  ], D.bubble, { rowClass: r => r.blocked ? 'dim' : '' });
+  ], D.bubble, { rowClass: r => r.blocked ? 'dim' : '', onRow: r => openTeam(r.id) });
   const mv = H.moves || [];
   if (!mv.length) $('#mtable').replaceChildren(h('tbody', {}, h('tr', {}, h('td', { class: 'mut' }, 'Moves show up here starting with the second update.'))));
   else table($('#mtable'), [{ k: 'at', h: 'When', l: 1, f: r => new Date(r.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) }, { k: 'type', h: 'Type', l: 1, f: r => h('span', { class: 'tag ' + r.type }, r.type) }, { k: 'text', h: 'What', l: 1 }], mv.slice(0, 120));
@@ -301,10 +343,10 @@ async function openCard(name) {
   const log = h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, ['Wk', 'Opp', 'Pts', 'Usage said', c.pos === 'QB' ? 'Pass yds' : 'Targets', c.pos === 'QB' ? 'Attempts' : 'Catches', 'Yds', 'Carries', 'TD', 'Tgt share', 'Snaps', 'RZ'].map((x, i) => h('th', { class: i < 2 ? 'l' : '' }, x)))),
     h('tbody', {}, lg.slice().reverse().map(x => h('tr', {}, h('td', { class: 'l' }, x.w), h('td', { class: 'l' }, x.opp), h('td', {}, h('b', {}, f1(x.pts))), h('td', { class: 'mut' }, f1(x.xfp)), h('td', {}, c.pos === 'QB' ? x.passyd : x.tgt), h('td', {}, c.pos === 'QB' ? x.att : x.rec), h('td', {}, c.pos === 'QB' ? x.rushyd : (x.recyd || 0) + (x.rushyd || 0)), h('td', {}, x.car), h('td', {}, x.td), h('td', {}, x.tsh != null ? x.tsh + '%' : '—'), h('td', {}, x.snap != null ? x.snap + '%' : '—'), h('td', {}, (x.rz_tgt || 0) + (x.rz_car || 0)))))));
   const statusBits = [c.status && c.status !== 'ACTIVE' ? '🚑 ' + c.status.replace('_', ' ') : '', rep && rep.practice ? `Wk${rep.week} practice: ${rep.practice.replace(' in Practice', '').replace('Participation', '')}${rep.injury ? ' (' + rep.injury + ')' : ''}` : '', `${c.own}% rostered` + (c.own_chg ? ` (${sgn(c.own_chg)})` : '')].filter(Boolean);
-  const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox ' + (tierOf(c.value) || '') },
+  const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox ' + (TIERS[c.name] || '') },
     h('button', { class: 'x', onclick: () => m.remove() }, '×'),
     h('div', { style: 'display:flex;gap:18px;align-items:center;margin-bottom:14px' }, avatar(c.name, c.nfl, c.pos, c.value, 96),
-      h('div', {}, h('h2', {}, c.name, ' ', tierEl(c.value)),
+      h('div', {}, h('h2', {}, c.name, ' ', tierEl(c.name)),
         h('div', { class: 'sub', style: 'margin:6px 0 0;font-size:14px' }, `${c.pos} · ${c.nfl} · ${c.mine ? '⭐ Your team' : c.owner}`),
         statusBits.length ? h('div', { class: 'sub', style: 'margin:2px 0 0' }, statusBits.join('  ·  ')) : '')),
     h('div', { style: `display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-radius:16px;background:linear-gradient(90deg,${vc}33,transparent);border:2px solid ${vc}` },
@@ -319,6 +361,7 @@ async function openCard(name) {
       h('div', {}, h('h3', {}, '💎 Value'), meter('Trade value (what the league thinks)', c.value, 'linear-gradient(90deg,#a64bff,#ff6bd6)'), meter('Value to you (your playoff weeks)', c.my_value, 'linear-gradient(90deg,#ffc83d,#ff9f43)'),
         lg.length ? [h('h3', {}, '📊 Every game (gold = 20+, red = dud)'), spark] : '')),
     h('h3', {}, `🗓️ Schedule (green = easy defense, red = tough) · rest of season ${c.sos_ros_label || '—'}, playoffs ${c.sos_po_label || '—'}`), sch,
+    h('div', { class: 'bar', style: 'margin-top:16px' }, h('button', { class: 'btn small blue', onclick: () => { m.remove(); window.askCoach && askCoach(`Tell me about ${c.name}. Should I ${c.mine ? 'keep or trade him' : c.owner === 'Free agent' ? 'pick him up' : 'trade for him'}? Why?`); } }, '🤖 ASK COACH ABOUT HIM')),
     c.outlook ? [h('h3', {}, '📰 ESPN outlook'), h('p', { style: 'margin:0;line-height:1.55' }, c.outlook)] : '',
     h('details', { style: 'margin-top:18px' }, h('summary', { style: 'cursor:pointer;font-family:var(--game);color:var(--gold);font-size:16px' }, '🤓 Nerd stats'),
       h('h3', {}, 'Usage'), h('div', { class: 'stats' }, [stat('Target share', c.tsh != null ? `${c.tsh}% → ${c.tsh3}%` : null, 'season → last 3'), stat('Carry share', c.csh ? `${c.csh}% → ${c.csh3}%` : null), stat('Snaps', c.snap != null ? `${c.snap}% → ${c.snap3}%` : null),
@@ -346,6 +389,7 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
   sel.addEventListener('change', () => { try { localStorage.setItem('league', sel.value); } catch (e) {} const u = new URL(location); u.searchParams.set('league', sel.value); location.href = u.toString(); });
   if (idx && idx.status && idx.status.espn_ok === false) $('#banner').replaceChildren(h('div', { class: 'banner' }, '⚠️ ' + idx.status.message));
   [D, H] = await Promise.all([fetch(BASE + 'latest.json?v=' + v).then(r => r.json()), fetch(BASE + 'history.json?v=' + v).then(r => r.json()).catch(() => ({ runs: [], moves: [] }))]);
+  TIERS = D.summary.tiers || {};
   const at = new Date(D.summary.at);
   $('#upd').textContent = `${D.summary.my_team} · Week ${D.summary.week} · updated ${at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`;
   document.title = `Oxtail Lab · ${D.summary.league}`;
