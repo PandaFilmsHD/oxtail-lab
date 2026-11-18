@@ -31,7 +31,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: data/usage.json
-          key: nflverse-v2-${{ steps.tb.outputs.b }}
+          key: nflverse-v3-${{ steps.tb.outputs.b }}
       - name: Pull ESPN + nflverse, run sims for every league
         env:
           ESPN_S2: ${{ secrets.ESPN_S2 }}
