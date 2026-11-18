@@ -15,6 +15,6 @@ jobs:
             echo "== $m"
             curl -sS -m 60 https://models.github.ai/inference/chat/completions \
               -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json" \
-              -d "{\"model\":\"$m\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hi in 3 words\"}],\"max_tokens\":20}" -w "\nHTTP %{http_code}\n" | tail -c 400
+              -d "{\"model\":\"$m\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hi in 3 words\"}],\"max_tokens\":20}" -i | head -c 900
           done
           echo "== catalog"; curl -sS -m 30 https://models.github.ai/catalog/models -H "Authorization: Bearer $GH_TOKEN" | head -c 1500
