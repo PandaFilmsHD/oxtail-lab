@@ -671,7 +671,7 @@ async function renderProps() {
       ...pl.legs.map(legRow), h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units || 0.5)}`), h('span', { class: 'k' }, `only if it pays better than ${odds(pl.fair)}`)));
     const P = PLD.parlays || {};
     const sect = (t, L) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t), h('div', { class: 'bgrid' }, ...L.map(card))] : [];
-    out = [tip, ...sect('🏈 4-team game parlays (+100 or better)', P.g4), ...sect('🏈 3-team game parlays', P.g3), ...sect('🎯 2-leg player props', P['2']), ...sect('🎯 3-leg player props (+100ish)', P['3'])];
+    out = [tip, ...sect('🔥 Model\'s confident parlays (bigger payout, every leg is one the sims like more than the market)', P.conf), ...sect('🏈 4-team game parlays (+100 or better)', P.g4), ...sect('🏈 3-team game parlays', P.g3), ...sect('🎯 2-leg player props', P['2']), ...sect('🎯 3-leg player props (+100ish)', P['3'])];
     // build your own
     const legs = PLD.legs || [];
     const chosen = legs.filter(l => PLPICK.has(l.label));

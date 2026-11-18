@@ -435,7 +435,7 @@ def main():
                 continue
             pj = math.prod(c["p"] for c in combo)
             kinds = [c["kindg"] for c in combo]
-            if 0.34 <= pj <= 0.50 and max(kinds.count(k) for k in set(kinds)) <= (2 if n_ == 4 else 1 if n_ == 3 else 2):
+            if 0.34 <= pj <= 0.50 and max(kinds.count(k) for k in set(kinds)) <= 2:
                 cand.append((pj, combo))
         # mix of bet types reads better and spreads the risk; then the highest chance wins
         cand.sort(key=lambda z: -(z[0] + sum(c["lean"] for c in z[1])))
@@ -450,6 +450,28 @@ def main():
             if len(outp) >= 6:
                 break
         parlays[f"g{n_}"] = outp
+    # model's confident parlays: only legs our sims like MORE than the market (lean 2+ pts) and that hit 70%+, paying +150 to +400
+    hot = [L_ for L_ in pool if L_["lean"] >= 0.02 and L_["p"] >= 0.70]
+    conf = []
+    for n_ in (3, 4, 5):
+        for combo in itertools.combinations(hot[:24], n_):
+            if len({c["who"] for c in combo}) < n_ or max(sum(1 for c in combo if c["game"] == g) for g in {c["game"] for c in combo}) > 2:
+                continue
+            pj = joint(combo)
+            if 0.20 <= pj <= 0.40:
+                conf.append((sum(c["lean"] for c in combo), pj, combo))
+    conf.sort(key=lambda z: -(z[0] + 0.3 * z[1]))
+    used = {}
+    parlays["conf"] = []
+    for le, pj, combo in conf:
+        if any(used.get(c["label"], 0) >= 1 for c in combo):
+            continue
+        for c in combo:
+            used[c["label"]] = 1
+        parlays["conf"].append({"p": round(100 * pj, 1), "fair": amer(pj), "lift": 1.0, "same_game": len({c["game"] for c in combo}) < len(combo), "lean": round(100 * le, 1),
+                                "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "type": c["type"], "lean": round(100 * c["lean"], 1)} for c in combo]})
+        if len(parlays["conf"]) >= 4:
+            break
     legs_out = [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": L_["type"], "kick": L_["kick"], "lean": round(100 * L_["lean"], 1)} for L_ in pool]
 
     # ---------------- record: save picks until kickoff, grade after ----------------
@@ -520,7 +542,7 @@ def main():
             pl["units"] = 0.5
     for n_ in parlays:
         for pl in parlays[n_]:
-            pl["units"] = 0.5
+            pl["units"] = 0.25 if n_ == "conf" else 0.5
     legs_out = legs_out + [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": "game", "kick": L_["kick"], "lean": round(100 * L_["lean"], 1)}
                            for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
     rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games")}
