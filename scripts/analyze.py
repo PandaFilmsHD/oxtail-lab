@@ -775,7 +775,7 @@ for t in IDS:
                 continue   # nobody hands over two starters and gets way worse
             st_g = max((P[x].get("start_pct") or 0) for x in G); st_t = max((P[x].get("start_pct") or 0) for x in T_)
             start_ok = st_g >= st_t - 25   # nobody gives up a guy they start every week for a guy the whole league benches
-            real = two_for_one_ok and start_ok and not (both_start and need < -3) and (ratio >= 1.0 if status[t] == "out" else (ratio >= 0.95 and need >= -1))   # within 5% = fair
+            real = two_for_one_ok and start_ok and not (both_start and need < -3) and (ratio >= 1.15 if status[t] == "out" else (ratio >= 0.95 and need >= -1))   # within 5% = fair; eliminated teams want a clear win
             stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.85 and need >= -6 and st_g >= st_t - 45
             if not real and not stretch:
                 continue
@@ -785,7 +785,9 @@ seen, top, nr, ns = set(), [], 0, 0
 quota = A["sims"]["trades_to_sim"]
 for c in cands:
     k = ("+".join(c["T"]), c["real"])
-    if k in seen or (c["real"] and nr >= quota * 2 // 3) or (not c["real"] and ns >= quota // 3) or sum(1 for x in top if x["T"] == c["T"]) >= 1:
+    core_t = max(c["T"], key=mval); core_g = max(c["G"], key=mval)
+    if k in seen or (c["real"] and nr >= quota * 2 // 3) or (not c["real"] and ns >= quota // 3) or sum(1 for x in top if x["T"] == c["T"]) >= 1 \
+       or sum(1 for x in top if max(x["T"], key=mval) == core_t) >= 2 or sum(1 for x in top if x["t"] == c["t"] and max(x["G"], key=mval) == core_g) >= 2:   # variety: not 7 versions of the same deal
         continue
     seen.add(k); top.append(c)
     if c["real"]: nr += 1
@@ -894,6 +896,8 @@ def trade_story(c):
                 reasons.append(f"you're deep at {pos} so you can cover {poss(first(n))} spot"); break
     if status[t] == "out" and not reasons:
         reasons.append("you're probably not making the playoffs, so you might as well get the better long-term guy")
+    if c["ratio"] >= 1.35:
+        why_me.append(f"You're overpaying in trade value ({c['ratio']:.2f}x what you get back). It still helps your title odds, but try asking for a little more first.")
     pitch = f"Would you do {gnames} for {tnames}? " + (("I think " + reasons[0] + (", and " + reasons[1] if len(reasons) > 1 else "") + ".") if reasons else "Let me know if you'd want to tweak it.")
     if d < -0.5 and not c["real"]:
         why_them.append("Heads up: on paper this makes their lineup worse, so expect them to counter or say no.")
