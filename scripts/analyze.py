@@ -1281,7 +1281,7 @@ def team_week(t, w):
     tot_, lu_, _ = best_lu(ROSTER[t], w)
     lab = "Final" if w == PO3 else "Semis" if w == PO2 else ("Round 1" if SET.get("playoff_teams") != 4 else "Semis") if w == PO1 else f"Week {w}"
     if SET.get("playoff_teams") == 4 and w == PO2: lab = "Final"
-    row = {"w": w, "label": lab, "total": r1(tot_), "expected": r1(base[t]["means"][w]), "lineup": lu_}
+    row = {"w": w, "label": lab, "total": r1(base[t]["means"][w]), "expected": r1(base[t]["means"][w]), "lineup": lu_}   # one number everywhere: the sims' expected score
     g = next(((h, a) for wk, h, a in REM if wk == w and t in (h, a)), None)
     if g:
         o = g[0] if g[1] == t else g[1]
@@ -1336,16 +1336,16 @@ for w in PLW:
     for x in lu_:
         x["chance"] = V[x["player"]]["q"][w]; x["opp"] = opp(P[x["player"]], w) or "BYE"; x["rank"] = opp_rank(P[x["player"]], w)
     bench_ = sorted([n for n in ROSTER[ME] if n not in {x["player"] for x in lu_} and V[n]["q"][w] > 0], key=lambda n: -V[n]["v"][w])[:4]
-    ideal[w] = {"total": r1(tot_), "lineup": lu_, "next_up": [{"player": n, "pts": r1(V[n]["v"][w]), "pos": P[n]["pos"]} for n in bench_]}
+    ideal[w] = {"total": r1(mine["means"][w]), "lineup": lu_, "next_up": [{"player": n, "pts": r1(V[n]["v"][w]), "pos": P[n]["pos"]} for n in bench_]}
 healthy = {w: r1(lineup(ROSTER[ME], w, on=lambda n: V[n]["v"][w] > 0 and P[n].get("inj") not in ("OUT", "INJURY_RESERVE") or n in AVAIL)) for w in PLW}
 tot, lu, _ = best_lu(ROSTER[ME], CUR)
 starters = {x["player"] for x in lu}
-this_week = {"week": CUR, "total": r1(tot), "lineup": lu,
+this_week = {"week": CUR, "total": r1(mine["means"][CUR]), "lineup": lu,
              "bench": [{"player": n, "pos": P[n]["pos"], "pts": r1(ev(n, CUR))} for n in sorted(ROSTER[ME], key=lambda n: -ev(n, CUR)) if n not in starters]}
 my_game = next(([h, a] for wk, h, a in REM if wk == CUR and ME in (h, a)), None)
 if my_game:
     o = my_game[0] if my_game[1] == ME else my_game[1]
-    this_week["opponent"] = TNAME[o]; this_week["win_pct"] = r1(mine["wk"]); this_week["opp_proj"] = r1(lineup(ROSTER[o], CUR))
+    this_week["opponent"] = TNAME[o]; this_week["win_pct"] = r1(mine["wk"]); this_week["opp_proj"] = r1(base[o]["means"][CUR])
 
 
 # ---------------- week by week: my best lineup every week, and who I'm playing ----------------
@@ -1362,12 +1362,12 @@ for w in WKS:
     hurt = [n for n in ROSTER[ME] if n in V and V[n]["q"][w] < 0.6 and opp(P[n], w)]
     _, _, maybe_ = best_lu(ROSTER[ME], w)
     row = {"maybe": maybe_, "w": w, "kind": "reg" if w <= REG else "po", "label": f"Week {w}" + ("" if w <= REG else " · " + ("Round 1" if w == PO1 else "Semis" if w == PO2 else "Final") if SET.get("playoff_teams") != 4 else ""),
-           "total": r1(tot_), "lineup": lu_, "bench": bench_, "byes": byes, "hurt": hurt}
+           "total": r1(mine["means"][w]), "lineup": lu_, "bench": bench_, "byes": byes, "hurt": hurt}
     g = next(((h, a) for wk, h, a in REM if wk == w and ME in (h, a)), None)
     if g:
         o = g[0] if g[1] == ME else g[1]
         ot, olu = lu_rows(ROSTER[o], w)
-        row.update({"opponent": TNAME[o], "opp_id": o, "opp_total": r1(ot), "opp_lineup": olu,
+        row.update({"opponent": TNAME[o], "opp_id": o, "opp_total": r1(base[o]["means"][w]), "opp_lineup": olu,
                     "win_pct": r1(mine["wk"]) if w == CUR else r1(50 * (1 + erf((base[ME]["means"][w] - base[o]["means"][w]) / (sqrt(team_sd(ROSTER[ME], w) ** 2 + team_sd(ROSTER[o], w) ** 2) * sqrt(2)))))})
     if w == PO1 and SET.get("playoff_teams") != 4:
         row["note"] = f"You have a {mine['bye']:.0f}% chance at a bye this week."

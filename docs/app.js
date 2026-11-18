@@ -359,9 +359,9 @@ function renderTeam() {
   const lt = (c, k, a, b) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(a)), h('div', { style: 'font-size:13px;font-weight:800' }, `${f1(b)} expected after injury odds (what League shows)`));
   $('#lusum').replaceChildren(lt('t1', `Wk ${po[1]} semis · full strength`, hl[po[1]], ex[po[1]]), lt('t3', `Wk ${po[2]} final · full strength`, hl[po[2]], ex[po[2]]));
   const IL = sm.ideal_lineups || {};
-  { const w = po[1], sch = (D.schedule || []).find(x => x.w === w), nums = [['💪 Full strength', hl[w], 'Everyone who can play plays. Best case.'], ['🎯 Expected', ex[w], 'Injury odds built in, and when a hurt guy sits, your bench steps in. This is the one the League page and the sims use.'], ['📋 Lineup total', sch && sch.total, 'Your best lineup with each starter\'s points cut by his chance to play, but no bench fill-in. Shows on Schedule and team cards.']];
-    const box = h('div', { class: 'box', style: 'margin-bottom:16px' }, h('h3', {}, `🤔 Why your Wk ${w} lineup has 3 numbers`), h('div', { class: 'three' }, nums.filter(x => x[1] != null).map(([k, v, t]) => h('div', { class: 'st' }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(v)), h('div', { class: 'gn' }, t)))),
-      h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'They only differ because of injured or questionable guys. If everyone is healthy, all three match.'));
+  { const w = po[1], nums = [['💪 Full strength', hl[w], 'Everyone who can play plays. Best case.'], ['🎯 Expected', ex[w], 'Injury odds built in, and if a hurt guy sits your bench steps in. This is the number used everywhere on the site.']];
+    const box = h('div', { class: 'box', style: 'margin-bottom:16px' }, h('h3', {}, `🤔 Your Wk ${w} lineup: best case vs expected`), h('div', { class: 'three' }, nums.filter(x => x[1] != null).map(([k, v, t]) => h('div', { class: 'st' }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(v)), h('div', { class: 'gn' }, t)))),
+      h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'They only differ because of injured or questionable guys. Each player in a lineup shows what he scores if he plays.'));
     const old_ = $('#threebox'); box.id = 'threebox'; if (old_) old_.replaceWith(box); else $('#lusum').after(box); }
   $('#ideal').replaceChildren(...po.filter(w => w && IL[w]).map(w => { const L = IL[w];
     return h('div', { class: 'box' }, h('h3', {}, (w === po[0] ? '😴 Wk ' + w + ' (bye if you get it)' : w === po[1] ? '⚔️ Wk ' + w + ' semis' : '🏆 Wk ' + w + ' final') + ` · ${f1(L.total)}`),
@@ -571,7 +571,7 @@ function renderSched() {
   if (x.byes.length) notes.push(h('p', { class: 'sub' }, '😴 On bye: ' + x.byes.join(', ')));
   if (x.hurt.length) notes.push(h('p', { class: 'sub' }, '🩹 Might not play: ' + x.hurt.join(', ')));
   (x.maybe || []).forEach(m => notes.push(h('p', { class: 'alert', style: 'background:#13163f;border-color:#ffc83d' }, `⭐ If ${m.player} is active, start him: ${f1(m.pts)} projected. Right now he's only ${Math.round(m.chance * 100)}% to play, so he's not in the lineup below.`)));
-  notes.push(h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Each player shows what he scores if he plays. The total is what you\'d expect after injury odds.'));
+  notes.push(h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Each player shows what he scores if he plays. The total is your expected score after injury odds (same number as the League page).'));
   if (x.w === D.summary.week && [4, 5, 6, 0, 1].includes(new Date().getDay())) notes.push(h('p', { class: 'sub' }, '⏱️ This week is in progress, so the projection is for the full week and the win % comes from the live sim.'));
   $('#wkview').replaceChildren(nav, head, ...notes, h('div', { class: 'grid2', style: 'grid-template-columns:repeat(auto-fit,minmax(320px,1fr))' },
     h('div', { class: 'box' }, h('h3', {}, '🛡️ Your best lineup · ' + f1(x.total)), lu(x.lineup, true),
