@@ -75,16 +75,6 @@
     "_help": "Force a player's per-game value (before matchup adjustment).",
     "D'Andre Swift": 14.5
   },
-  "core": [
-    "Jahmyr Gibbs",
-    "Brock Bowers",
-    "C.J. Stroud",
-    "Puka Nacua"
-  ],
-  "no_trade_teams": [
-    11,
-    12
-  ],
   "weights": {
     "recent": 0.4,
     "matchup_swing": 0.15,
@@ -95,5 +85,20 @@
     "base": 200000,
     "per_trade": 30000,
     "trades_to_sim": 40
+  },
+  "leagues": {
+    "_help": "Per-league: players you'd never trade (core) and ESPN team ids you won't trade with.",
+    "787523197": {
+      "core": [
+        "Jahmyr Gibbs",
+        "Brock Bowers",
+        "C.J. Stroud",
+        "Puka Nacua"
+      ],
+      "no_trade_teams": [
+        11,
+        12
+      ]
+    }
   }
 }

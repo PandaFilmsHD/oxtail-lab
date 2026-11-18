@@ -3,104 +3,117 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0b1e">
 <title>Oxtail Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Oxtail <span>Lab</span></h1><div class="upd" id="upd">loading…</div></header>
+  <header class="top">
+    <div class="logo"><span class="ball">🏈</span>OXTAIL <b>LAB</b></div>
+    <div class="switch"><select id="league" aria-label="League"></select></div>
+    <div class="live"><i></i><span id="upd">loading…</span></div>
+  </header>
+  <div id="banner"></div>
   <nav class="tabs" id="tabs">
-    <button data-tab="home" class="on">Home</button>
-    <button data-tab="trades">Trade targets</button>
-    <button data-tab="lab">Trade lab</button>
-    <button data-tab="waivers">Waivers</button>
-    <button data-tab="ranks">Rankings</button>
-    <button data-tab="team">My team</button>
-    <button data-tab="league">League</button>
-    <button data-tab="how">How it works</button>
+    <button data-tab="home" class="on"><span class="ic">🏠</span>Home</button>
+    <button data-tab="trades"><span class="ic">🔁</span>Trades</button>
+    <button data-tab="lab"><span class="ic">🧪</span>Trade Lab</button>
+    <button data-tab="waivers"><span class="ic">📥</span>Waivers</button>
+    <button data-tab="ranks"><span class="ic">🏆</span>Rankings</button>
+    <button data-tab="team"><span class="ic">🛡️</span>My Team</button>
+    <button data-tab="league"><span class="ic">🌎</span>League</button>
+    <button data-tab="how"><span class="ic">⚙️</span>Settings</button>
   </nav>
 
   <section id="home">
-    <div class="cards" id="kpis"></div>
-    <h2>My take</h2>
-    <div class="box take"><ul id="take"></ul></div>
-    <div class="grid2" style="margin-top:14px">
+    <div class="hero">
+      <div class="box gauge"><div id="gauge"></div><div class="num" id="gnum">0%</div><div class="lbl">CHANCE TO WIN IT ALL</div><div class="rank" id="grank"></div></div>
+      <div class="tiles" id="kpis"></div>
+    </div>
+    <h2>🧠 Coach's take</h2>
+    <div class="box coach"><div class="face">🦬</div><ul id="take"></ul></div>
+    <div class="grid2" style="margin-top:16px">
       <div class="box"><h3 id="tw-h">This week</h3><div id="thisweek"></div></div>
-      <div><h3 class="sub" style="margin:0 0 6px">Your title odds over time</h3><div class="chart" id="trend"></div>
-        <h3 class="sub" style="margin:14px 0 6px">What could swing it (title odds change if he misses the playoffs)</h3><div class="chart" id="swing"></div></div>
+      <div style="display:grid;gap:16px">
+        <div class="box"><h3>📈 Title odds over time</h3><div class="chart" id="trend"></div></div>
+        <div class="box"><h3>💥 Biggest risks (if he misses the playoffs)</h3><div class="chart" id="swing"></div></div>
+      </div>
     </div>
   </section>
 
   <section id="trades" hidden>
-    <h2>Trade targets</h2>
-    <p class="sub">Every 1-for-1, 2-for-1 and 1-for-2 with every team got scored, then the best ones got simmed. <span class="tag real">Realistic</span> = their lineup drops 1 pt/week or less (or they're eliminated) and value is close. <span class="tag stretch">Stretch</span> = helps you more, hurts them. Tap a row to open it in the Trade lab.</p>
+    <h2>🔁 Trade targets</h2>
+    <p class="sub">Every 1-for-1, 2-for-1 and 1-for-2 with every team got scored, then the best ones got simmed. <span class="tag real">REALISTIC</span> = their lineup barely drops (or they're eliminated) and the value's close. <span class="tag stretch">STRETCH</span> = better for you, worse for them.</p>
     <div class="bar">
       <div class="seg" id="tkind"><button data-v="realistic" class="on">Realistic</button><button data-v="stretch">Stretch</button><button data-v="all">All</button></div>
       <label class="chk"><input type="checkbox" id="hideblocked" checked> Hide teams I won't trade with</label>
     </div>
-    <div class="chart" id="tchart"></div>
-    <div class="tw" style="margin-top:10px"><table id="ttable"></table></div>
+    <div class="tcards" id="tcards"></div>
+    <h2 style="font-size:20px">Full list</h2>
+    <div class="tw"><table id="ttable"></table></div>
   </section>
 
   <section id="lab" hidden>
-    <h2>Trade lab</h2>
-    <p class="sub">Build any trade (or add/drop from free agents), and optionally sit anyone to test injuries. Runs 30,000 seasons right in your browser on expected points, so compare its two numbers to each other.</p>
+    <h2>🧪 Trade lab</h2>
+    <p class="sub">Build any trade or add/drop, and sit anyone to test injuries. Runs 30,000 seasons right on your device. Compare its two numbers to each other.</p>
     <div class="grid2">
-      <div class="box"><h3>You give</h3><div class="picks" id="give"></div></div>
-      <div class="box"><h3>Trade partner</h3><select id="partner" style="width:100%;margin-bottom:10px"></select><h3>You get</h3><div class="picks" id="get"></div></div>
+      <div class="box"><h3>🔴 You give</h3><div class="picks" id="give"></div></div>
+      <div class="box"><h3>🟢 You get</h3><select id="partner" class="plain" style="width:100%;margin-bottom:10px"></select><div class="picks" id="get"></div></div>
     </div>
-    <div class="box" style="margin-top:14px"><h3>What if these guys are out for the playoffs? (optional)</h3>
+    <div class="box" style="margin-top:16px"><h3>🚑 What if these guys miss the playoffs? (optional)</h3>
       <div class="bar"><input type="search" id="outq" placeholder="Search any player…" style="flex:1;min-width:200px"></div>
-      <div class="picks" id="outlist" style="max-height:180px"></div></div>
-    <div class="bar" style="margin-top:14px"><button class="btn" id="run">Run 30,000 sims</button><button class="btn ghost" id="clear">Clear</button></div>
+      <div class="picks" id="outlist" style="max-height:190px"></div></div>
+    <div class="bar" style="margin-top:20px"><button class="btn" id="run">▶ RUN 30,000 SIMS</button><button class="btn ghost" id="clear">CLEAR</button></div>
     <div class="box res" id="result"><span class="mut">Pick players and hit Run.</span></div>
   </section>
 
   <section id="waivers" hidden>
-    <h2>Waiver claims</h2>
-    <p class="sub">Free agents ranked by weighted lineup points added (Weeks left in the regular season + playoff weeks counted double) after dropping the guy shown, plus this week's boost. Title +pts was simmed for the top ones.</p>
+    <h2>📥 Waiver claims</h2>
+    <p class="sub">Free agents ranked by lineup points they add (rest of the regular season + your playoff weeks counted double) after dropping the guy shown, plus this week's boost.</p>
     <div class="tw"><table id="wtable"></table></div>
   </section>
 
   <section id="ranks" hidden>
-    <h2>Rest of season + playoff rankings</h2>
-    <p class="sub">ROS ppg = expected points a week for every week left after matchups, recent form and injury odds. Playoff pts = expected semis + final total. Yours are gold.</p>
+    <h2>🏆 Rankings</h2>
+    <p class="sub">Tap anyone for their full card. Tier comes from trade value. Luck = actual minus expected points per game (big plus = running hot).</p>
     <div class="bar">
       <div class="seg" id="rpos"><button data-v="ALL" class="on">All</button><button data-v="QB">QB</button><button data-v="RB">RB</button><button data-v="WR">WR</button><button data-v="TE">TE</button></div>
-      <div class="seg" id="rsort"><button data-v="po" class="on">Playoff weeks</button><button data-v="ros">Rest of season</button></div>
+      <div class="seg" id="rsort"><button data-v="po" class="on">Playoffs</button><button data-v="ros">Rest of season</button><button data-v="val">Trade value</button></div>
       <label class="chk"><input type="checkbox" id="faonly"> Free agents only</label>
-      <input type="search" id="rq" placeholder="Search…">
+      <input type="search" id="rq" placeholder="Search player or team…">
     </div>
     <div class="tw"><table id="rtable"></table></div>
   </section>
 
   <section id="team" hidden>
-    <h2>Your guys in the playoffs</h2>
-    <p class="sub">Projected points if active, the opponent (rank vs that position, 32 = easiest), and the chance he plays when under 100%.</p>
+    <h2>🛡️ Your squad in the playoffs</h2>
+    <p class="sub">Projected points if active, opponent and its rank vs that position (32 = easiest), and the chance he plays when under 100%.</p>
+    <div class="tiles" id="lusum" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:16px"></div>
     <div class="tw"><table id="ptable"></table></div>
   </section>
 
   <section id="league" hidden>
-    <h2>League odds</h2>
-    <div class="chart" id="lchart"></div>
-    <div class="tw" style="margin-top:10px"><table id="ltable"></table></div>
-    <h2>Teams to work</h2>
+    <h2>🌎 League odds</h2>
+    <div class="box"><div class="chart" id="lchart"></div></div>
+    <div class="tw" style="margin-top:14px"><table id="ltable"></table></div>
+    <h2>🎯 Teams to work</h2>
     <p class="sub">Everyone who isn't a lock. Bubble teams need wins now, so offer a starter for their weakest spot. Eliminated teams should want value.</p>
     <div class="tw"><table id="btable"></table></div>
-    <h2>Recent league moves</h2>
+    <h2>📰 League moves</h2>
     <p class="sub">Adds, drops, trades and injury changes spotted between updates.</p>
     <div class="tw"><table id="mtable"></table></div>
   </section>
 
   <section id="how" hidden>
-    <h2>How it works</h2>
-    <div class="box"><ul id="howlist">
-      <li>A GitHub job pulls the league from ESPN a few times a day, then reruns everything and updates this page.</li>
-      <li>Player value = season average blended with the last 4 games, then moved up or down as much as 15% by how many points the opponent gives that position.</li>
-      <li>Every team starts its best lineup each week. Weekly scores swing about 24 points. The bracket is 6 teams, top 2 get byes, ties go to points.</li>
-      <li>Trades and waivers are scored on your lineup for the rest of the regular season plus the playoff weeks you'll actually play, counted double.</li>
-      <li>Injury guesses and value overrides live in <code>assumptions.json</code> in the repo. Edit that file to change them; the next update uses it.</li>
+    <h2>⚙️ Settings + how it works</h2>
+    <div class="box"><ul>
+      <li>A GitHub job pulls every league on your ESPN account a few times a day, grabs NFL advanced stats from nflverse, reruns everything and updates this page.</li>
+      <li>Player value blends season average, last 4 games, expected points from usage and ESPN's rest-of-season projection, then adjusts for usage trend and each week's matchup.</li>
+      <li>Every team starts its best lineup each week, scores swing about 24 points a week, and the bracket follows your league's playoff setup.</li>
+      <li>Injury guesses live in <code>assumptions.json</code> in the repo. Edit it on GitHub and the next update uses it.</li>
     </ul><div id="assume"></div></div>
   </section>
 </div>

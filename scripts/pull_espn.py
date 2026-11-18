@@ -13,9 +13,8 @@ import requests
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CFG = json.loads((ROOT / "config.json").read_text())
-LEAGUE, SEASON = CFG["league_id"], CFG["season"]
+SEASON = CFG["season"]
 READS = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons"
-BASE = f"{READS}/{SEASON}/segments/0/leagues/{LEAGUE}"
 POS = {1: "QB", 2: "RB", 3: "WR", 4: "TE", 5: "K", 16: "D"}
 
 s2, swid = os.environ.get("ESPN_S2", "").strip(), os.environ.get("SWID", "").strip()
@@ -34,13 +33,13 @@ def get(url, params=None, flt=None, tries=4):
         if r.status_code == 200:
             return r.json()
         if r.status_code in (401, 403):
-            sys.exit(f"ESPN said {r.status_code}. Your ESPN_S2/SWID cookies are wrong or expired.")
+            raise RuntimeError(f"ESPN said {r.status_code}: cookies wrong/expired, or this league is private to someone else")
         time.sleep(2 * (i + 1))
     r.raise_for_status()
 
 
-def main():
-    # NFL schedule -> opponent by week for every pro team
+def pro_schedule():
+    """NFL schedule -> opponent by week for every pro team."""
     pro = get(f"{READS}/{SEASON}", {"view": "proTeamSchedules_wl"})
     abbr = {t["id"]: t["abbrev"] for t in pro["settings"]["proTeams"]}
     games = {}
@@ -53,7 +52,30 @@ def main():
             home = x["homeProTeamId"] == t["id"]
             g[str(wk)] = ("" if home else "@") + abbr[x["awayProTeamId"] if home else x["homeProTeamId"]]
         games[t["abbrev"]] = g
+    return games, abbr
 
+
+def discover():
+    """Every ESPN football league on this account for this season: {league_id: {name, team_id}}."""
+    out = {}
+    try:
+        r = S.get(f"https://fan.api.espn.com/apis/v2/fans/{swid}", params={"displayEvents": "false", "displayNow": "false", "displayRecs": "false",
+                  "context": "fantasy", "source": "espncom-fantasy-lm", "lang": "en", "section": "espn", "region": "us"}, timeout=30)
+        r.raise_for_status()
+        for pref in r.json().get("preferences", []):
+            e = (pref.get("metaData") or {}).get("entry") or {}
+            if e.get("abbrev") != "ffl" or e.get("seasonId") != SEASON:
+                continue
+            for g in e.get("groups", []):
+                out[str(g["groupId"])] = {"name": g.get("groupName"), "team_id": e.get("entryId")}
+        print(f"found {len(out)} football league(s) on your ESPN account")
+    except Exception as ex:
+        print("league discovery failed, using config.json leagues:", ex)
+    return out
+
+
+def pull_league(LEAGUE, games, abbr, want_team=None):
+    BASE = f"{READS}/{SEASON}/segments/0/leagues/{LEAGUE}"
     d = get(BASE, [("view", v) for v in ("mRoster", "mTeam", "mMatchupScore", "mSettings")])
     cur = d.get("scoringPeriodId") or d["status"]["currentMatchupPeriodId"]
     ss = d["settings"]["scheduleSettings"]
@@ -81,6 +103,12 @@ def main():
         for e in t.get("roster", {}).get("entries", []):
             roster_of[e["playerId"]] = t["id"]
     tmap = {t["id"]: t for t in teams}
+    me = want_team
+    sw = swid.lower()
+    for t in d["teams"]:
+        owners = [o.lower() for o in (t.get("owners") or [])] + [str(t.get("primaryOwner", "")).lower()]
+        if sw in owners:
+            me = t["id"]
     sched = []
     for m in d.get("schedule", []):
         wk = m["matchupPeriodId"]
@@ -147,18 +175,41 @@ def main():
             players.append({"id": p["id"], "n": p["fullName"], "pos": pos, "nfl": abbr.get(p.get("proTeamId"), "FA"),
                             "t": roster_of.get(p["id"], 0), "inj": p.get("injuryStatus") or ("ACTIVE" if not p.get("injured") else "OUT"),
                             "avg": avg, "proj": proj, "own": round(own.get("percentOwned", 0)), "own_chg": round(own.get("percentChange", 0) or 0, 1),
-                            "start_pct": round(own.get("percentStarted", 0) or 0), "espn_ros": round(season_proj - (season_act or 0), 1) if season_proj else None,
+                            "start_pct": round(own.get("percentStarted", 0) or 0), "espn_ros": round(season_proj, 1) if season_proj else None,  # ESPN keeps this as a rest-of-season projection
                             "outlook": (outlook or "")[:600], "wk": wk})
         time.sleep(0.3)
 
-    model = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "season": SEASON, "league_id": LEAGUE, "cur": cur,
+    model = {"my_team": me, "league_name": settings.get("name"), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "season": SEASON, "league_id": LEAGUE, "cur": cur,
              "reg_end": reg_end, "po_teams": po_teams, "settings": settings, "teams": teams, "sched": sched, "games": games, "rank": rank, "players": players}
-    out = ROOT / "data" / "model.json"
-    out.parent.mkdir(exist_ok=True)
+    out = ROOT / "data" / str(LEAGUE) / "model.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists():
-        shutil.copy(out, ROOT / "data" / "model_prev.json")
+        shutil.copy(out, out.parent / "model_prev.json")
     out.write_text(json.dumps(model, separators=(",", ":")))
-    print(f"week {cur}: {len(teams)} teams, {len(players)} players, {len(sched)} games left")
+    print(f"{settings.get('name')} ({LEAGUE}) week {cur}: you are team {me}, {len(teams)} teams, {len(players)} players, {len(sched)} games left")
+
+
+def main():
+    games, abbr = pro_schedule()
+    leagues = {str(k): dict(v) for k, v in (CFG.get("leagues") or {}).items() if not str(k).startswith("_")}
+    if CFG.get("auto_discover", True):
+        for lid, info in discover().items():
+            leagues.setdefault(lid, {}).update({k: v for k, v in info.items() if v is not None and k not in leagues.get(lid, {})})
+    skip = {str(x) for x in CFG.get("skip_leagues", [])}
+    ok = []
+    for lid, info in leagues.items():
+        if lid in skip:
+            continue
+        try:
+            pull_league(int(lid), games, abbr, info.get("team_id"))
+            ok.append(lid)
+        except SystemExit:
+            raise
+        except Exception as ex:
+            print(f"league {lid} failed: {ex}")
+    if not ok:
+        sys.exit("No leagues pulled.")
+    (ROOT / "data" / "leagues.json").write_text(json.dumps({lid: leagues[lid] for lid in ok}, indent=1))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,17 @@
+{
+ "leagues": [
+  {
+   "id": "787523197",
+   "name": "Od from oxtail",
+   "team": "They Hit The Second Bower",
+   "week": 11,
+   "at": "2026-11-18T03:34:51Z",
+   "champ_pct": 23.9
+  }
+ ],
+ "status": {
+  "at": "2026-11-18T03:46:00Z",
+  "espn_ok": true,
+  "message": null
+ }
+}

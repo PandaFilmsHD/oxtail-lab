@@ -6,18 +6,22 @@ What it does:
   3. Searches 1-for-1, 2-for-1 and 1-for-2 trades with every team and sims the best ones.
   4. Ranks waiver adds, builds ROS + playoff rankings, finds bubble teams, writes a plain-English take.
 """
-import json, math, time, pathlib, itertools
+import json, math, os, time, pathlib, itertools
 import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CFG = json.loads((ROOT / "config.json").read_text())
 A = json.loads((ROOT / "assumptions.json").read_text())
-M = json.loads((ROOT / "data" / "model.json").read_text())
-PREV_P = ROOT / "data" / "model_prev.json"
-OUT = ROOT / "docs" / "data"
+LID = os.environ.get("LEAGUE") or str(CFG.get("default_league"))
+LDIR = ROOT / "data" / LID
+M = json.loads((LDIR / "model.json").read_text())
+PREV_P = LDIR / "model_prev.json"
+OUT = ROOT / "docs" / "data" / LID
 OUT.mkdir(parents=True, exist_ok=True)
+LCFG = (CFG.get("leagues") or {}).get(LID, {})
+LA = (A.get("leagues") or {}).get(LID, {})   # per-league assumptions (core players, teams you won't trade with)
 
-ME = CFG["my_team_id"]
+ME = M.get("my_team") or LCFG.get("team_id")
 CUR, REG = M["cur"], M["reg_end"]
 PO1, PO2, PO3 = REG + 1, REG + 2, REG + 3
 WKS = [w for w in range(CUR, PO3 + 1)]
@@ -31,7 +35,7 @@ DEFAULT_SETTINGS = {"teams": len(M["teams"]), "ppr": 1, "pass_td": 4, "playoff_t
                     "scoring": {"3": 0.04, "4": 4, "20": -2, "24": 0.1, "25": 6, "53": 1, "42": 0.1, "43": 6, "72": -2, "19": 2, "26": 2, "44": 2}}
 SET = {**DEFAULT_SETTINGS, **(M.get("settings") or {})}
 SET["source"] = "ESPN" if M.get("settings") else "defaults (no ESPN settings in this pull)"
-OVR_SET = {k: v for k, v in (CFG.get("league_overrides") or {}).items() if not k.startswith("_")}
+OVR_SET = {k: v for k, v in {**(CFG.get("league_overrides") or {}), **(LCFG.get("overrides") or {})}.items() if not k.startswith("_")}
 SET.update(OVR_SET)
 SC = {**DEFAULT_SETTINGS["scoring"], **(SET.get("scoring") or {})}
 if "ppr" in OVR_SET: SC["53"] = OVR_SET["ppr"]
@@ -59,8 +63,8 @@ def league_xpts(xs):
 rng = np.random.default_rng()
 AVAIL = {k: v for k, v in A["avail"].items() if not k.startswith("_")}
 OVR = {k: v for k, v in A["override"].items() if not k.startswith("_")}
-CORE = set(A.get("core", []))
-NO_TRADE = set(A.get("no_trade_teams", []))
+CORE = set(LA.get("core", []))
+NO_TRADE = set(LA.get("no_trade_teams", []))
 
 # ---------------- rosters ----------------
 P = {}
@@ -133,7 +137,7 @@ for n, p in P.items():
     e = USAGE.get(norm(n), {})
     u = [x for x in e.get("weeks", []) if x["w"] < CUR]
     pr = {"nfl": p["nfl"], "own": p["own"], "own_chg": p.get("own_chg"), "start_pct": p.get("start_pct"), "outlook": p.get("outlook") or None,
-          "status": p.get("inj"), "ngs": e.get("ngs"), "pfr": e.get("pfr"), "report": e.get("injury"), "depth": e.get("depth"),
+          "status": p.get("inj"), "ngs": e.get("ngs"), "pfr": e.get("pfr"), "report": e.get("injury") if (e.get("injury") or {}).get("week", 0) >= CUR - 1 else None, "depth": e.get("depth"),
           "team_ctx": NFLTEAMS.get(e.get("team") or "", None)}
     if len(played) >= 3:
         s = sorted(played)
@@ -158,9 +162,11 @@ for n, p in P.items():
             pr.update(xfp=round(xpg, 1), xfp4=round(sum(xl[-4:]) / len(xl[-4:]), 1), fpoe=round(sum(al) / len(al) - xpg, 1))
             for x, xv in zip(xs, xl):
                 x["xfp"] = round(xv, 1)
-    gl = games_left(p)
+    gl = games_left(p, 17)
     if p.get("espn_ros") and gl:
-        pr["espn_ros_pg"] = round(p["espn_ros"] / gl, 1)
+        pg_ = p["espn_ros"] / gl
+        if p["avg"] <= 0 or 0.35 * p["avg"] <= pg_ <= 2.5 * p["avg"]:   # ignore projections that don't make sense
+            pr["espn_ros_pg"] = round(pg_, 1)
     pr["sos_ros"], pr["sos_ros_label"] = sched_grade(p, [w for w in WKS if CUR < w <= REG])
     pr["sos_po"], pr["sos_po_label"] = sched_grade(p, [PO2, PO3])
     pr["schedule"] = [{"w": w, "opp": opp(p, w) or "BYE", "rank": opp_rank(p, w)} for w in WKS]
@@ -317,6 +323,7 @@ print(f"base sims done {time.time() - t0:.1f}s, title {mine['ch']:.1f}%")
 PW = ([PO1, PO2] if SET.get("playoff_teams") == 4 else [PO2, PO3] if mine["bye"] >= 50 else [PO1, PO2, PO3])
 REGW = [w for w in WKS if CUR < w <= REG]
 ros = lambda n: sum(ev(n, w) for w in WKS if w > CUR)
+ros_pg = lambda n: ros(n) / max(1, sum(1 for w in WKS if w > CUR and opp(P[n], w)))   # per game he plays (byes don't count)
 po_pts = lambda n: sum(ev(n, w) for w in (PO2, PO3))
 reg_pts = lambda n: sum(ev(n, w) for w in REGW)
 team_score = lambda rost, t, ws: sum(lineup(rost[t], w) for w in ws)
@@ -335,6 +342,18 @@ for pos, k in REPL_N.items():
     L = sorted((ppg_ros(n) for n, p in P.items() if p["pos"] == pos), reverse=True)
     L2 = sorted((ppg_po(n) for n, p in P.items() if p["pos"] == pos), reverse=True)
     REPL[pos] = (L[min(k, len(L) - 1)] if L else 0, L2[min(k, len(L2) - 1)] if L2 else 0)
+# market value = how the rest of the league sees a guy: season ppg + last 4 games, times how much of the rest of the season he'll play
+def avail(n):  # share of his remaining games he's expected to play (bye weeks don't count against him)
+    gw = [w for w in ROSW if opp(P[n], w)]
+    return sum(V[n]["q"][w] for w in gw) / max(1, len(gw))
+def pub(n):
+    base_ = OVR.get(n, 0.6 * P[n]["avg"] + 0.4 * (V[n]["recent"] if V[n]["recent"] is not None else P[n]["avg"]))
+    return base_ * avail(n)
+REPL_PUB = {}
+for pos, k in REPL_N.items():
+    L = sorted((pub(n) for n, p in P.items() if p["pos"] == pos), reverse=True)
+    REPL_PUB[pos] = L[min(k, len(L) - 1)] if L else 0
+MKT = {n: max(0.0, pub(n) - REPL_PUB[p["pos"]]) for n, p in P.items() if p["pos"] in SKILL}
 MV, MYV = {}, {}
 for n, p in P.items():
     if p["pos"] not in SKILL:
@@ -343,12 +362,12 @@ for n, p in P.items():
     trend = (PROF.get(n) or {}).get("trend") or 1
     MV[n] = max(0.0, ppg_ros(n) - ra) * max(0.9, min(1.1, trend))          # what the league should value him at
     MYV[n] = max(0.0, 0.4 * (sum(ev(n, w) for w in REGW) / max(1, len(REGW)) - ra) + 0.6 * (ppg_po(n) - rp))  # what he's worth to a team on a bye
-_mx, _my = max(MV.values() or [1]) or 1, max(MYV.values() or [1]) or 1
+_mk, _my = max(MKT.values() or [1]) or 1, max(MYV.values() or [1]) or 1
 for n in MV:
     PROF.setdefault(n, {})
-    PROF[n]["value"] = round(100 * MV[n] / _mx)
+    PROF[n]["value"] = round(100 * MKT[n] / _mk)
     PROF[n]["my_value"] = round(100 * MYV[n] / _my)
-mval = lambda n: MV.get(n, 0) + 0.3  # tiny floor so bench guys aren't worth exactly zero
+mval = lambda n: MKT.get(n, 0) + 0.3  # tiny floor so bench guys aren't worth exactly zero
 
 # ---------------- trade search ----------------
 cands = []
@@ -372,15 +391,17 @@ for t in IDS:
             gain = my_score(r) - MY_BASE
             if gain < 2:
                 continue
-            vin = sum(mval(n) for n in G) * (0.8 if len(G) > len(T_) else 1)   # 2-for-1: the side getting the best player wins ties
-            vout = sum(mval(n) for n in T_) * (0.8 if len(T_) > len(G) else 1)
-            ratio = vin / max(vout, 1)
+            # value check uses market value (what other managers see), with a 25% tax on the side sending 2 players
+            vin = sum(mval(n) for n in G) * (0.75 if len(G) > len(T_) else 1)
+            vout = sum(mval(n) for n in T_) * (0.75 if len(T_) > len(G) else 1)
+            ratio = vin / max(vout, 0.5)
+            best_g, best_t = max(mval(n) for n in G), max(mval(n) for n in T_)
             need = (team_score(r, t, REGW) - base_t) / max(1, len(REGW)) if REGW else 0
-            real = ratio >= 1.0 if status[t] == "out" else (need >= -1 and ratio >= 0.9)
-            lvl = 2 if ratio >= 1.05 else 1 if ratio >= 0.92 else 0 if ratio >= 0.82 else -1
-            if status[t] != "out":
-                lvl += (need >= 2) - (need <= -3)
-            if not real and lvl < 1:
+            # nobody gives you two good players for one unless your guy is clearly the best player in the deal
+            two_for_one_ok = len(T_) < 2 or best_g >= 1.15 * best_t
+            real = two_for_one_ok and (ratio >= 1.1 if status[t] == "out" else (ratio >= 1.0 and need >= -1))
+            stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.8 and need >= -6
+            if not real and not stretch:
                 continue
             cands.append({"t": t, "G": G, "T": T_, "gain": gain, "ratio": ratio, "need": need, "real": real, "r": r})
 cands.sort(key=lambda c: -c["gain"])
@@ -400,7 +421,8 @@ for c in top:
                    "get": " + ".join(c["T"]), "title_pct": r1(res["ch"]), "change_pts": r1(res["ch"] - mine["ch"]), "final_pct": r1(res["fi"]),
                    "value_ratio": round(c["ratio"], 2), "partner_weekly_gain": r1(c["need"]), "kind": "realistic" if c["real"] else "stretch",
                    "blocked": c["t"] in NO_TRADE, "wk16": r1(res["means"][PO2]), "wk17": r1(res["means"][PO3])})
-trades.sort(key=lambda x: -x["change_pts"])
+trades = [x for x in trades if x["change_pts"] >= 1.5]   # anything smaller is noise, not worth a trade
+trades.sort(key=lambda x: (-x["change_pts"]))
 print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0:.1f}s")
 
 # ---------------- waivers ----------------
@@ -416,7 +438,7 @@ for n in fa:
         drop = next((x for x in bench if P[x]["pos"] == pos and ros(x) < ros(n)), bench[0])
     r = clone(ROSTER); r[ME].remove(drop); r[ME].append(n)
     waivers.append({"player": n, "pos": pos, "nfl": P[n]["nfl"], "drop": drop, "ros_gain": r1(my_score(r) - MY_BASE),
-                    "this_week_gain": r1(lineup(r[ME], CUR) - lineup(ROSTER[ME], CUR)), "ros_ppg": r1(ros(n) / max(1, len(WKS) - 1)),
+                    "this_week_gain": r1(lineup(r[ME], CUR) - lineup(ROSTER[ME], CUR)), "ros_ppg": r1(ros_pg(n)),
                     "playoff_pts": r1(po_pts(n)), "opp16": opp(P[n], PO2) or "BYE", "opp17": opp(P[n], PO3) or "BYE", "own_pct": P[n]["own"], "_r": r})
 waivers.sort(key=lambda x: -(x["ros_gain"] + 2 * x["this_week_gain"]))
 waivers = waivers[:12]
@@ -445,7 +467,7 @@ for n, p in P.items():
     if p["pos"] not in SKILL:
         continue
     o = TNAME.get(p["t"], "Free agent")
-    ranks.append({"player": n, "pos": p["pos"], "nfl": p["nfl"], "owner": "You" if p["t"] == ME else o, "ros_ppg": r1(ros(n) / nw),
+    ranks.append({"player": n, "pos": p["pos"], "nfl": p["nfl"], "owner": "You" if p["t"] == ME else o, "ros_ppg": r1(ros_pg(n)),
                   "reg_pts": r1(reg_pts(n)), "playoff_pts": r1(po_pts(n)), "opp16": opp(p, PO2) or "BYE", "rank16": opp_rank(p, PO2),
                   "opp17": opp(p, PO3) or "BYE", "rank17": opp_rank(p, PO3), "recent": V[n]["recent"], "status": p["inj"],
                   "value": PROF.get(n, {}).get("value"), "my_value": PROF.get(n, {}).get("my_value"),
@@ -488,11 +510,12 @@ for n in ROSTER[ME]:
     if p["pos"] == "K":
         continue
     o = {"player": n, "pos": p["pos"], "status": p["inj"], "season_avg": p["avg"], "recent": V[n]["recent"], "value_used": V[n]["base"],
-         "playoff_expected": r1(po_pts(n)), "ros_ppg": r1(ros(n) / nw)}
+         "playoff_expected": r1(po_pts(n)), "ros_ppg": r1(ros_pg(n))}
     for w, k in ((PO1, "wk15"), (PO2, "wk16"), (PO3, "wk17")):
         o[k + "_opp"] = opp(p, w) or "BYE"; o[k + "_rank"] = opp_rank(p, w); o[k + "_proj"] = r1(V[n]["v"][w]); o[k + "_chance"] = V[n]["q"][w]
     my_players.append(o)
 my_players.sort(key=lambda x: -x["playoff_expected"])
+healthy = {w: r1(lineup(ROSTER[ME], w, on=lambda n: V[n]["v"][w] > 0 and P[n].get("inj") not in ("OUT", "INJURY_RESERVE") or n in AVAIL)) for w in (PO1, PO2, PO3)}
 tot, lu = lineup(ROSTER[ME], CUR, detail=True)
 starters = {x["player"] for x in lu}
 this_week = {"week": CUR, "total": r1(tot), "lineup": lu,
@@ -543,7 +566,7 @@ elif mine["po"] >= 90:
     take.append(f"You're in ({r1(mine['po'])}%) but the bye isn't safe yet ({r1(mine['bye'])}%). Regular season wins still matter a lot.")
 else:
     take.append(f"Playoffs aren't safe ({r1(mine['po'])}%). Win now beats playoff matchups right now.")
-take.append(f"You win it all in {r1(ch)}% of sims. Next best is {lead['team']} at {lead['champ_pct']}%." + (f" That's {'up' if ch > prev_run['champ_pct'] else 'down'} from {prev_run['champ_pct']}% last update." if prev_run and abs(ch - prev_run["champ_pct"]) >= 1 else ""))
+take.append(f"You win it all in {r1(ch)}% of sims. Your biggest threat is {lead['team']} at {lead['champ_pct']}%." + (f" That's {'up' if ch > prev_run['champ_pct'] else 'down'} from {prev_run['champ_pct']}% last update." if prev_run and abs(ch - prev_run["champ_pct"]) >= 1 else ""))
 okr = [x for x in trades if x["kind"] == "realistic" and not x["blocked"] and x["change_pts"] > 0]
 if okr:
     b = okr[0]
@@ -560,9 +583,10 @@ wtop = next((x for x in waivers if x["ros_gain"] >= 3), None)
 if wtop:
     take.append(f"Waivers: {wtop['player']} ({wtop['pos']}) for {wtop['drop']} adds about {wtop['ros_gain']} weighted lineup points.")
 
-summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "league": CFG["league_name"], "week": CUR, "reg_end": REG,
+summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "league": M.get("league_name") or LCFG.get("name") or LID, "league_id": LID, "week": CUR, "reg_end": REG,
            "playoff_weeks": [PO1, PO2, PO3], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
-           "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "take": take, "this_week": this_week, "swing": swing,
+           "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy,
+           "expected_lineup": {w: r1(mine["means"][w]) for w in (PO1, PO2, PO3)}, "take": take, "this_week": this_week, "swing": swing,
            "sims": A["sims"], "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
 tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
@@ -572,15 +596,60 @@ tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 i
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
 latest = {"summary": summary, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble,
           "my_players": my_players, "tester": tester}
+PO_STARTERS = {x["player"] for w in (PO2, PO3) for x in lineup(ROSTER[ME], w, detail=True)[1]}
+
+
+def verdict(n, p, pr):
+    """Plain-English call + the 3-6 reasons that matter most."""
+    R = []
+    tr, lk = pr.get("trend"), pr.get("fpoe")
+    if tr and tr >= 1.12: R.append(("📈", f"Usage is up {round((tr - 1) * 100)}% over his last 3 games ({pr.get('opp_g3')} touches+targets a game)."))
+    if tr and tr <= 0.88: R.append(("📉", f"Usage is down {round((1 - tr) * 100)}% over his last 3 games."))
+    if lk is not None and lk >= 2.5: R.append(("🍀", f"Running hot: scoring {lk} more a game than his usage says he should. Expect a little cool-down."))
+    if lk is not None and lk <= -2.5: R.append(("🔄", f"Unlucky so far: scoring {abs(lk)} less a game than his usage says. Due to bounce back."))
+    po = [(s_["opp"], s_["rank"]) for s_ in pr.get("schedule", []) if s_["w"] in (PO2, PO3)]
+    if pr.get("sos_po_label") == "Easy": R.append(("🟢", "Soft playoff matchups: " + " and ".join(o for o, _ in po) + "."))
+    if pr.get("sos_po_label") == "Tough": R.append(("🔴", "Tough playoff matchups: " + " and ".join(o for o, _ in po) + "."))
+    if pr.get("sos_ros_label") == "Easy" and pr.get("sos_po_label") != "Easy": R.append(("🟢", "Easy schedule the rest of the regular season."))
+    qs = [V[n]["q"][w] for w in (PO2, PO3) if opp(p, w)]
+    if qs and min(qs) < 0.95: R.append(("🚑", f"Only about {round(100 * sum(qs) / len(qs))}% likely to play in the playoffs."))
+    if any(not opp(p, w) for w in (PO2, PO3)): R.append(("💤", "Has a bye during the fantasy playoffs."))
+    dep = pr.get("depth") or {}
+    if dep.get("rank", 1) > 1 and p["pos"] != "QB" and p.get("inj") not in ("OUT", "INJURY_RESERVE"): R.append(("🪜", f"Listed {dep['pos']}{dep['rank']} on the depth chart."))
+    rz = (pr.get("rz_tgt") or 0) + (pr.get("rz_car") or 0)
+    if pr.get("games") and rz / pr["games"] >= 2.2: R.append(("🎯", f"Big red zone role: {rz} red zone chances in {pr['games']} games."))
+    if (pr.get("snap3") or 0) >= 85 and p["pos"] != "QB": R.append(("🔒", f"Every-down guy: on the field for {pr['snap3']}% of snaps lately."))
+    if pr.get("boom", 0) >= 40: R.append(("💥", f"Boom machine: 20+ points in {pr['boom']}% of his games."))
+    if pr.get("bust", 0) >= 40: R.append(("🎲", f"Risky: under 8 points in {pr['bust']}% of his games."))
+    if (p.get("own_chg") or 0) >= 5: R.append(("🔥", f"Getting picked up fast ({p['own_chg']:+}% rostered this week)."))
+    v, mv = pr.get("value") or 0, pr.get("my_value") or 0
+    mine_, fa_ = p["t"] == ME, p["t"] == 0
+    if mine_:
+        starts = n in PO_STARTERS
+        if starts and n in CORE: call, line = "KEEP", "Core piece of your playoff lineup. Not going anywhere."
+        elif starts: call, line = "KEEP", "Starts for you in the playoffs. Only move him for a clear upgrade at his spot."
+        elif v >= 25: call, line = "SELL", "Not in your best playoff lineup, but the league still values him. Use him as a trade chip."
+        elif ros_pg(n) < 6 and not AVAIL.get(n): call, line = "DROP", "Not helping you. His roster spot could be a waiver add."
+        else: call, line = "HOLD", "Bench depth. Fine to keep as injury insurance."
+    elif fa_:
+        call, line = ("ADD", "Worth a waiver claim for your roster.") if mv >= 15 or ros_pg(n) >= 9 else ("PASS", "Not worth a roster spot right now.")
+    else:
+        if mv >= 45 and v <= mv + 5: call, line = "BUY", "Would help your playoff lineup and the price shouldn't be crazy."
+        elif mv >= 45: call, line = "PRICEY", "Would help you, but his team will value him high."
+        else: call, line = "PASS", "Wouldn't move the needle much for your title odds."
+    return call, line, [{"icon": a, "text": b} for a, b in R[:6]]
+
+
 cards = {}
 for n, p in P.items():
     if p["pos"] not in SKILL or not (p["t"] or ros(n) > 20):
         continue
     pr = dict(PROF.get(n, {}))
     pr.update(name=n, pos=p["pos"], owner=TNAME.get(p["t"], "Free agent"), mine=p["t"] == ME, avg=p["avg"], recent=V[n]["recent"], value_used=V[n]["base"],
-              ros_ppg=round(ros(n) / nw, 1), playoff_pts=round(po_pts(n), 1), reg_pts=round(reg_pts(n), 1),
+              ros_ppg=round(ros_pg(n), 1), playoff_pts=round(po_pts(n), 1), reg_pts=round(reg_pts(n), 1),
               weekly=[{"w": w, "ev": round(ev(n, w), 1), "if_active": round(V[n]["v"][w], 1), "chance": V[n]["q"][w]} for w in WKS],
               espn_pts={k: v for k, v in sorted(p["wk"].items(), key=lambda kv: int(kv[0]))})
+    pr["verdict"], pr["verdict_line"], pr["reasons"] = verdict(n, p, pr)
     cards[n] = pr
 (OUT / "players.json").write_text(json.dumps(cards, separators=(",", ":")))
 (OUT / "latest.json").write_text(json.dumps(latest, separators=(",", ":")))
