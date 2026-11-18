@@ -131,12 +131,13 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         rank[pos] = {abbr[int(tid)]: v["rank"] for tid, v in (prs.get(pos, {}).get("ratingsByOpponent") or {}).items() if int(tid) in abbr}
 
     # free agents worth looking at: top owned at each position
-    fa = []
+    fa, ON_WAIVERS = [], set()
     for slot, lim in ((0, 25), (2, 40), (4, 40), (6, 25), (16, 12), (17, 10)):
         flt = {"players": {"filterStatus": {"value": ["FREEAGENT", "WAIVERS"]}, "filterSlotIds": {"value": [slot]},
                            "limit": lim, "sortPercOwned": {"sortPriority": 1, "sortAsc": False}}}
         r = get(BASE, {"view": "kona_player_info", "scoringPeriodId": cur}, flt)
         fa += [x["player"]["id"] for x in r.get("players", [])]
+        ON_WAIVERS.update(x["player"]["id"] for x in r.get("players", []) if x.get("status") == "WAIVERS")
     ids = list(dict.fromkeys(list(roster_of) + fa))
 
     players = []
@@ -177,7 +178,7 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
                 avg = round(sum(played) / len(played), 1) if played else 0
             players.append({"id": p["id"], "n": p["fullName"], "pos": pos, "nfl": abbr.get(p.get("proTeamId"), "FA"),
                             "t": roster_of.get(p["id"], 0), "slot": slot_names.get(slot_of.get(p["id"]), slot_of.get(p["id"])), "inj": p.get("injuryStatus") or ("ACTIVE" if not p.get("injured") else "OUT"),
-                            "avg": avg, "proj": proj, "own": round(own.get("percentOwned", 0)), "own_chg": round(own.get("percentChange", 0) or 0, 1),
+                            "avg": avg, "proj": proj, "own": round(own.get("percentOwned", 0)), "wv": 1 if p["id"] in ON_WAIVERS else 0, "own_chg": round(own.get("percentChange", 0) or 0, 1),
                             "start_pct": round(own.get("percentStarted", 0) or 0), "espn_ros": round(season_proj, 1) if season_proj else None,  # ESPN keeps this as a rest-of-season projection
                             "outlook": (outlook or "")[:600], "wk": wk})
         time.sleep(0.3)

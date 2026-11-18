@@ -54,6 +54,21 @@ for L in leagues:
     T = D["tester"]; wi = T["weeks"].index(cur) if cur in T["weeks"] else 0
     tp = {p["n"]: p for p in T["players"]}
     name = (L.get("name") or "").strip()
+    # ---- trade deadline: 48 hours out, send the best realistic offer ----
+    _dl = (D.get("summary") or {}).get("trade_deadline") or (M.get("settings") or {}).get("trade_deadline")
+    if _dl:
+        _hl = (_dl / 1000 - NOW.timestamp()) / 3600
+        if 0 < _hl <= 48:
+            _tr = [t for t in D.get("trades") or [] if t.get("kind") == "realistic" and not t.get("blocked")]
+            _st = [t for t in D.get("trades") or [] if t.get("kind") == "stretch" and not t.get("blocked") and (t.get("accept_pct") or 0) >= 25]
+            _b = _tr[0] if _tr else (_st[0] if _st else None)
+            _lbl = "Best offer" if _tr else "No sure thing. Best long shot"
+            fire(f"deadline|{lid}|{_dl}", f"⏳ {name}: trade deadline in {round(_hl)} hours",
+                 (f"{_lbl}: {_b['give']} for {_b['get']} ({_b['partner']}), {_b['accept_pct']}% chance they say yes, title odds {_b['change_pts']:+.1f}%." if _b else "No realistic trade is worth forcing. You're fine standing pat."),
+                 {"what": f"Trades lock in {round(_hl)} hours for the rest of the season.",
+                  "means": (("Top realistic deal" if _tr else "Nothing clears the realistic bar. Closest long shot") + f": give {_b['give']}, get {_b['get']} from {_b['partner']}. About {_b['accept_pct']}% they accept, and your title odds go {_b['change_pts']:+.1f}%." if _b else "Nothing on the board helps enough to be worth it."),
+                  "todo": (_b.get("pitch") or "Send the offer in ESPN.") if _b else "Nothing to do."},
+                 None, [name], [{"label": "SEE TRADES", "tab": "trades", "league": lid}], 4)
     roster = [p for p in M["players"] if p["t"] == me]
     for p in roster:
         mine.setdefault(p["n"], {"p": p, "leagues": [], "card": C.get(p["n"]), "slots": []})

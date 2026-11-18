@@ -118,6 +118,8 @@ function renderChanges() {
 }
 function renderHome() {
   renderChanges();
+  const _locked = D.summary.trade_deadline && D.summary.trade_deadline < Date.now();
+  document.querySelectorAll('[data-tab=trades],[data-tab=lab]').forEach(b => b.hidden = !!_locked);
   renderTodo(); renderToss();
   const s = D.summary, k = s.kpis, prev = H.runs.length > 1 ? H.runs[H.runs.length - 2] : null;
   gauge($('#gauge'), k.ch); countUp($('#gnum'), k.ch);
@@ -351,7 +353,7 @@ function renderWaivers() {
   const os_ = $('#streambox'); if (os_) os_.replaceWith(sp); else $('#wtable').before(sp);
   table($('#wtable'), [
     { k: 'verdict', h: 'Call', l: 1, f: r => h('span', { class: 'tag ' + (r.verdict === 'CLAIM' ? 'real' : 'no'), title: r.why }, r.verdict === 'CLAIM' ? '✅ CLAIM' : 'SKIP') },
-    { k: 'player', h: 'Add', l: 1, f: r => h('span', {}, pl(r.player), h('div', { class: 'mut', style: 'font-size:12px;max-width:260px;white-space:normal' }, r.why)) }, { k: 'drop', h: 'Drop', l: 1 },
+    { k: 'player', h: 'Add', l: 1, f: r => h('span', {}, pl(r.player), h('div', { class: 'mut', style: 'font-size:12px;max-width:260px;white-space:normal' }, r.why), r.priority ? h('div', { style: 'font-size:12px;max-width:260px;white-space:normal;color:var(--blue);margin-top:3px' }, '🎟️ ' + r.priority) : '') }, { k: 'drop', h: 'Drop', l: 1 },
     { k: 'this_week_gain', h: 'This week', f: r => sgn(r.this_week_gain), c: r => cls(r.this_week_gain) }, { k: 'ros_gain', h: 'Rest of season', t: 'Lineup points gained, playoff weeks count double', f: r => sgn(r.ros_gain), c: r => cls(r.ros_gain) },
     { k: 'change_pts', h: 'Title odds', f: r => r.change_pts == null ? '—' : sgn(r.change_pts) + '%' }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'ros_ppg', h: 'Pts/wk rest of yr', f: r => f1(r.ros_ppg) },
     { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) }, { k: 'opp16', h: 'Semis', l: 1 }, { k: 'opp17', h: 'Final', l: 1 }, { k: 'own_pct', h: 'Rostered', f: r => r.own_pct + '%' }
@@ -468,7 +470,7 @@ function alertsBox() {
 function renderHow() {
   if (!$('#alertsbox')) $('#how').prepend(alertsBox());
   if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
-    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · lineup habits 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · deadline + priority 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]

@@ -537,6 +537,26 @@ BT = backtest()
 BW = (0.3, 0.25, 0.25) if not BT else tuple(0.8 * BT[k] for k in ("w_avg", "w_recent", "w_xfp"))   # ESPN's rest-of-season number keeps the other 0.2
 print("backtest:", BT)
 
+# who actually played each past week (from saved box scores), so a real 0-point game counts when grading
+PLAYED = set()
+try:
+    _lp0 = ROOT / "data" / LID / "lineups.json"
+    if _lp0.exists():
+        for wk_, wkd in json.loads(_lp0.read_text()).items():
+            if wk_ != "_slots":
+                for rows in wkd.values():
+                    PLAYED.update((int(wk_), r[0]) for r in rows if r[3])
+except Exception:
+    pass
+def actual(n, W):
+    """Points he really scored that week, 0 if he played and scored nothing, None if he didn't play (or we can't tell)."""
+    p_ = P.get(n)
+    if not p_:
+        return None
+    a_ = (p_.get("wk") or {}).get(str(W))
+    if a_:
+        return a_
+    return 0.0 if (W, p_.get("id")) in PLAYED else None
 # ---------------- how much to trust us vs ESPN this week, learned from past graded weeks ----------------
 STACK, STACK_N = {}, {}
 _ap = ROOT / "data" / LID / "proj_archive.json"
@@ -548,8 +568,8 @@ if _ap.exists():
             continue
         for n, vals in sn["players"].items():
             m_, e_ = vals[0], vals[1]
-            act = (P.get(n) or {}).get("wk", {}).get(str(W))
-            if act and e_ is not None and n in P:
+            act = actual(n, W)
+            if act is not None and e_ is not None and n in P:
                 _rows.setdefault(P[n]["pos"], []).append((m_, e_, act))
     for pos, R_ in _rows.items():
         A_ = np.array(R_)
@@ -566,8 +586,8 @@ if _ap.exists():
             continue
         for n, vals in sn["players"].items():
             m_, e_ = vals[0], vals[1]; s_ = vals[2] if len(vals) > 2 else None
-            act = (P.get(n) or {}).get("wk", {}).get(str(W))
-            if not act or n not in P or e_ is None:
+            act = actual(n, W)
+            if act is None or n not in P or e_ is None:
                 continue
             wm = STACK.get(P[n]["pos"], 0.5); bl = wm * m_ + (1 - wm) * e_
             o_ = vals[3] if len(vals) > 3 else None
@@ -1412,6 +1432,8 @@ for c in top:
                    "mv_send": r1(sum(MKT.get(n, 0) for n in c["G"])), "mv_get": r1(sum(MKT.get(n, 0) for n in c["T"])), **trade_story(c)})
 trades = [x for x in trades if x["change_pts"] >= 1.0]   # anything smaller is noise, not worth a trade
 trades.sort(key=lambda x: (x["kind"] != "realistic", -(x["accept_pct"] * 0.6 + min(x["change_pts"], 10) * 4)))   # most likely to get accepted first, still rewarding bigger gains
+if SET.get("trade_deadline") and SET["trade_deadline"] / 1000 < time.time():
+    trades = []   # deadline passed: trades are locked, so stop suggesting them
 print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0:.1f}s")
 
 # ---------------- waivers ----------------
@@ -1810,6 +1832,27 @@ for x in waivers:
         x["verdict"], x["why"] = "CLAIM", f"Breakout radar gives him {b['score']}% to become a weekly starter. Cheap lottery ticket for {x['drop']}."
     else:
         x["verdict"], x["why"] = "SKIP", f"Small upgrade: {x['this_week_gain']:+.1f} this week, about {x['ros_gain'] / WEQ:+.1f} a week after that."
+# ---------------- is he worth your waiver priority? (rolling waivers: a claim sends you to the back of the line) ----------------
+MY_WV = TEAMS[ME].get("waiver"); NT_ = len(TEAMS)
+for x in waivers:
+    if x["verdict"] != "CLAIM":
+        continue
+    p_ = P[x["player"]]
+    if "wv" in p_ and not p_["wv"]:
+        x["priority"] = "Free agent right now: add him anytime, it doesn't cost your waiver spot."
+        continue
+    if MY_WV is None or SET.get("waiver_type") == "FAAB":
+        continue
+    hot = (p_.get("own_chg") or 0) >= 2 or (p_.get("own") or 0) >= 20   # other managers are going after him
+    big = x["ros_gain"] / WEQ >= 2.5 or (x.get("change_pts") or 0) >= 2 or x["this_week_gain"] >= 5
+    if MY_WV >= NT_ * 2 / 3:
+        x["priority"] = f"Worth it. You're #{MY_WV} of {NT_} in waiver order already, so a claim barely costs you anything."
+    elif not hot:
+        x["priority"] = f"Save your #{MY_WV} waiver spot. Barely anyone is adding him ({p_.get('own') or 0}% rostered), so grab him as a free agent once waivers clear."
+    elif big:
+        x["priority"] = f"Worth burning your #{MY_WV} waiver spot. He's a real upgrade and other teams are adding him."
+    else:
+        x["priority"] = f"Close call. You're #{MY_WV} in waiver order, and that top spot could land a starter if someone gets hurt before the playoffs. Only claim him if you need him this week."
 waivers.sort(key=lambda x: (x["verdict"] != "CLAIM", -(x["ros_gain"] + 2 * x["this_week_gain"])))
 CLAIMED = {x["player"] for x in waivers if x["verdict"] == "CLAIM"}
 seen_drop = {}
@@ -1929,8 +1972,8 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
     pe_s, ns_, pe_o, no_ = 0.0, 0, 0.0, 0
     for n, vals in sn["players"].items():
         m_, e_ = vals[0], vals[1]; s_ = vals[2] if len(vals) > 2 else None; o_ = vals[3] if len(vals) > 3 else None
-        act = (P.get(n) or {}).get("wk", {}).get(str(W))
-        if not act:
+        act = actual(n, W)
+        if act is None:
             continue
         if s_ is not None:
             pe_s += abs(s_ - act); ns_ += 1
@@ -1955,8 +1998,8 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
     byp = {}
     for n, vals in sn["players"].items():
         m_ = vals[0]
-        act = (P.get(n) or {}).get("wk", {}).get(str(W))
-        if act and n in P: byp.setdefault(P[n]["pos"], []).append((m_, act))
+        act = actual(n, W)
+        if act is not None and n in P: byp.setdefault(P[n]["pos"], []).append((m_, act))
     for L_ in byp.values():
         for i in range(len(L_)):
             for j in range(i + 1, len(L_)):
