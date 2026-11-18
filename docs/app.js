@@ -449,7 +449,7 @@ function alertsBox() {
 function renderHow() {
   if (!$('#alertsbox')) $('#how').prepend(alertsBox());
   if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
-    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · alert fix 4'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · alert fix 5'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]
@@ -691,7 +691,10 @@ function openWhy(title, lines, sub) {
 }
 function legRow(l) { const w = whyOf(l.label); return h('div', { class: 'leg' + (w ? ' tap' : ''), onclick: w ? (e => { e.stopPropagation(); openWhy(l.label, w, `${Math.round(l.p)}% in the sims`); }) : null }, h('span', { class: 'lp ' + (l.p >= 80 ? 'hi' : '') }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), l.lean >= 2 ? h('span', { class: 'tag real', title: 'Our sims lean this way vs the market' }, '✓ LEAN') : ''); }
 async function renderProps() {
-  if (!PLD) PLD = await fetch('data/props_lab.json?v=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
+  if (!PLD || Date.now() - (PLD._got || 0) > 5 * 60 * 1000) {   // re-check every 5 minutes so new prices and reasons show up without restarting the app
+    const f_ = await fetch('data/props_lab.json?v=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
+    if (f_) { f_._got = Date.now(); PLD = f_; }
+  }
   const body = $('#pbody');
   if (!PLD) { body.replaceChildren(h('div', { class: 'box mut' }, 'Prop Lab data isn\'t built yet. It runs with the next update.')); return; }
   const ago = PLD.lines_at ? Math.round((Date.now() - new Date(PLD.lines_at)) / 36e5) : null;
@@ -942,3 +945,5 @@ async function renderAlertList() {
 
 document.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('modal')) e.target.remove(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = $$('.modal'); if (m.length) m[m.length - 1].remove(); } });
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#props').hidden && PLD && Date.now() - (PLD._got || 0) > 5 * 60 * 1000) renderProps(); });
