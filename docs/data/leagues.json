@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T12:33:06Z",
-   "champ_pct": 28.9,
+   "at": "2026-11-18T17:19:45Z",
+   "champ_pct": 31.3,
    "todo": [
     {
      "urgent": false,
@@ -16,24 +16,10 @@
      "tab": "home"
     },
     {
-     "urgent": true,
-     "icon": "\ud83d\udea8",
-     "title": "Seahawks D/ST is on bye",
-     "detail": "Stream Chargers D/ST this week: add him, drop Seahawks D/ST (+6.5 pts). Grab your guy back after if he's still there.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Elic Ayomanor, drop Tre' Harris",
-     "detail": "Fills a hole this week (+3.1 pts). You can drop him again after.",
-     "tab": "waivers"
-    },
-    {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Rhamondre Stevenson + KC Concepcion for Davante Adams (JELQING MY KING JD5)",
-     "detail": "Title odds +4.8%. Would you do Rhamondre Stevenson and KC Concepcion for Davante Adams? I think you get depth for injuries and byes down the stretch, and Adams is just sitting on your bench.",
+     "title": "Offer Jordan Addison + Seth McGowan for Adonai Mitchell (KoopKuppKlan)",
+     "detail": "Title odds +2.1%. Would you do Jordan Addison and Seth McGowan for Adonai Mitchell? I think you get depth for injuries and byes down the stretch, and you're deep at WR so you can cover Mitchell's spot.",
      "tab": "trades"
     }
    ]
@@ -43,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T12:33:30Z",
+   "at": "2026-11-18T17:20:04Z",
    "champ_pct": 14.3,
    "todo": [
     {
@@ -57,7 +43,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.3%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -67,9 +53,16 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T12:33:40Z",
+   "at": "2026-11-18T17:20:12Z",
    "champ_pct": 3.4,
    "todo": [
+    {
+     "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Carnell Tate might not play (70%)",
+     "detail": "If he's ruled out, start David Montgomery (9.5).",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
@@ -88,15 +81,8 @@
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Carnell Tate or David Montgomery",
-     "detail": "Carnell Tate 9.7 vs David Montgomery 9.5. Carnell Tate is 85% to play, so if he's ruled out, David Montgomery is your guy.",
+     "detail": "Carnell Tate 8.0 vs David Montgomery 9.5. Carnell Tate is 70% to play, so if he's ruled out, David Montgomery is your guy.",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Kyren Williams + Bijan Robinson for D'Andre Swift + George Pickens (Ryan's Rad Team)",
-     "detail": "Title odds +2.2%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
-     "tab": "trades"
     }
    ]
   },
@@ -105,7 +91,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T12:33:18Z",
+   "at": "2026-11-18T17:19:55Z",
    "champ_pct": 30.1,
    "todo": [
     {
@@ -119,14 +105,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.1%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Rhamondre Stevenson + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
-     "detail": "Title odds +5.3%. Would you do Rhamondre Stevenson and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
+     "detail": "Title odds +5.6%. Would you do Rhamondre Stevenson and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
      "tab": "trades"
     }
    ]
