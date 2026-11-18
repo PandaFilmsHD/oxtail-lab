@@ -55,6 +55,22 @@ def dec(am):
     return 1 + (am / 100 if am > 0 else 100 / -am)
 
 
+def imp_p(am):
+    return (100 / (am + 100) if am > 0 else -am / (-am + 100)) if am else None
+
+
+def conflict(combo):
+    """True if the parlay has two legs on one game's side (both spreads, or a moneyline and the other team's alt spread) or two on its total."""
+    seen = set()
+    for c in combo:
+        if c.get("type") == "game":
+            g_ = (c["game"], "total" if c.get("kindg") == "total" else "side")
+            if g_ in seen:
+                return True
+            seen.add(g_)
+    return False
+
+
 def amer(p):
     p = min(max(p, 0.01), 0.99)
     return round(-100 * p / (1 - p)) if p >= 0.5 else round(100 * (1 - p) / p)
@@ -122,7 +138,7 @@ def spread_shift(week, spr):
     return 0.0, []
 
 
-def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0.6):
+def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0.6, cover=0.5, over=0.5):
     """Joint (home margin, total) sims.
     resid: current DIST['_game_resid'] rows [margin - spread, total - total_line, spread] (2016-25).
     pool : new DIST['_game_pool'] rows [margin - spread, total - total_line, spread, total_line, season] (2006-25).
@@ -138,6 +154,7 @@ def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0
     near = near - np.array([np.median(near[:, 0]), np.median(near[:, 1]), 0])
     i = rng.integers(0, len(near), na)
     mar_a = spr + near[i, 0] + rng.normal(0, noise, na)
+    mar_a = mar_a + (spr - np.quantile(mar_a, 1 - cover))   # P(mar_a > spr) = cover
     tr_a = near[i, 1]
     # B) direct margins, favorite's view (home and away favorites pooled)
     psp = pool[:, 2]
@@ -152,12 +169,17 @@ def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0
     fm = pfm[j] + np.round(fs - pfs[sel].mean())
     mar_b = sgn * fm
     tr_b = pool[j, 1] - np.median(pool[sel, 1])
+    up, dn = mar_b > spr, mar_b < spr
+    if up.any() and dn.any():   # reweight to the market's cover chance, keeping each side's shape, the pushes and the key numbers
+        pu, pd_ = up.mean(), dn.mean()
+        w_ = np.where(up, cover * (pu + pd_) / pu, np.where(dn, (1 - cover) * (pu + pd_) / pd_, 1.0))
+        k_ = rng.choice(nb, nb, p=w_ / w_.sum()); mar_b, tr_b = mar_b[k_], tr_b[k_]
     if m_shift:   # integer-preserving shift: move |m_shift| of draws by one full point
         mar_b = mar_b + np.sign(m_shift) * (rng.random(nb) < min(1.0, abs(m_shift)))
         mar_a = mar_a + m_shift
     mar = np.r_[mar_a, mar_b]
     totl = tot + t_shift + np.r_[tr_a, tr_b] + rng.normal(0, noise, n)
-    totl = totl - (np.median(totl) - (tot + t_shift))   # centered after the jitter: no angle = exactly 50/50 on the total
+    totl = totl - (np.quantile(totl, 1 - over) - (tot + t_shift))   # centered after the jitter: no angle = exactly the market's no-vig over chance
     p = rng.permutation(n)
     return mar[p], totl[p]
 
@@ -217,18 +239,20 @@ def main():
     if not lines or not DIST:
         print("props_lab: no lines or fits yet"); return
     resid = np.array(DIST["_game_resid"], dtype=float)
-    pool = np.array(DIST.get("_game_pool") or [r + [0, 0] for r in DIST["_game_resid"]], dtype=float)
+    pool = pool_g = np.array(DIST.get("_game_pool") or [r + [0, 0] for r in DIST["_game_resid"]], dtype=float)
     TEASERS = []
     ANG = DIST["_angles"]
 
     # best prices for game markets (Odds API), keyed by home team
-    gbest = {}
+    gbest, gdk = {}, {}
     for g in (GO.get("games") or {}).values():
         h, a = FULL.get(g["home"]), FULL.get(g["away"])
-        if not h:
-            continue
+        if not h or (kick.get(h) and g.get("at") and abs((datetime.datetime.fromisoformat(g["at"].replace("Z", "+00:00")) - datetime.datetime.fromisoformat(kick[h].replace("Z", "+00:00"))).total_seconds()) > 43200):
+            continue   # game_odds holds this week AND next: keep only this week's game for each home team
         b = gbest.setdefault(h, {})
         for mk, books in g["books"].items():
+            if mk not in ("h2h", "spreads", "totals"):
+                continue
             for bk in books:
                 for o in bk["outcomes"]:
                     side = {"h2h": "ml", "spreads": "spr", "totals": "tot"}[mk]
@@ -236,6 +260,8 @@ def main():
                     k_ = (side, tag, o.get("point"))
                     if k_ not in b or o["price"] > b[k_]["price"]:
                         b[k_] = {"price": o["price"], "book": bk["book"]}
+                    if bk["book"] == "draftkings":
+                        gdk.setdefault(h, {})[(side, tag)] = (o.get("point"), o["price"], g.get("at"))
 
     # players: name -> usage entry
     PL = {key(v["name"]): v for v in (U.get("players") or {}).values()}
@@ -300,14 +326,14 @@ def main():
                 hi = mid
         return (lo + hi) / 2
 
-    games, sims, done, LEGS = [], {}, set(), []
+    games, sims, done, LEGS, SAFE = [], {}, set(), [], []
     HOMES = {FULL.get(e["home"]) for e in RAW.get("events", [])} | {FULL.get(g["home"]) for g in (GO.get("games") or {}).values()}
     for tm_, L_ in lines.items():   # older stats files don't say who's home: fill it in from the odds feed
         if "home" not in L_:
             L_["home"] = tm_ in HOMES if HOMES else L_["spread"] >= lines.get(L_["opp"], {}).get("spread", 0)
     # injury status for every player ESPN gives us (all four leagues' player pools)
     INJ = {}
-    for mp in sorted(D.glob("*/model.json")):
+    for mp in sorted(D.glob("*/model.json"), key=lambda p_: (load(p_, {}) or {}).get("at") or ""):   # newest file last, so it wins
         for q in (load(mp, {}) or {}).get("players", []):
             INJ[key(q["n"])] = q.get("inj") or "ACTIVE"
     OUTS = ("OUT", "INJURY_RESERVE", "DOUBTFUL", "SUSPENSION")
@@ -344,7 +370,9 @@ def main():
         roof = "dome" if h in ROOF else (L.get("roof") or "outdoors")
         shift, angles = total_shift(wx, roof, L.get("wd"), L.get("gt"))   # wind tiers, rain, SNF/MNF (backtested vs closing lines)
         m_shift, s_angles = spread_shift(cur, spr)                            # weeks 1-4 dogs
-        mar, totl = sample_game(spr, tot, resid, pool, rng, N, t_shift=shift, m_shift=m_shift)   # half the sims use real margins: keeps 3 and 7 right
+        nv2 = lambda x_, y_: imp_p(x_ or -110) / (imp_p(x_ or -110) + imp_p(y_ or -110))
+        mar, totl = sample_game(spr, tot, resid, pool, rng, N, t_shift=shift, m_shift=m_shift,
+                                cover=nv2(L.get("spread_odds"), lines.get(a, {}).get("spread_odds")), over=nv2(L.get("over_odds"), L.get("under_odds")))   # half the sims use real margins: keeps 3 and 7 right
         hp = np.maximum(0, (totl + mar) / 2); ap = np.maximum(0, (totl - mar) / 2)
         sims[h] = (hp, ap, mar); sims[a] = (ap, hp, -mar)
         b = gbest.get(h, {})
@@ -372,20 +400,36 @@ def main():
             edge = p - pm
             if edge >= MIN_EDGE and ((side == "tot" and angles) or (side == "spr" and s_angles)):   # only the angles that held up in the backtest create game plays
                 plays.append({"pick": label, "p": round(100 * p, 1), "p_mkt": round(100 * pm, 1), "edge": round(100 * edge, 1), "max_c": int(100 * p - 2), "kind": side})
-        auto = []   # every-bet tracker: on each market, the side the sims like more than the market, if it's -150 or better
-        for i in (0, 2, 4):
-            sides = []
-            for j in (i, i + 1):
-                side, tag, pt, label, p_, pr_ = opts[j]
-                o_ = opts[j + 1 if j % 2 == 0 else j - 1][5]
-                if pr_ is None or o_ is None:
-                    continue
-                pm_ = imp(pr_) / (imp(pr_) + imp(o_))
-                sides.append((p_ - pm_, label, pr_, p_, pm_, side))
-            if sides:
-                e_, label, pr_, p_, pm_, side = max(sides)
-                if pr_ >= -150 and e_ > 0:
-                    auto.append({"pick": label, "price": int(pr_), "p": round(100 * p_, 1), "p_mkt": round(100 * pm_, 1), "edge": round(100 * e_, 1), "kind": side})
+        auto = []   # every-bet tracker: on each market, the side the sims like more than DraftKings' no-vig number, at DK's own number and price
+        dkb = gdk.get(h, {})
+        if all(dkb.get(z) for z in (("spr", "home"), ("spr", "away"), ("tot", "over"), ("tot", "under"), ("ml", "home"), ("ml", "away"))):
+            # DraftKings' own numbers: re-run the sims from DK's spread and total (same angles), so "edge" = angles + DK's price, not a stale-line gap
+            nvd = lambda t1, t2: imp_p(dkb[t1][1]) / (imp_p(dkb[t1][1]) + imp_p(dkb[t2][1]))
+            mar_u, totl_u = sample_game(-dkb[("spr", "home")][0], dkb[("tot", "over")][0], resid, pool, rng, N, t_shift=shift, m_shift=m_shift,
+                                        cover=nvd(("spr", "home"), ("spr", "away")), over=nvd(("tot", "over"), ("tot", "under")))
+            src = "dk"
+        else:
+            mar_u, totl_u, src = mar, totl, "consensus"
+        phw_u = float(np.mean(mar_u > 0) + 0.5 * np.mean(mar_u == 0))
+        def p_at(side, tag, pt):   # our chance at any number, from the same sims, pushes taken out
+            if side == "ml":
+                return phw_u if tag == "home" else 1 - phw_u
+            v = ((mar_u if tag == "home" else -mar_u) + pt) if side == "spr" else ((totl_u - pt) if tag == "over" else (pt - totl_u))
+            return float(np.mean(v > 0)) / max(1e-9, float(np.mean(v != 0)))
+        for i, (side, tags) in zip((0, 2, 4), (("spr", ("home", "away")), ("tot", ("over", "under")), ("ml", ("home", "away")))):
+            q_ = [dkb.get((side, t)) for t in tags] if src == "dk" else [(opts[i][2], opts[i][5], None), (opts[i + 1][2], opts[i + 1][5], None)]
+            if any(z[1] in (None, 0) for z in q_) or (side != "ml" and any(z[0] is None for z in q_)):
+                continue
+            ims = [imp_p(z[1]) for z in q_]
+            sides = [(p_at(side, t, z[0]) - im / sum(ims), t, z[0], int(z[1]), p_at(side, t, z[0]), im / sum(ims)) for t, z, im in zip(tags, q_, ims)]
+            e_, t, pt, pr_, p_, pm_ = max(sides)
+            team = h if t == "home" else a
+            ev_ = p_ * dec(pr_) - 1
+            if pr_ >= -150 and e_ > 0.006:   # no angle = edge 0 at the market's own price (+-0.2 pts of sim noise): nothing to test there
+                auto.append({"pick": f"{team} {pt:+g}" if side == "spr" else f"{t.title()} {pt:g}" if side == "tot" else f"{team} moneyline", "tag": t, "pt": pt,
+                             "price": pr_, "src": src, "p": round(100 * p_, 1), "p_mkt": round(100 * pm_, 1), "edge": round(100 * e_, 1), "ev": round(100 * ev_, 1),
+                             "tier": "bet" if ev_ >= 0 else "lean", "kind": side,
+                             "bucket": "angle" if (side == "tot" and angles) or (side == "spr" and s_angles) else "ml" if side == "ml" else "no_angle"})
         if not started:
             gk = tuple(sorted((h, a)))
             for t in teaser_legs(h, a, spr, mar, k_):
@@ -397,8 +441,10 @@ def main():
                              *[(f"{a} @ {h} Over {x:g}", totl > x) for x in [half(tot - k) for k in (5, 7, 9, 11)]],
                              *[(f"{a} @ {h} Under {x:g}", totl < x) for x in [half(tot + k) for k in (5, 7, 9, 11)]]):
                 pa = float(ind.mean())
+                if 0.84 <= pa <= 0.92 and "moneyline" not in lab:
+                    SAFE.append({"lean": 0.0, "label": lab, "game": gk, "who": lab.split()[0], "p": pa, "ind": ind, "type": "game", "kick": k_})
                 if 0.70 <= pa <= (0.93 if "moneyline" in lab else 0.90):
-                    LEGS.append({"kindg": "total" if (" Over " in lab or " Under " in lab) else "ml" if "moneyline" in lab else "spread", "lean": (0.004 if (" Under " in lab and angles) else 0.0), "label": lab, "game": gk, "who": lab.split()[0], "p": pa, "ind": ind, "type": "game", "kick": k_})
+                    LEGS.append({"kindg": "total" if (" Over " in lab or " Under " in lab) else "ml" if "moneyline" in lab else "spread", "lean": (0.004 if (" Under " in lab and angles) else 0.0), "label": lab, "game": gk, "who": (f"{a}@{h} total" if (" Over " in lab or " Under " in lab) else lab.split()[0]), "p": pa, "ind": ind, "type": "game", "kick": k_})
         games.append({"home": h, "away": a, "kick": k_, "started": started, "spread": spr, "total": tot, "roof": roof, "weather": wx, "angles": angles + s_angles,
                       "sim": {"home_win": round(100 * p_home_win, 1), "home_cover": round(100 * p_home_cover, 1), "over": round(100 * p_over, 1),
                               "home_pts": round(float(np.mean(hp)), 1), "away_pts": round(float(np.mean(ap)), 1), "fair_total": round(float(np.median(totl)), 1),
@@ -575,15 +621,25 @@ def main():
                     X = (V2A.sample_count(st, p["pos"], np.maximum(0, fin * f), rng) if V2A else rng.poisson(np.maximum(0, fin * f))) if st in ("pass_tds", "td", "rec") else fin * base
                 if not big_gap and st != "td":
                     # alt lines he hits about 75-82% of the time, for parlays
-                    for side_, q in (("Over", 0.22), ("Over", 0.17), ("Under", 0.78), ("Under", 0.83)):
+                    for side_, q in (("Over", 0.28), ("Over", 0.22), ("Over", 0.17), ("Under", 0.72), ("Under", 0.78), ("Under", 0.83)):
                         v = float(np.quantile(X, q))
                         alt = (math.floor(v) - 0.5) if side_ == "Over" else (math.ceil(v) + 0.5)
                         if side_ == "Over" and alt < 0.5:
                             continue
                         ind = (X > alt) if side_ == "Over" else (X < alt)
                         pa = float(ind.mean())
-                        if 0.72 <= pa <= 0.86:
+                        if 0.66 <= pa <= 0.86:
                             legs.append({"lean": (po - p_mkt) * (1 if side_ == "Over" else -1), "label": f"{nm} {side_} {alt:g} {label.lower()}", "game": tuple(sorted((tm, lines[tm]["opp"]))), "who": nm, "p": pa, "ind": ind, "type": "prop", "kick": k_})
+                    # the low alt lines (hit 86-94%) for the +200-300 ladders
+                    for side_, q in (("Over", 0.15), ("Over", 0.12), ("Over", 0.09), ("Under", 0.85), ("Under", 0.88), ("Under", 0.91)):
+                        v = float(np.quantile(X, q))
+                        alt = (math.floor(v) - 0.5) if side_ == "Over" else (math.ceil(v) + 0.5)
+                        if side_ == "Over" and alt < 0.5:
+                            continue
+                        ind = (X > alt) if side_ == "Over" else (X < alt)
+                        pa = float(ind.mean())
+                        if 0.84 <= pa <= 0.92 and RAT is None:
+                            SAFE.append({"lean": (po - p_mkt) * (1 if side_ == "Over" else -1), "label": f"{nm} {side_} {alt:g} {label.lower()}", "game": tuple(sorted((tm, lines[tm]["opp"]))), "who": nm, "p": pa, "ind": ind, "type": "prop", "kick": k_})
                 if not big_gap and st != "td" and po > p_mkt:
                     # longshots: the big alt over (hits 15-30%) on guys the sims like more than the market
                     for q in (0.75, 0.82):
@@ -592,7 +648,7 @@ def main():
                         if 0.12 <= pa <= 0.32:
                             longs.append({"label": f"{nm} Over {alt:g} {label.lower()}", "p": round(100 * pa, 1), "fair": amer(pa), "lean": round(100 * (po - p_mkt), 1), "kick": k_,
                                           "game": tuple(sorted((tm, lines[tm]["opp"]))), "who": nm, "ind": ind})
-                if st == "td" and po > p_mkt and 0.12 <= po <= 0.40:
+                if st == "td" and po > p_mkt and 0.12 <= po <= 0.40 and not big_gap:
                     longs.append({"label": f"{nm} anytime TD", "p": round(100 * po, 1), "fair": amer(po), "lean": round(100 * (po - p_mkt), 1), "kick": k_, "price": x["yes"],
                                   "game": tuple(sorted((tm, lines[tm]["opp"]))), "who": nm, "ind": X >= 1})
                 dk_ = x.get("dk") or {}
@@ -600,11 +656,33 @@ def main():
                     cand = [("Yes", po, x["yes"])]
                 else:
                     cand = [("Over", po, x["over"]), ("Under", 1 - po, x["under"])]
+                def p_line(L_):   # our chance of the over at any number (DraftKings may hang a different one), pushes taken out
+                    if st in ("pass_tds", "td", "rec"):
+                        if V2A:
+                            ov = V2A.p_over_count(st, p["pos"], fin * fs, L_)
+                            return ov if L_ % 1 else ov / max(1e-9, 1 - (V2A.p_over_count(st, p["pos"], fin * fs, L_ - 1) - ov))
+                        from scipy import stats as ss_
+                        lam = np.maximum(1e-9, fin * fs); ov = float(np.mean(ss_.poisson.sf(math.floor(L_), lam)))
+                        return ov if L_ % 1 else ov / max(1e-9, 1 - float(np.mean(ss_.poisson.pmf(int(L_), lam))))
+                    return float(np.mean(fin * base > L_))
+                dkl = 0.5 if st == "td" else dk_.get("line")
+                dko, dku = (dk_.get("yes"), dk_.get("no")) if st == "td" else (dk_.get("over"), dk_.get("under"))
+                dk_po = (po if dkl == line else p_line(dkl)) if (dkl is not None and dko) else None
+                dk_nv = (imp_p(dko) / (imp_p(dko) + imp_p(dku))) if (dko and dku) else (p_mkt if dkl == line else None)
+                stp = 1.0 if st in ("pass_tds", "td", "rec") else max(1.0, round(0.05 * line))
+                dpdl = None if st == "td" else round((p_line(line - stp) - p_line(line + stp)) / (2 * stp), 5)   # over's chance lost per unit of line: CLV when the line moves
                 for side, pp, price in cand:
                     ev = pp * dec(price) - 1
                     pm_ = p_mkt if side in ("Over", "Yes") else 1 - p_mkt
-                    props.append({"news": why_news, "edge": round(100 * (pp - pm_), 1), "max_c": int(100 * pp - 2), "pickem": st != "td" and 100 * pp >= PICKEM and not big_gap, "big_gap": big_gap, "player": nm, "team": tm, "opp": lines[tm]["opp"], "pos": p["pos"], "market": label, "side": side, "line": line if st != "td" else None,
-                                  "price": price, "dk": (dk_.get("over") if side == "Over" else dk_.get("under")) if dk_.get("line") == line else None, "books": x.get("books"), "p": round(100 * pp, 1), "p_mkt": round(100 * (p_mkt if side in ("Over", "Yes") else 1 - p_mkt), 1),
+                    ov_ = side in ("Over", "Yes")
+                    dpr = (dko if ov_ else dku) if dk_po is not None else None
+                    dps = (dk_po if ov_ else 1 - dk_po) if dpr else None
+                    dpm = (dk_nv if ov_ else 1 - dk_nv) if (dpr and dk_nv is not None) else None
+                    props.append({"uname": p["name"], "event": x.get("event"), "dpdl": dpdl, "dk_line": dkl if dpr else None, "dk_price": dpr,
+                                  "dk_p": round(100 * dps, 1) if dpr else None, "dk_pm": round(100 * dpm, 1) if dpm is not None else None,
+                                  "dk_edge": round(100 * (dps - dpm), 1) if dpm is not None else None, "dk_ev": round(100 * (dps * dec(dpr) - 1), 1) if dpr else None,
+                                  "news": why_news, "edge": round(100 * (pp - pm_), 1), "max_c": int(100 * pp - 2), "pickem": st != "td" and 100 * pp >= PICKEM and not big_gap, "big_gap": big_gap, "player": nm, "team": tm, "opp": lines[tm]["opp"], "pos": p["pos"], "market": label, "side": side, "line": line if st != "td" else None,
+                                  "price": price, "dk": dpr if dkl == line else None, "books": x.get("books"), "p": round(100 * pp, 1), "p_mkt": round(100 * (p_mkt if side in ("Over", "Yes") else 1 - p_mkt), 1),
                                   "ev": round(100 * ev, 1), "ours": round(ours_m, 2), "mkt": round(mm, 2), "final": round(fin, 2), "kick": k_,
                                   "median": round(float(np.median(X)), 1), "p10": round(float(np.percentile(X, 10)), 1), "p90": round(float(np.percentile(X, 90)), 1)})
         return props, legs
@@ -612,6 +690,7 @@ def main():
     price_props({}, _rat)   # pass 1: how far our average sits from the market's average, by market
     CORR = {k: float(np.median(v)) for k, v in _rat.items() if len(v) >= 8}
     props, plegs = price_props(CORR, None)   # pass 2: with that systematic gap removed
+    ALLP = props   # both sides, for the tracker
     LEGS += plegs
     best = {}
     for x in props:   # one side per player-market
@@ -652,7 +731,7 @@ def main():
         for combo in itertools.combinations(pool[:32 if n_ == 3 else 45], n_):
             if len({c["who"] for c in combo}) < n_:
                 continue
-            if max(sum(1 for c in combo if c["game"] == g) for g in {c["game"] for c in combo}) > 2:
+            if max(sum(1 for c in combo if c["game"] == g) for g in {c["game"] for c in combo}) > 2 or conflict(combo):
                 continue
             pj = joint(combo); naive = math.prod(c["p"] for c in combo)
             if not lo_ <= pj <= hi_:
@@ -703,7 +782,7 @@ def main():
     conf = []
     for n_ in (3, 4, 5):
         for combo in itertools.combinations(hot[:24], n_):
-            if len({c["who"] for c in combo}) < n_ or max(sum(1 for c in combo if c["game"] == g) for g in {c["game"] for c in combo}) > 2:
+            if len({c["who"] for c in combo}) < n_ or max(sum(1 for c in combo if c["game"] == g) for g in {c["game"] for c in combo}) > 2 or conflict(combo):
                 continue
             pj = joint(combo)
             if 0.20 <= pj <= 0.40:
@@ -753,6 +832,69 @@ def main():
         if len(long_parlays) >= 6:
             break
     LONGS.sort(key=lambda z: -(z["lean"] + 0.05 * z["p"]))
+    # +200-300 ladders: 5-8 low alt lines (86-94% each), props + game lines, max 2 per game, priced together from the sims
+    SAFE_ = []
+    _sl = set()
+    for L_ in sorted([z for z in SAFE if z["kick"] and z["kick"] > now.isoformat()], key=lambda z: (-(z["lean"] >= 0.01), abs(z["p"] - 0.86), -z["lean"])):
+        if L_["label"] not in _sl:
+            _sl.add(L_["label"]); SAFE_.append(L_)
+    ladders, used_l = [], {}
+    for start in range(min(len(SAFE_), 40)):
+        pick_ = [SAFE_[start]]
+        if used_l.get(pick_[0]["label"], 0) >= 1:
+            continue
+        for L_ in SAFE_:
+            if L_ in pick_ or any(L_["who"] == c["who"] for c in pick_) or sum(1 for c in pick_ if c["game"] == L_["game"]) >= 2 or used_l.get(L_["label"], 0) >= 1:
+                continue
+            if L_["type"] == "game" and any(c["game"] == L_["game"] and c["type"] == "game" for c in pick_):
+                continue   # no over + under of one total, or both sides of one spread
+            trial = pick_ + [L_]
+            if joint(trial) < 0.25:
+                continue
+            pick_ = trial
+            if len(pick_) >= 10 or joint(pick_) <= 0.33:
+                break
+        pj = joint(pick_)
+        if 5 <= len(pick_) <= 10 and 0.25 <= pj <= 0.33 and frozenset(c["label"] for c in pick_) not in {frozenset(l["label"] for l in x["legs"]) for x in ladders}:
+            for c in pick_:
+                used_l[c["label"]] = used_l.get(c["label"], 0) + 1
+            ladders.append({"p": round(100 * pj, 1), "fair": amer(pj), "lift": 1.0, "same_game": len({c["game"] for c in pick_}) < len(pick_), "ladder": True,
+                            "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "type": c["type"], "lean": round(100 * c["lean"], 1)} for c in pick_]})
+        if len(ladders) >= 6:
+            break
+    parlays["ladder"] = ladders
+    # best 4-leg parlays at +200 to +300. The math: a parlay's real value = (chance it hits) x (payout). Books price each leg with
+    # their margin, so every extra leg costs you; the way to beat that is legs the sims like MORE than the market (lean) and
+    # same-game legs that help each other (lift > 1 = they hit together more often than the book's multiplied price assumes).
+    # Score = total lean + correlation lift, only combos that land at 25-33% (+200 to +300).
+    best4, cand4 = [], []
+    _s4 = set(); p4 = []
+    for L_ in sorted(LEGS, key=lambda z: (-z["lean"], -z["p"])):   # legs at 66-80%: four of them land near +200 to +300
+        if 0.66 <= L_["p"] <= 0.80 and L_["label"] not in _s4 and (L_["kick"] or "") > now.isoformat():
+            _s4.add(L_["label"]); p4.append(L_)
+    p4 = p4[:36]
+    for combo in itertools.combinations(p4, 4):
+        if len({c["who"] for c in combo}) < 4 or max(sum(1 for c in combo if c["game"] == g) for g in {c["game"] for c in combo}) > 2:
+            continue
+        pj = joint(combo)
+        if 0.25 <= pj <= 0.33:
+            naive = math.prod(c["p"] for c in combo); lift = pj / naive
+            cand4.append((sum(c["lean"] for c in combo) + 0.6 * math.log(lift), pj, lift, combo))
+    cand4.sort(key=lambda z: -z[0]); used4 = {}
+    for sc_, pj, lift, combo in cand4:
+        if any(used4.get(c["label"], 0) >= 1 for c in combo):
+            continue
+        for c in combo:
+            used4[c["label"]] = 1
+        nl = sum(1 for c in combo if c["lean"] >= 0.02)
+        why = [f"{nl} of 4 legs are ones the sims like more than the market"] if nl else ["No leg has a model lean: this one is a fair-price check"]
+        if lift > 1.01:
+            why.append(f"same-game legs help each other: hits {round(100 * (lift - 1))}% more often than if they were unrelated")
+        best4.append({"p": round(100 * pj, 1), "fair": amer(pj), "lift": round(lift, 3), "same_game": lift > 1.001, "why": why,
+                      "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "type": c["type"], "lean": round(100 * c["lean"], 1)} for c in combo]})
+        if len(best4) >= 4:
+            break
+    parlays["best4"] = best4
     # favorite stacks: 4-6 heavy favorites / safe alt spreads (one per game) that add up to about +250 to +400
     fs_ = []
     favml = []
@@ -780,7 +922,13 @@ def main():
         fav_stacks.append({"p": round(100 * pj, 1), "fair": amer(pj), "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "lean": 0} for c in combo]})
         if len(fav_stacks) >= 4:
             break
-    longshots = {"fav_stacks": fav_stacks, "singles": [{k: v for k, v in L_.items() if k not in ("ind", "game", "who")} for L_ in LONGS[:30]], "parlays": long_parlays}
+    ml_all = sorted(favml, key=lambda z: -z["p"])
+    ml_long = []
+    for n_ in (len(ml_all), 8, 6):
+        if n_ >= 4 and n_ <= len(ml_all):
+            legs_ = ml_all[:n_]; pj = math.prod(c["p"] for c in legs_)
+            ml_long.append({"p": round(100 * pj, 1), "fair": amer(pj), "n": n_, "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "lean": 0} for c in legs_]})
+    longshots = {"ml_long": ml_long, "fav_stacks": fav_stacks, "singles": [{k: v for k, v in L_.items() if k not in ("ind", "game", "who")} for L_ in LONGS[:30]], "parlays": long_parlays}
     legs_out = [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": L_["type"], "kick": L_["kick"], "lean": round(100 * L_["lean"], 1),
                  "game": "-".join(L_["game"]), "bits": bits(L_)} for L_ in pool]
 
@@ -792,7 +940,7 @@ def main():
         del wk[k_old]
     for x in props:
         if x["grade"]:
-            wk[f"{x['player']}|{x['market']}"] = {k: x[k] for k in ("player", "team", "market", "side", "line", "price", "p", "p_mkt", "edge", "grade", "kick")}
+            wk[f"{x['player']}|{x['market']}"] = {k: x[k] for k in ("player", "uname", "team", "market", "side", "line", "price", "p", "p_mkt", "edge", "grade", "kick")}
     for g in games:
         for pl in g["plays"]:
             if not g["started"]:
@@ -800,21 +948,90 @@ def main():
                     del wk[k_old]
                 wk[f"G|{g['home']}|{pl['kind']}|{pl['pick'].split()[0]}"] = {"game": f"{g['away']} @ {g['home']}", "home": g["home"], "pick": pl["pick"], "kind": pl["kind"],
                                                     "p": pl["p"], "p_mkt": pl["p_mkt"], "edge": pl["edge"], "spread": g["spread"], "total": g["total"], "kick": g["kick"]}
-    for g in games:   # every-bet tracker: game lines
+    nowi = now.isoformat(timespec="seconds")
+    for k_old in [k for k, v in wk.items() if k.startswith(("GA|", "PA|")) and v.get("v") != 2 and not v.get("graded") and (v.get("kick") or "9") > nowi]:
+        del wk[k_old]   # v1 tracker entries (wrong prices, never locked) for games that haven't started
+    locked = lambda k, tier: k in wk and wk[k].get("v") == 2 and not (wk[k].get("tier") in ("lean", "best") and tier == "bet")
+    for g in games:   # every-bet tracker: game lines, locked the first time a market qualifies
         if not g["started"]:
             for au in g.get("auto", []):
-                wk[f"GA|{g['home']}|{au['kind']}"] = {"game": f"{g['away']} @ {g['home']}", "home": g["home"], "pick": au["pick"], "kind": au["kind"], "price": au["price"],
-                                                      "p": au["p"], "p_mkt": au["p_mkt"], "edge": au["edge"], "spread": g["spread"], "total": g["total"], "kick": g["kick"], "auto": True}
-    for x in props:   # every-bet tracker: props the sims like by 1+ point, -150 or better, at DraftKings' price when we have it
-        pr_ = x.get("dk") or x.get("price")
-        if pr_ and pr_ >= -150 and x["edge"] >= 1.0 and not x["big_gap"] and x["kick"] and x["kick"] > now.isoformat():
-            wk[f"PA|{x['player']}|{x['market']}"] = {k: x[k] for k in ("player", "team", "market", "side", "line", "p", "p_mkt", "edge", "kick")} | {"price": int(pr_), "auto": True}
+                ka = f"GA|{g['home']}|{au['kind']}"
+                if not locked(ka, au["tier"]):
+                    wk[ka] = {"v": 2, "game": f"{g['away']} @ {g['home']}", "home": g["home"], "spread": g["spread"], "total": g["total"], "kick": g["kick"], "auto": True, "at": nowi} | \
+                             {k: au[k] for k in ("pick", "kind", "tag", "pt", "price", "src", "p", "p_mkt", "edge", "ev", "tier", "bucket")}
+    TRK = {}   # one side per player-market, chosen by DraftKings' edge when DK has the prop (DK's line can flip which side is better)
+    for x in ALLP:
+        k2, sc = (x["player"], x["market"]), ((1, x["dk_edge"]) if x.get("dk_edge") is not None else (0, x["edge"]))
+        if k2 not in TRK or sc > TRK[k2][0]:
+            TRK[k2] = (sc, x)
+    for _, x in TRK.values():   # every-bet tracker: props 1+ pt better than DraftKings' no-vig chance, -150 or better, at DK's own line and price
+        if not (x["kick"] and x["kick"] > nowi) or x["big_gap"]:
+            continue
+        if x.get("dk_price") and x.get("dk_edge") is not None:
+            t_ = dict(src="dk", line=x["dk_line"], price=int(x["dk_price"]), p=x["dk_p"], p_mkt=x["dk_pm"], edge=x["dk_edge"], ev=x["dk_ev"])
+            t_["tier"] = "bet" if t_["ev"] >= 0 else "lean"
+        else:   # no DraftKings line in the pull: best price of the consensus books, kept OUT of the headline (no one gets the best of 5 every time)
+            t_ = dict(src="best", line=x["line"], price=int(x["price"]), p=x["p"], p_mkt=x["p_mkt"], edge=x["edge"], ev=x["ev"], tier="best")
+        if t_["price"] >= -150 and t_["edge"] >= 1.0:
+            kp = f"PA|{x['player']}|{x['market']}"
+            if not locked(kp, t_["tier"]):
+                wk[kp] = {k: x[k] for k in ("player", "uname", "team", "market", "side", "kick", "event", "dpdl")} | t_ | {"v": 2, "news": bool(x["news"]), "auto": True, "at": nowi}
     stat_by = {}
     for v in (U.get("players") or {}).values():
         for w in v.get("weeks", []):
             stat_by[(key(v["name"]), str(w["w"]))] = w
     box_in = {(v.get("team"), str(w["w"])) for v in (U.get("players") or {}).values() for w in v.get("weeks", []) if "pts" in w}
     rec = {"props": [0, 0, 0.0], "games": [0, 0, 0.0], "auto_games": [0, 0, 0.0], "auto_props": [0, 0, 0.0], "weeks": {}}
+    PC = load(D / "props_close.json", {}) or {}
+    MKR = {"Pass yds": "player_pass_yds", "Pass TDs": "player_pass_tds", "Rush yds": "player_rush_yds", "Rec yds": "player_reception_yds", "Catches": "player_receptions", "Anytime TD": "td"}
+    def game_clv(x, Lh, La):
+        """Closing (nflverse, last line before kickoff) no-vig chance of OUR bet at OUR number, and the EV that implies at the price we got."""
+        nv = lambda a_, b_: imp_p(a_ or -110) / (imp_p(a_ or -110) + imp_p(b_ or -110))
+        hs = x["tag"] in ("home", "over")
+        if x["kind"] == "ml":
+            if not (Lh.get("ml") and La.get("ml")):
+                return None
+            q = nv(Lh["ml"], La["ml"]); q = q if hs else 1 - q
+        else:
+            cs, ct = Lh.get("spread"), Lh.get("total")
+            if cs is None or ct is None:
+                return None
+            mar_c, tot_c = sample_game(cs, ct, resid, pool_g, rng, 20000, cover=nv(Lh.get("spread_odds"), La.get("spread_odds")), over=nv(Lh.get("over_odds"), Lh.get("under_odds")))
+            v = ((mar_c if hs else -mar_c) + x["pt"]) if x["kind"] == "spr" else ((tot_c - x["pt"]) if hs else (x["pt"] - tot_c))
+            q = min(0.99, max(0.01, float(np.mean(v > 0)) / max(1e-9, float(np.mean(v != 0)))))   # closing market's chance at OUR number
+        return {"q": round(100 * q, 1), "ev": round(100 * (q * dec(x["price"]) - 1), 1), "pts": round(100 * q - x["p_mkt"], 1),
+                "close": Lh.get("ml") if x["kind"] == "ml" else Lh.get("spread") if x["kind"] == "spr" else Lh.get("total")}
+    def prop_clv(w_, x):
+        c = ((PC.get("props") or {}).get(x.get("event")) or {}).get(x["player"], {}).get(MKR[x["market"]]) if str(PC.get("week")) == w_ else None
+        if not c:
+            return None
+        if x["market"] == "Anytime TD":
+            if not (c.get("yes") and c.get("no")):
+                return None
+            qo = imp_p(c["yes"]) / (imp_p(c["yes"]) + imp_p(c["no"]))
+        else:
+            if c.get("line") is None or not (c.get("over") and c.get("under")) or (c["line"] != x["line"] and x.get("dpdl") is None):
+                return None
+            qo = imp_p(c["over"]) / (imp_p(c["over"]) + imp_p(c["under"])) + (x.get("dpdl") or 0) * (c["line"] - x["line"])
+        q = min(0.99, max(0.01, qo if x["side"] in ("Over", "Yes") else 1 - qo))
+        return {"q": round(100 * q, 1), "ev": round(100 * (q * dec(x["price"]) - 1), 1), "pts": round(100 * q - x["p_mkt"], 1), "close": c.get("line")}
+    EB = lambda e: "1-2.5" if e < 2.5 else "2.5-4" if e < 4 else "4-6" if e < 6 else "6+"
+    TR = {}
+    def tally(k, x):
+        g_ = k.startswith("GA|")
+        names = ["all games" if g_ else "all props", f"{'games' if g_ else 'props'} {x['tier']}s"]
+        names += ([f"{x['kind']} {x['bucket']}"] if g_ else [x["market"], f"edge {EB(x['edge'] or 0)}"] + (["news"] if x.get("news") else []))
+        for nm_ in names:
+            s = TR.setdefault(nm_, dict(w=0, l=0, push=0, open=0, u=0.0, var=0.0, pm=0.0, po=0.0, ev=0.0, cn=0, cs=0.0, cq=0.0))
+            if not x.get("graded"):
+                s["open"] += 1; continue
+            if x.get("result") is None:
+                s["push"] += 1; continue
+            d_, pm = dec(x["price"]), (x.get("p_mkt") or 50) / 100
+            s["w" if x["result"] else "l"] += 1; s["u"] += (d_ - 1) if x["result"] else -1
+            s["var"] += pm * (1 - pm) * d_ * d_; s["pm"] += pm; s["po"] += (x.get("p") or 50) / 100; s["ev"] += (x.get("ev") or 0) / 100
+            if x.get("clv"):
+                s["cn"] += 1; s["cs"] += x["clv"]["ev"] / 100; s["cq"] += (x["clv"]["ev"] / 100) ** 2
     for w_, picks in PK.items():
         for k, x in picks.items():
             if x.get("result") is None:
@@ -825,7 +1042,12 @@ def main():
                         continue
                     m_ = Lh["pts"] - La["pts"]; t_ = Lh["pts"] + La["pts"]
                     pk = x["pick"]
-                    if pk.startswith("Over") or pk.startswith("Under"):
+                    if x.get("v") == 2:   # tracker v2: graded at the number it was bet at (DraftKings' number, not the consensus one)
+                        sg = 1 if x["tag"] in ("home", "over") else -1
+                        v_ = (sg * m_ + x["pt"]) if x["kind"] == "spr" else (sg * (t_ - x["pt"])) if x["kind"] == "tot" else sg * m_
+                        x["result"] = None if v_ == 0 else bool(v_ > 0)
+                        x["clv"] = game_clv(x, Lh, La)
+                    elif pk.startswith("Over") or pk.startswith("Under"):
                         x["result"] = None if t_ == x["total"] else ((t_ > x["total"]) == pk.startswith("Over"))
                     elif "moneyline" in pk:
                         x["result"] = None if m_ == 0 else ((m_ > 0) == (pk.split()[0] == x["home"]))
@@ -836,7 +1058,7 @@ def main():
                 else:
                     if (x["team"], w_) not in box_in or (U.get("lines") or {}).get(w_, {}).get(x["team"], {}).get("pts") is None:
                         continue   # box score for his game isn't in yet
-                    s_ = stat_by.get((key(x["player"]), w_))
+                    s_ = stat_by.get((key(x.get("uname") or x["player"]), w_))
                     if s_ and "pts" not in s_ and not (s_.get("snap") or 0):
                         s_ = None   # only a 0-snap row: treat like he didn't play
                     if not s_:
@@ -849,9 +1071,13 @@ def main():
                     x["actual"] = stv
                     x["result"] = (stv >= 1) if x["market"] == "Anytime TD" else (None if stv == x["line"] else ((stv > x["line"]) == (x["side"] == "Over")))
                     x["graded"] = True
-            if x.get("graded") and x.get("result") is not None and x.get("auto"):   # 1 unit at the posted price
-                b_ = rec["auto_games" if k.startswith("GA|") else "auto_props"]
-                b_[0 if x["result"] else 1] += 1; b_[2] += (dec(x["price"]) - 1) if x["result"] else -1
+                    if x.get("v") == 2:
+                        x["clv"] = prop_clv(w_, x)
+            if x.get("auto"):   # tracker: headline = 1 unit on every +EV ("bet" tier) v2 entry at the price it was locked at
+                if x.get("v") == 2:
+                    if x.get("graded") and x.get("result") is not None and x.get("tier") == "bet":
+                        b_ = rec["auto_games" if k.startswith("GA|") else "auto_props"]
+                        b_[0 if x["result"] else 1] += 1; b_[2] += (dec(x["price"]) - 1) if x["result"] else -1
                 continue
             if x.get("graded") and x.get("result") is not None:
                 b_ = rec["games" if k.startswith("G|") else "props"]
@@ -860,13 +1086,29 @@ def main():
                 b_[2] += ((1 - c_) / c_) if x["result"] else -1   # $1 bought at the market price, like a Kalshi contract
                 ww = rec["weeks"].setdefault(w_, [0, 0, 0.0])
                 ww[0 if x["result"] else 1] += 1; ww[2] += ((1 - c_) / c_) if x["result"] else -1
+    for w_, picks in PK.items():   # tracker buckets, open bets included
+        for k, x in picks.items():
+            if x.get("auto") and x.get("v") == 2:
+                tally(k, x)
     (D / "props_picks.json").write_text(json.dumps(PK, separators=(",", ":"), sort_keys=True))
     for b_ in (rec["props"], rec["games"], rec["auto_games"], rec["auto_props"]):
         b_[2] = round(b_[2], 2)
     for k in rec["weeks"]:
         rec["weeks"][k][2] = round(rec["weeks"][k][2], 2)
     graded = [dict(x, week=w_) for w_, pk in PK.items() for k, x in pk.items() if x.get("graded") and not x.get("auto")]
-    rec["auto_open"] = {"games": sum(1 for k, x in wk.items() if k.startswith("GA|") and not x.get("graded")), "props": sum(1 for k, x in wk.items() if k.startswith("PA|") and not x.get("graded"))}
+    rec["auto_open"] = {"games": sum(1 for k, x in wk.items() if k.startswith("GA|") and x.get("tier") == "bet" and not x.get("graded")),
+                        "props": sum(1 for k, x in wk.items() if k.startswith("PA|") and x.get("tier") == "bet" and not x.get("graded"))}
+    def summ(s):
+        n = s["w"] + s["l"]; o = {"w": s["w"], "l": s["l"], "push": s["push"], "open": s["open"], "units": round(s["u"], 2)}
+        if n:
+            o.update(roi=round(100 * s["u"] / n, 1), roi_se=round(100 * s["var"] ** 0.5 / n, 1), hit=round(100 * s["w"] / n, 1),
+                     hit_mkt=round(100 * s["pm"] / n, 1), hit_ours=round(100 * s["po"] / n, 1), ev_claimed=round(100 * s["ev"] / n, 1))
+        if s["cn"]:
+            m_ = s["cs"] / s["cn"]; sd = max(0.0, s["cq"] / s["cn"] - m_ * m_) ** 0.5
+            o.update(clv_n=s["cn"], clv_ev=round(100 * m_, 2), clv_se=round(100 * sd / s["cn"] ** 0.5, 2),
+                     clv_n_needed=int(min(99999, (2 * sd / max(abs(m_), 0.005)) ** 2)))   # bets for the CLV average to sit 2 SE from zero
+        return o
+    rec["tracker"] = {k_: summ(v) for k_, v in sorted(TR.items())}
     UNIT = float((load(ROOT / "config.json", {}) or {}).get("unit", 25))
     STAKE = {"A": 1.0, "B": 0.5, "C": 0.25}
     for x in props:

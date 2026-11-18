@@ -123,8 +123,9 @@ def main():
         for k, L in mk.items():
             if k == "td":
                 ps = [prob(x[2]) / (prob(x[2]) + prob(x[3])) if x[3] is not None else prob(x[2]) * 0.93 for x in L if x[0] not in VENUES]
-                best = max(x[2] for x in L); R.setdefault(nm, {})["td"] = {"yes": best, "p": round(statistics.median(ps or [prob(x[2]) * 0.93 for x in L]), 3), "books": len(L),
-                                                                            "two_way": sum(x[3] is not None for x in L), "event": L[0][4]}
+                best = max(x[2] for x in L); dk = next((x for x in L if x[0] == "draftkings"), None)
+                R.setdefault(nm, {})["td"] = {"yes": best, "p": round(statistics.median(ps or [prob(x[2]) * 0.93 for x in L]), 3), "books": len(L),
+                                              "two_way": sum(x[3] is not None for x in L), "event": L[0][4], "dk": {"yes": dk[2], "no": dk[3]} if dk else None}
                 continue
             pts = [x[1] for x in L]; main = max(set(pts), key=lambda v: (pts.count(v), -abs(v - statistics.median(pts))))
             at = [x for x in L if x[1] == main]

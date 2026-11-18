@@ -46,8 +46,8 @@ def wval(w, name, pos=None):
 
 
 def ystat(w, st, pos):
-    if st == 'td':
-        return float(w.get('rutd') or 0) if pos == 'QB' else float(w.get('td') or 0)
+    if st == 'td':   # the fit's td: rushing + receiving (usage.json 'td' also counts a QB's passing TDs)
+        return float(w.get('rutd') or 0) + (0.0 if pos == 'QB' else float(w.get('retd') or 0))
     return wval(w, st)
 
 
@@ -97,8 +97,9 @@ class V2:
                 if not prior or not w.get('opp'):
                     continue
                 for st in DEFST:
-                    a = ystat(w, st, pos) if st != 'td' else float(w.get('td') or 0)
-                    b = float(np.mean([ystat(x, st, pos) if st != 'td' else float(x.get('td') or 0) for x in prior]))
+                    tdv = lambda z: float(z.get('rutd') or 0) + float(z.get('retd') or 0)
+                    a = ystat(w, st, pos) if st != 'td' else tdv(w)
+                    b = float(np.mean([ystat(x, st, pos) if st != 'td' else tdv(x) for x in prior]))
                     d = A.setdefault((w['opp'], pos, st), {})
                     s = d.setdefault(w['w'], [0.0, 0.0]); s[0] += a; s[1] += b
         avg = {}
