@@ -72,6 +72,16 @@ ${METHOD}`;
   const md = t => { const d = el('div'); t.split(/\n{2,}/).forEach(par => { const lines = par.split('\n'); if (lines.every(l => /^\s*([-*•]|\d+\.)\s+/.test(l))) { const ul = el('ul'); lines.forEach(l => { const li = el('li'); fmt(li, l.replace(/^\s*([-*•]|\d+\.)\s+/, '')); ul.append(li); }); d.append(ul); } else { const p = el('p'); fmt(p, par); d.append(p); } }); return d; };
   const fmt = (node, txt) => txt.split(/(\*\*[^*]+\*\*)/).forEach(part => { if (/^\*\*[^*]+\*\*$/.test(part)) node.append(el('b', {}, part.slice(2, -2))); else node.append(document.createTextNode(part)); });
 
+  let LIVE = null;
+  // draws the answer that's still coming in, into whatever bubble is on screen right now (survives closing and reopening Coach)
+  function paintLive() {
+    if (!busy || !LIVE || panel.hidden) return;
+    const out = panel.querySelectorAll('.msg.assistant'); const b = out[out.length - 1]; if (!b) return;
+    const txt = history[history.length - 1].content;
+    if (txt) b.replaceChildren(md(txt));
+    else b.replaceChildren(el('span', { class: 'thinking' }, LIVE.status), el('span', { class: 'dots' }, '… ' + Math.round((Date.now() - LIVE.t0) / 1000) + 's'));
+    const lg = $c('#chatlog'); if (lg) lg.scrollTop = lg.scrollHeight;
+  }
   function render() {
     const k = getKey();
     panel.replaceChildren(
@@ -84,6 +94,7 @@ ${METHOD}`;
       k ? el('form', { class: 'chatin', onsubmit: e => { e.preventDefault(); const i = $c('#chatq'); if (i.value.trim()) { ask(i.value.trim()); i.value = ''; } } }, el('input', { id: 'chatq', placeholder: 'Ask about a trade, player, matchup…', autocomplete: 'off' }), el('button', { class: 'btn small', type: 'submit' }, 'SEND'))
         : keyScreen());
     const lg = $c('#chatlog'); lg.scrollTop = lg.scrollHeight;
+    paintLive();
   }
   function keyScreen() {
     const inp = el('input', { type: 'password', placeholder: 'Paste your free Gemini key (AIza…)', autocomplete: 'off' });
@@ -154,10 +165,11 @@ ${METHOD}`;
     busy = true; await ensureCards();
     history.push({ role: 'user', content: q }); history.push({ role: 'assistant', content: '' });
     render();
-    const out = panel.querySelectorAll('.msg.assistant'); const bubble = out[out.length - 1];
-    const t0 = Date.now(), think = el('span', { class: 'thinking' }, 'Coach is thinking'), dots = el('span', { class: 'dots' }, '…');
-    bubble.replaceChildren(think, dots); const tick = setInterval(() => { if (bubble.contains(dots)) dots.textContent = '… ' + Math.round((Date.now() - t0) / 1000) + 's'; else clearInterval(tick); }, 1000);
-    const onText = txt => { bubble.replaceChildren(md(txt)); const lg = $c('#chatlog'); lg.scrollTop = lg.scrollHeight; };
+    LIVE = { t0: Date.now(), status: 'Coach is thinking' };
+    paintLive();
+    const tick = setInterval(paintLive, 1000);
+    const think = { set textContent(t) { LIVE.status = t; paintLive(); } };
+    const onText = txt => { history[history.length - 1].content = txt; paintLive(); };
     try {
       if (provider() === 'gemini') { history[history.length - 1].content = (await askGemini(onText)) || '(no answer)'; return; }
       if (provider() === 'local') { history[history.length - 1].content = (await askLocal(onText, t => { if (t) think.textContent = t; })) || '(no answer)'; return; }
@@ -182,7 +194,7 @@ ${METHOD}`;
       history[history.length - 1].content = txt || '(no answer)';
     } catch (e) {
       history[history.length - 1].content = '⚠️ ' + e.message;
-    } finally { clearInterval(tick); busy = false; render(); }
+    } finally { clearInterval(tick); busy = false; LIVE = null; render(); }
   }
   // ask Google which models this key can actually use, then pick the best Flash ones
   let MODELS_CACHE = null;
