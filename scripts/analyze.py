@@ -237,11 +237,15 @@ for n, p in P.items():
     PROF[n] = pr
 
 
+_KR = _U.get("kick") or {}
+KICK = {int(w): {TEAMFIX.get(t, t): v for t, v in d.items()} for w, d in _KR.items()}
+SEASON = int(M.get("season") or 2026)
 # ---------------- automatic availability: who plays which week, from ESPN status + practice reports + ESPN news ----------------
 import re as _re
-SEASON_END = _re.compile(r"(remainder of the (?:20\d\d )?season|season-ending|out for the (?:rest of the )?season|torn (?:his )?acl|tearing his acl|ruptured (?:his )?achilles|torn achilles)", _re.I)
+SEASON_END = _re.compile(r"(remainder of the (?:20\d\d )?season|season-ending|(?:out|sidelined|done|miss|lost) for the (?:rest of the |remainder of the )?(?:20\d\d )?season|rest of the (?:20\d\d )?(?:regular )?season|won't return this season|will not return this season|season is over|torn (?:his )?acl|tearing his acl|ruptured (?:his )?achilles|torn achilles)", _re.I)
 RET_WK = _re.compile(r"(?:return|back|activated|debut)\D{0,40}?week (\d{1,2})|week (\d{1,2})\D{0,25}?(?:return|comeback)", _re.I)
 LONG = _re.compile(r"(several weeks|multiple weeks|extended (?:period|absence)|four to six weeks|4-6 weeks|six to eight weeks|long-term)", _re.I)
+DATE_RE = _re.compile(r"(?:return|back|activated|eligible)[^.]{0,60}?\b(Jan|Feb|Mar|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2})\b", _re.I)
 SHORT = _re.compile(r"(day-to-day|week-to-week|considered questionable|optimistic|expected to play|should be fine)", _re.I)
 def auto_avail(n):
     p = P[n]; inj = p.get("inj") or "ACTIVE"
@@ -264,6 +268,18 @@ def auto_avail(n):
         ret = int(m_.group(1) or m_.group(2))
         if ret < CUR:
             ret = None   # old news about a week that already passed
+    md = DATE_RE.search(txt)   # "earliest return date is Sunday, Dec. 20" -> the NFL week of that date
+    if md and KICK:
+        try:
+            import datetime as _d
+            mo = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].index(md.group(1)[:3].lower()) + 1
+            yr = SEASON if mo >= 8 else SEASON + 1
+            dt = _d.datetime(yr, mo, int(md.group(2)), 23, tzinfo=_d.timezone.utc)
+            wk_ = min((w for w, d in KICK.items() if d and max(d.values()) >= dt.strftime("%Y-%m-%dT")), default=None)
+            if wk_ and wk_ >= CUR:
+                ret = max(ret or 0, wk_)
+        except Exception:
+            pass
     if nw.get("ret"):   # ESPN's own expected return date -> NFL week
         try:
             import datetime as _d
@@ -1346,8 +1362,6 @@ if PREV_P.exists():
 # ---------------- lineup lock + starters whose status just changed ----------------
 from zoneinfo import ZoneInfo as _ZI
 import datetime as _dt
-_KR = _U.get("kick") or {}
-KICK = {int(w): {TEAMFIX.get(t, t): v for t, v in d.items()} for w, d in _KR.items()}
 lock = None
 if sw0:
     ks = sorted(((KICK.get(CUR) or {}).get(P[x["player"]]["nfl"]), x["player"]) for x in sw0["lineup"] if (KICK.get(CUR) or {}).get(P[x["player"]]["nfl"]))
