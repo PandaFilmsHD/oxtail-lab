@@ -1,5 +1,5 @@
 // Oxtail Lab service worker: always try the network first (fresh odds), fall back to the last saved copy when offline.
-const CACHE = 'oxtail-v5';
+const CACHE = 'oxtail-v6';
 const ACACHE = 'oxtail-alerts';   // full alert reports that came inside the push
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'style.css', 'app.js', 'chat.js', 'manifest.webmanifest', 'icons/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== ACACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
@@ -24,7 +24,10 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     const c = cs[0];
     const alert = e.notification.data && e.notification.data.alert;
-    if (c) { c.postMessage({ type: 'alert', id, alert }); return c.focus(); }   // app already open: hand it the whole report
-    return self.clients.openWindow(url);
+    // save the tap: the app checks this every time it comes on screen, so the report shows even if the message below gets lost
+    return caches.open(ACACHE).then(k => k.put('pending', new Response(JSON.stringify({ id, alert, t: Date.now() }), { headers: { 'Content-Type': 'application/json' } }))).then(() => {
+      if (c) { try { c.postMessage({ type: 'alert', id, alert }); } catch (x) {} return c.focus ? c.focus().catch(() => self.clients.openWindow(url)) : self.clients.openWindow(url); }
+      return self.clients.openWindow(url);
+    });
   }));
 });

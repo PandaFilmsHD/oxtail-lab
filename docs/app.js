@@ -770,7 +770,22 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
 })();
 
 // installable app: register the service worker, and refresh the data whenever the app comes back to the screen
-if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => { r.update().catch(() => {}); document.addEventListener('visibilitychange', () => { if (!document.hidden) r.update().catch(() => {}); }); }).catch(() => {}));
+// a tapped alert the service worker saved: show it whenever the app is on screen (covers taps while the app was asleep)
+let PEND_BUSY = false;
+async function checkPendingAlert() {
+  if (PEND_BUSY || document.hidden) return; PEND_BUSY = true;
+  try {
+    const c = await caches.open('oxtail-alerts'); const r = await c.match('pending');
+    if (r) { const p = await r.json(); await c.delete('pending');
+      if (Date.now() - (p.t || 0) < 15 * 60 * 1000 && p.id) { $$('.modal').forEach(m => m.remove()); if (p.alert && p.alert.report) { openAlert(p.alert); renderAlertList(); } else await showAlertById(p.id); } }
+  } catch (e) {}
+  PEND_BUSY = false;
+}
+document.addEventListener('visibilitychange', () => setTimeout(checkPendingAlert, 250));
+addEventListener('focus', () => setTimeout(checkPendingAlert, 250));
+addEventListener('pageshow', () => setTimeout(checkPendingAlert, 400));
+setTimeout(checkPendingAlert, 900);
 let _hiddenAt = 0;
 document.addEventListener('visibilitychange', () => { if (document.hidden) _hiddenAt = Date.now(); else if (_hiddenAt && Date.now() - _hiddenAt > 10 * 60 * 1000) location.reload(); });
 
@@ -826,9 +841,9 @@ async function renderAlertList() {
 }
 (async () => {
   const id = new URLSearchParams(location.search).get('alert');
-  if (id) { history.replaceState(null, '', location.pathname + (LID ? '?league=' + LID : '') + location.hash); setTimeout(() => showAlertById(id), 400); }
+  if (id) { caches.open('oxtail-alerts').then(c => c.delete('pending')).catch(() => {}); history.replaceState(null, '', location.pathname + (LID ? '?league=' + LID : '') + location.hash); setTimeout(() => showAlertById(id), 400); }
   renderAlertList();
-  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => { if (ev.data && ev.data.type === 'alert' && ev.data.id) { $$('.modal').forEach(m => m.remove()); if (ev.data.alert && ev.data.alert.report) openAlert(ev.data.alert); else showAlertById(ev.data.id); } });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => { if (ev.data && ev.data.type === 'alert' && ev.data.id) { caches.open('oxtail-alerts').then(c => c.delete('pending')).catch(() => {}); $$('.modal').forEach(m => m.remove()); if (ev.data.alert && ev.data.alert.report) openAlert(ev.data.alert); else showAlertById(ev.data.id); } });
   // if the app was asleep when you tapped, the message can get lost: check again when it comes back to the screen
   document.addEventListener('visibilitychange', () => { const id = new URLSearchParams(location.search).get('alert'); if (!document.hidden && id && !$$('.asheetwrap').length) showAlertById(id); });
 })();
