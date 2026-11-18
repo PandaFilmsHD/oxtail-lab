@@ -60,7 +60,7 @@ def league_xpts(xs):
             xs["rush_yards_gained_exp"] * SC.get("24", 0) + xs["rush_touchdown_exp"] * SC.get("25", 0) + xs["receptions_exp"] * SC.get("53", 0) +
             xs["rec_yards_gained_exp"] * SC.get("42", 0) + xs["rec_touchdown_exp"] * SC.get("43", 0) +
             (xs["pass_two_point_conv_exp"] + xs["rush_two_point_conv_exp"] + xs["rec_two_point_conv_exp"]) * SC.get("19", 2))
-rng = np.random.default_rng()
+rng = np.random.default_rng(12345)   # fixed seed: same inputs give the same odds
 AVAIL = {k: v for k, v in A["avail"].items() if not k.startswith("_")}
 OVR = {k: v for k, v in A["override"].items() if not k.startswith("_")}
 CORE = set(LA.get("core", []))

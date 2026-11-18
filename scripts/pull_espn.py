@@ -184,6 +184,10 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
     out = ROOT / "data" / str(LEAGUE) / "model.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists():
+        old = json.loads(out.read_text())
+        if {k: v for k, v in old.items() if k != "at"} == {k: v for k, v in model.items() if k != "at"}:
+            print(f"{settings.get('name')} ({LEAGUE}): nothing changed since last pull")
+            return
         shutil.copy(out, out.parent / "model_prev.json")
     out.write_text(json.dumps(model, separators=(",", ":")))
     print(f"{settings.get('name')} ({LEAGUE}) week {cur}: you are team {me}, {len(teams)} teams, {len(players)} players, {len(sched)} games left")

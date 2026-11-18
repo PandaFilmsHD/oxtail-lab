@@ -1,5 +1,5 @@
 """Run the whole pipeline for every league: ESPN pull -> nflverse -> sims per league -> site index."""
-import json, os, pathlib, subprocess, sys, time
+import hashlib, json, os, pathlib, subprocess, sys, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PY = sys.executable
@@ -11,11 +11,14 @@ def run(args, env=None):
     return subprocess.run([PY] + args, cwd=ROOT, env={**os.environ, **(env or {})}).returncode
 
 
-status = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "espn_ok": True, "message": None}
+status = {"espn_ok": True, "message": None}
 if "--no-pull" not in sys.argv:
     if run(["scripts/pull_espn.py"]) != 0:
         status.update(espn_ok=False, message="Couldn't pull from ESPN. If this keeps happening your ESPN cookies probably expired: update the ESPN_S2 and SWID secrets.")
-    run(["scripts/pull_nflverse.py"])
+    if os.environ.get("NFL_CACHED") == "true" and (ROOT / "data" / "usage.json").exists():
+        print("nflverse: using stats pulled in the last 6 hours")
+    else:
+        run(["scripts/pull_nflverse.py"])
 leagues = json.loads((ROOT / "data" / "leagues.json").read_text()) if (ROOT / "data" / "leagues.json").exists() else {}
 for d in sorted((ROOT / "data").iterdir()):
     if (d / "model.json").exists() and d.name not in leagues:
@@ -24,8 +27,23 @@ index = []
 for lid in leagues:
     if not (ROOT / "data" / lid / "model.json").exists():
         continue
-    if run(["scripts/analyze.py"], {"LEAGUE": lid}) != 0:
+    # only rerun the sims when something actually changed (league data, nflverse stats, settings, injury guesses, or the code)
+    hp = ROOT / "docs" / "data" / lid / ".inputs"
+    srcs = [ROOT / "data" / lid / "model.json", ROOT / "data" / "usage.json", ROOT / "config.json", ROOT / "assumptions.json"] + sorted((ROOT / "scripts").glob("*.py"))
+    hsh = hashlib.sha256()
+    for f in srcs:
+        if f.exists():
+            b = f.read_bytes()
+            if f.name == "model.json":
+                m_ = json.loads(b); m_.pop("at", None); b = json.dumps(m_, sort_keys=True).encode()
+            hsh.update(b)
+    hsh = hsh.hexdigest()
+    if "--force" not in sys.argv and hp.exists() and hp.read_text() == hsh and (ROOT / "docs" / "data" / lid / "latest.json").exists():
+        print(f"{lid}: no changes, skipping sims")
+    elif run(["scripts/analyze.py"], {"LEAGUE": lid}) != 0:
         print(f"analysis failed for {lid}")
+    else:
+        hp.write_text(hsh)
     lp = ROOT / "docs" / "data" / lid / "latest.json"
     if lp.exists():
         s = json.loads(lp.read_text())["summary"]

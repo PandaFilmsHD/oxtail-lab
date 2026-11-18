@@ -8,6 +8,21 @@ const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
 let D, H, CARDS = null, LID = null, BASE = 'data/';
 const tierOf = v => v == null ? null : v >= 80 ? 'legendary' : v >= 55 ? 'epic' : v >= 30 ? 'rare' : v >= 12 ? 'uncommon' : 'common';
 const tierEl = v => { const t = tierOf(v); return t ? h('span', { class: 'tier ' + t, title: 'Trade value ' + v }, t.toUpperCase()) : ''; };
+const TEAMC = { ARI: ['#97233F', '#FFB612'], ATL: ['#A71930', '#000000'], BAL: ['#241773', '#9E7C0C'], BUF: ['#00338D', '#C60C30'], CAR: ['#0085CA', '#101820'], CHI: ['#0B162A', '#C83803'], CIN: ['#FB4F14', '#000000'], CLE: ['#311D00', '#FF3C00'],
+  DAL: ['#003594', '#869397'], DEN: ['#FB4F14', '#002244'], DET: ['#0076B6', '#B0B7BC'], GB: ['#203731', '#FFB612'], HOU: ['#03202F', '#A71930'], IND: ['#002C5F', '#A2AAAD'], JAX: ['#006778', '#D7A22A'], KC: ['#E31837', '#FFB81C'],
+  LV: ['#000000', '#A5ACAF'], LAC: ['#0080C6', '#FFC20E'], LAR: ['#003594', '#FFA300'], MIA: ['#008E97', '#FC4C02'], MIN: ['#4F2683', '#FFC62F'], NE: ['#002244', '#C60C30'], NO: ['#101820', '#D3BC8D'], NYG: ['#0B2265', '#A71930'],
+  NYJ: ['#125740', '#FFFFFF'], PHI: ['#004C54', '#A5ACAF'], PIT: ['#101820', '#FFB612'], SF: ['#AA0000', '#B3995D'], SEA: ['#002244', '#69BE28'], TB: ['#D50A0A', '#34302B'], TEN: ['#0C2340', '#4B92DB'], WSH: ['#5A1414', '#FFB612'] };
+const initials = n => n.replace(/ (Jr\.|Sr\.|II|III|IV|V)$/, '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+function avatar(name, nfl, pos, value, size = 28) {
+  const [a, b] = TEAMC[nfl] || ['#3f5bff', '#a66bff'], t = tierOf(value);
+  const glow = { legendary: '#ffb300', epic: '#b05bff', rare: '#33a6ff', uncommon: '#3ddc84' }[t] || '#ffffff33';
+  const e = h('span', { class: 'av', title: `${name} · ${pos} · ${nfl}` }, initials(name));
+  e.style.cssText = `width:${size}px;height:${size}px;font-size:${size * .4}px;background:linear-gradient(145deg,${a},${b});box-shadow:0 0 0 2px ${glow},0 ${size > 40 ? 6 : 3}px 0 #0007`;
+  if (size > 50) e.append(h('span', { class: 'avpos' }, pos));
+  return e;
+}
+const NFL = n => (D.rankings.find(r => r.player === n) || (D.tester.players.find(p => p.n === n) || {})).nfl;
+const POS = n => (D.rankings.find(r => r.player === n) || D.tester.players.find(p => p.n === n) || {}).pos || '';
 const VAL = n => (CARDS && CARDS[n] && CARDS[n].value) ?? (D && D.rankings && (D.rankings.find(r => r.player === n) || {}).value);
 function countUp(el, to, fmt = v => v.toFixed(1) + '%', ms = 1100) { const t0 = performance.now(); const step = t => { const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(to * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
 function confetti(n = 90) { const cs = ['#ffc83d', '#3ddc84', '#4cc9ff', '#ff6bd6', '#a66bff', '#ff9f43']; for (let i = 0; i < n; i++) { const c = h('div', { class: 'confetti' }); c.style.left = Math.random() * 100 + 'vw'; c.style.background = cs[i % cs.length]; c.style.animationDuration = 1.6 + Math.random() * 1.6 + 's'; c.style.animationDelay = Math.random() * .4 + 's'; document.body.append(c); setTimeout(() => c.remove(), 4000); } }
@@ -81,7 +96,7 @@ function renderHome() {
   $('#kpis').replaceChildren(tile('t1', '🏁 Make the final', k.fi, prev && prev.final_pct), tile('t2', '✅ Make playoffs', k.po, prev && prev.playoffs_pct), tile('t3', '😴 First round bye', k.bye, prev && prev.bye_pct), tile('t4', '👑 1 seed', k.s1, prev && prev.seed1_pct));
   $('#take').replaceChildren(...s.take.map((t, i) => { const li = h('li', {}, t); li.style.animationDelay = i * 70 + 'ms'; return li; }));
   const tw = s.this_week; $('#tw-h').textContent = `🗓️ Week ${tw.week} best lineup`;
-  const lu = h('table', {}, h('tbody', {}, tw.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, pl(x.player), ' ', tierEl(VAL(x.player))), h('td', {}, f1(x.pts))))));
+  const lu = h('table', {}, h('tbody', {}, tw.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), x.slot, VAL(x.player), 26), pl(x.player), tierEl(VAL(x.player)))), h('td', {}, f1(x.pts))))));
   $('#thisweek').replaceChildren(
     tw.opponent ? h('p', { style: 'margin:0 0 10px' }, `vs ${tw.opponent}: you win `, h('b', { style: 'color:var(--gold)' }, pct(tw.win_pct)), ` of sims. Projected ${f1(tw.total)} to ${f1(tw.opp_proj)}.`) : '',
     h('div', { class: 'tw' }, lu), h('p', { class: 'sub', style: 'margin:10px 0 0' }, 'Bench: ' + tw.bench.map(b => `${b.player} ${f1(b.pts)}`).join(', ')));
@@ -95,7 +110,7 @@ function renderTrades() {
   const hide = $('#hideblocked').checked;
   const rows = D.trades.filter(t => (TK === 'all' || t.kind === TK) && !(hide && t.blocked));
   const names = s => s.split(' + ');
-  const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, pl(n), tierEl(VAL(n)))));
+  const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 26), pl(n), tierEl(VAL(n)))));
   $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, 12).map((r, i) => { const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
       h('div', { class: 'who' }, h('span', {}, '🤝 ' + r.partner), h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'BLOCKED' : r.kind === 'realistic' ? 'REALISTIC' : 'STRETCH')),
       h('div', { class: 'swap' }, side('give', 'YOU GIVE', r.give), h('div', { class: 'arrow' }, '➜'), side('get', 'YOU GET', r.get)),
@@ -191,7 +206,7 @@ function renderRanks() {
   const rows = D.rankings.filter(r => (RK.pos === 'ALL' || r.pos === RK.pos) && (!RK.fa || r.owner === 'Free agent') && (!q || r.player.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q)));
   const sosC = v => v === 'Easy' ? 'pos' : v === 'Tough' ? 'neg' : '';
   table($('#rtable'), [
-    { k: 'player', h: 'Player', l: 1, f: r => pl(r.player) }, { k: 'tier', h: 'Tier', l: 1, sv: r => r.value ?? -1, f: r => tierEl(r.value) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'owner', h: 'Team', l: 1 },
+    { k: 'player', h: 'Player', l: 1, f: r => h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(r.player, r.nfl, r.pos, r.value, 26), pl(r.player)) }, { k: 'tier', h: 'Tier', l: 1, sv: r => r.value ?? -1, f: r => tierEl(r.value) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'owner', h: 'Team', l: 1 },
     { k: 'value', h: 'Trade value', t: '0-100. Points over a replacement starter for the rest of the season, adjusted for usage trend', f: r => r.value == null ? '—' : r.value },
     { k: 'my_value', h: 'Value to you', t: '0-100. Same idea but weighted to the playoff weeks you will actually play', f: r => r.my_value == null ? '—' : r.my_value },
     { k: 'po_n', h: 'Playoff rk', sv: r => -r.po_n, f: r => r.pos + r.po_n }, { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) },
@@ -288,8 +303,10 @@ async function openCard(name) {
   const statusBits = [c.status && c.status !== 'ACTIVE' ? '🚑 ' + c.status.replace('_', ' ') : '', rep && rep.practice ? `Wk${rep.week} practice: ${rep.practice.replace(' in Practice', '').replace('Participation', '')}${rep.injury ? ' (' + rep.injury + ')' : ''}` : '', `${c.own}% rostered` + (c.own_chg ? ` (${sgn(c.own_chg)})` : '')].filter(Boolean);
   const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox ' + (tierOf(c.value) || '') },
     h('button', { class: 'x', onclick: () => m.remove() }, '×'),
-    h('h2', {}, c.name, ' ', tierEl(c.value)),
-    h('div', { class: 'sub', style: 'margin:4px 0 14px;font-size:14px' }, `${c.pos} · ${c.nfl} · ${c.mine ? '⭐ Your team' : c.owner}  ·  ` + statusBits.join('  ·  ')),
+    h('div', { style: 'display:flex;gap:18px;align-items:center;margin-bottom:14px' }, avatar(c.name, c.nfl, c.pos, c.value, 96),
+      h('div', {}, h('h2', {}, c.name, ' ', tierEl(c.value)),
+        h('div', { class: 'sub', style: 'margin:6px 0 0;font-size:14px' }, `${c.pos} · ${c.nfl} · ${c.mine ? '⭐ Your team' : c.owner}`),
+        statusBits.length ? h('div', { class: 'sub', style: 'margin:2px 0 0' }, statusBits.join('  ·  ')) : '')),
     h('div', { style: `display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-radius:16px;background:linear-gradient(90deg,${vc}33,transparent);border:2px solid ${vc}` },
       h('div', { style: `font-family:var(--game);font-size:28px;color:#111;background:${vc};padding:4px 16px;border-radius:12px;box-shadow:0 4px 0 ${vd}` }, c.verdict),
       h('div', { style: 'font-size:16px;flex:1;min-width:200px' }, c.verdict_line)),

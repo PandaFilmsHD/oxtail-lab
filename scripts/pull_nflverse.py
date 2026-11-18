@@ -222,7 +222,9 @@ def main():
         e["weeks"] = [e["weeks"][w] for w in sorted(e["weeks"])]
     out = ROOT / "data" / "usage.json"
     out.parent.mkdir(exist_ok=True)
-    out.write_text(json.dumps({"players": P, "teams": TEAMS}, separators=(",", ":")))
+    txt = json.dumps({"players": P, "teams": TEAMS}, separators=(",", ":"), sort_keys=True)
+    if not out.exists() or out.read_text() != txt:
+        out.write_text(txt)
     print(f"usage.json: {len(P)} players, {len(TEAMS)} teams")
 
 

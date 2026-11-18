@@ -182,3 +182,7 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
 @media(max-width:600px){.logo{font-size:24px}.tile .v{font-size:30px}.gauge .num{font-size:44px}h2{font-size:22px}nav.tabs button{font-size:14px;padding:9px 12px}.tcard .swap{grid-template-columns:1fr}.tcard .arrow{transform:rotate(90deg);text-align:center}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.av{position:relative;flex:0 0 auto;display:inline-grid;place-items:center;border-radius:28%;font-family:var(--game);color:#fff;text-shadow:0 2px 0 #0008;letter-spacing:.5px;vertical-align:middle}
+.av .avpos{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:12px;background:#0b0c26;border:2px solid var(--gold);color:var(--gold);padding:0 7px;border-radius:8px;text-shadow:none}
+.tcard .foot{flex-wrap:wrap}.tcard .foot .btn{white-space:nowrap;margin-left:auto}.tcard .meta{flex:1;min-width:140px}
+.tcard .side .p{flex-wrap:nowrap}
