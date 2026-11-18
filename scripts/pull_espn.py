@@ -141,7 +141,7 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
     for i in range(0, len(ids), 40):
         chunk = ids[i:i + 40]
         flt = {"players": {"filterIds": {"value": chunk},
-                           "filterStatsForTopScoringPeriodIds": {"value": 17, "additionalValue": [f"00{SEASON}", f"10{SEASON}"]}}}
+                           "filterStatsForTopScoringPeriodIds": {"value": 17, "additionalValue": [f"00{SEASON}", f"10{SEASON}", f"11{SEASON}{cur}"]}}}
         r = get(BASE, {"view": "kona_player_info", "scoringPeriodId": cur}, flt)
         for x in r.get("players", []):
             p = x["player"]
@@ -217,6 +217,7 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         nw["text"] = nw["text"][:700]
         NEWS[x["id"]] = nw; x["news"] = nw
         time.sleep(0.05)
+    print(f"  ESPN weekly projections: {sum(1 for x in players if x.get('proj') is not None)}/{len(players)} players")
     dbg = [x for x in hurt if x["n"] in ("Michael Wilson", "Puka Nacua")]
     for x in dbg:
         print(f"  news {x['n']}: {json.dumps(x.get('news'))[:400]}")
