@@ -200,3 +200,6 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 .tcard .foot{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;border-top:2px dashed #2c3080;padding-top:10px}
 .tcard .meta{text-align:left;font-size:12px;line-height:1.35}
 @media(max-width:600px){.tcard .swap{grid-template-columns:1fr}.tcard .arrow{transform:rotate(90deg)}.tcard .foot{grid-template-columns:1fr auto}.tcard .meta{grid-column:1/-1;order:3}}
+
+.tcard{overflow:hidden;min-width:0}.tcard .side,.tcard .swap{max-width:100%}
+@media(max-width:860px){.tcard .swap{grid-template-columns:1fr}.tcard .arrow{animation:none;transform:rotate(90deg);justify-self:center}}
