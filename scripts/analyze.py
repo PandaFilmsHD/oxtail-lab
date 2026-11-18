@@ -555,6 +555,41 @@ if _ap.exists():
         n_ = len(R_); STACK[pos] = round((n_ * float(best) + 20 * 0.5) / (n_ + 20), 2); STACK_N[pos] = n_   # shrink toward 50/50
 print("our weight vs ESPN this week:", STACK or "50/50 (no graded weeks yet)")
 
+# ---------------- validated rules from the 1,100-row blind review (each held up across 2022-2024) ----------------
+def _uw(n):
+    return [x for x in (USAGE.get(norm(n)) or {}).get("weeks", []) if x["w"] < CUR]
+# 1) backup QB now starting: judge him only on games where he actually played QB (15+ attempts)
+QBSTART = {}
+for n, p in P.items():
+    if p["pos"] != "QB":
+        continue
+    u = _uw(n); real_ = [x for x in u if (x.get("att") or 0) >= 15]; low = [x for x in u if (x.get("att") or 0) < 15]
+    if low and len(real_) >= 1 and (u[-1].get("att") or 0) >= 15:
+        pts_ = [p["wk"].get(str(x["w"])) for x in real_ if p["wk"].get(str(x["w"]))]
+        if pts_:
+            QBSTART[n] = round(sum(pts_) / len(pts_), 1)
+            AVG[n] = QBSTART[n]
+# 2) left last game early (snaps under half his usual) -> -23% next game
+HURT_LAST = {}
+for n, p in P.items():
+    if p["pos"] not in SKILL:
+        continue
+    u = [x for x in _uw(n) if x.get("snap") is not None]
+    if len(u) >= 4 and u[-1]["w"] == max((x["w"] for x in u), default=0):
+        med = sorted(x["snap"] for x in u[:-1])[len(u[:-1]) // 2]
+        if med >= 40 and u[-1]["snap"] < 0.5 * med:
+            HURT_LAST[n] = (u[-1]["w"], u[-1]["snap"], med)
+# 4) the team's regular QB (most real starts) and whether he's out
+TEAM_QB = {}
+for n, p in P.items():
+    if p["pos"] == "QB":
+        st_ = sum(1 for x in _uw(n) if (x.get("att") or 0) >= 15)
+        if st_ >= 3 and st_ > TEAM_QB.get(p["nfl"], ("", 0))[1]:
+            TEAM_QB[p["nfl"]] = (n, st_)
+print(f"rules: {len(QBSTART)} QBs judged on real starts, {len(HURT_LAST)} left last game early, {len(TEAM_QB)} team QBs known")
+
+def nxt_game(p):
+    return next((w for w in WKS if opp(p, w)), None)
 V = {}
 for n, p in P.items():
     r = recent(p)
@@ -607,6 +642,10 @@ for n, p in P.items():
             v[w] = round(wm * mine_ + (1 - wm) * p["proj"], 2) if p["proj"] > 0 else 0.0
         else:
             v[w] = mine_
+        if w == nxt_game(p) and n in HURT_LAST:
+            v[w] = round(v[w] * 0.77, 2)   # left his last game early: these guys usually stay banged up
+        if w == CUR and p["pos"] in ("WR", "TE") and (p.get("inj") == "QUESTIONABLE"):
+            v[w] = round(v[w] * 0.85, 2)   # questionable WR/TE score less even when they play
         inj = p.get("inj") or "ACTIVE"
         if av:
             q[w] = float(av.get(str(w), 0))
@@ -633,6 +672,19 @@ def ev(n, w):
     return x["v"][w] * x["q"][w] if x and w in x["v"] else 0.0
 
 
+
+
+# WR/TE when the team's regular QB is out: -14% (scaled by the chance he sits)
+for n, p in P.items():
+    if p["pos"] not in ("WR", "TE") or n not in V:
+        continue
+    tq = TEAM_QB.get(p["nfl"])
+    if not tq or tq[0] not in V or tq[0] == n:
+        continue
+    for w in WKS:
+        sit = 1 - V[tq[0]]["q"][w]
+        if sit > 0.25 and V[n]["v"][w] > 0:
+            V[n]["v"][w] = round(V[n]["v"][w] * (1 - 0.14 * sit), 2)
 
 # ---------------- backup bump: when a regular starter at his position sits, the backup scores more ----------------
 # 4 past seasons: backups (projected under 7) averaged about +2.3 (WR), +3.3 (RB), +2.5 (TE) when a 12+ ppg teammate at the position sat.
@@ -1642,6 +1694,13 @@ def verdict(n, p, pr):
         a_ = AVAIL[n]; R.append(("🩺", AUTO_WHY[n] + " Chance to play: " + ", ".join(f"Wk {w} {round(100 * float(a_[str(w)]))}%" for w in WKS if w >= CUR and float(a_.get(str(w), 0)) > 0)[:120] + "."))
     if n in ROLE and n not in FILLIN and abs(ROLE[n]["avg"] - p["avg"]) >= 1.5:
         ro = ROLE[n]; R.append(("📈" if ro["dir"] == "up" else "📉", f"His role changed in Wk {ro['since']} (snaps {ro['snap_before']}% → {ro['snap_after']}%). Since then: {ro['pts_avg']} pts a game, usage worth {ro['xfp_avg']}. We judge him on the new role ({ro['avg']}) instead of his season average ({p['avg']})."))
+    if n in HURT_LAST:
+        hw_, hs_, hm_ = HURT_LAST[n]; R.append(("🤕", f"Only played {hs_}% of snaps in Wk {hw_} (usually {hm_}%). Guys who leave early tend to stay banged up, so his next game is projected about 23% lower."))
+    if n in QBSTART:
+        R.append(("🔄", f"Judged only on games he actually started at QB ({QBSTART[n]} pts a game), not his backup snaps."))
+    tq_ = TEAM_QB.get(p["nfl"])
+    if p["pos"] in ("WR", "TE") and tq_ and tq_[0] in V and V[tq_[0]]["q"].get(CUR, 1) < 0.75:
+        R.append(("🧢", f"{tq_[0]} might not start at QB, and WR/TEs score about 14% less with a backup throwing to them."))
     if n in FILLIN:
         fi = FILLIN[n]
         R.append(("🔁", f"Most of his points came in Weeks {', '.join(map(str, fi['out_weeks']))} while {fi['starter']} was out. {fi['starter']} is back, so he's valued as a backup now" + (f" ({fi['with_pg']:.1f} pts a game when they both played)." if fi["with_pg"] is not None else " (he's barely played with him back).")))

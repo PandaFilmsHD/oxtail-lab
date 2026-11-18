@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 11,
    "at": "2026-11-18T06:45:24Z",
-   "champ_pct": 32.1,
+   "champ_pct": 32.0,
    "todo": [
     {
      "urgent": false,
@@ -32,8 +32,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Rhamondre Stevenson + KC Concepcion for Quinshon Judkins (Griffin's Great Team)",
-     "detail": "Title odds +1.5%. Would you do Rhamondre Stevenson and KC Concepcion for Quinshon Judkins? I think Stevenson slides right into your RB spot, and you get depth for injuries and byes down the stretch.",
+     "title": "Offer Rhamondre Stevenson + Rome Odunze for Kyle Monangai + DK Metcalf (Gomd Naber)",
+     "detail": "Title odds +2.5%. Would you do Rhamondre Stevenson and Rome Odunze for Kyle Monangai and DK Metcalf? I think Odunze slides right into your FLEX spot, and Metcalf is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -62,16 +62,9 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Emmett Johnson or Josh Downs",
-     "detail": "Emmett Johnson 10.1 vs Josh Downs 9.3. Josh Downs has the higher ceiling (12.7 vs 9.4). Go with him if you need a big week.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
-     "detail": "Title odds +7.7%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
+     "detail": "Title odds +7.8%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -82,27 +75,27 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:43Z",
-   "champ_pct": 3.5,
+   "champ_pct": 4.1,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.5%.",
+     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.9%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Carnell Tate or David Montgomery",
-     "detail": "Carnell Tate 10.8 vs David Montgomery 11.2. Carnell Tate is 85% to play, so if he's ruled out, David Montgomery is your guy.",
+     "title": "Toss-up at FLEX: Carnell Tate or Darren Waller",
+     "detail": "Carnell Tate 9.1 vs Darren Waller 9.0. Carnell Tate is 85% to play, so if he's ruled out, Darren Waller is your guy.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Kyren Williams + Bijan Robinson for D'Andre Swift + George Pickens (Ryan's Rad Team)",
-     "detail": "Title odds +1.9%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
+     "title": "Offer Kyren Williams + Bijan Robinson for D'Andre Swift + Garrett Wilson (Ryan's Rad Team)",
+     "detail": "Title odds +1.5%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and Garrett Wilson? I think it bumps your lineup about 1.6 pts a week, and Williams slides right into your RB spot.",
      "tab": "trades"
     }
    ]
@@ -113,7 +106,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:30Z",
-   "champ_pct": 33.6,
+   "champ_pct": 34.8,
    "todo": [
     {
      "urgent": false,
@@ -132,8 +125,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Denzel Boston + Jaylen Warren for Tony Pollard (Melissa's Magnificent Team)",
-     "detail": "Title odds +3.7%. Would you do Denzel Boston and Jaylen Warren for Tony Pollard? I think Boston slides right into your WR spot over Samuel, and you get depth for injuries and byes down the stretch.",
+     "title": "Offer Saquon Barkley + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
+     "detail": "Title odds +5.5%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
      "tab": "trades"
     }
    ]
