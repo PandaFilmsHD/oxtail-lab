@@ -617,6 +617,16 @@ for w_, d_ in LINES.items():
 OPP_IT = {t: sum(v) / len(v) for t, v in OPP_IT.items()}
 _dst = [p["avg"] for p in P.values() if p["pos"] == "D" and p["avg"]]
 DST_SCALE = (sorted(_dst)[len(_dst) // 2] / 5.0) if _dst else 1.0   # this league's D/ST scoring vs the standard the fit used
+_k = [p["avg"] for p in P.values() if p["pos"] == "K" and p["avg"]]
+K_SCALE = (sorted(_k)[len(_k) // 2] / 7.9) if _k else 1.0
+def k_proj(p, w):
+    """Kickers: own team's Vegas expected score + a little of his own average (2022-25 backtest)."""
+    if not opp(p, w):
+        return None
+    it = ((LINES.get(w) or {}).get(p["nfl"]) or {}).get("it") or OPP_IT.get(p["nfl"])
+    if it is None:
+        return None
+    return max(0.0, K_SCALE * (3.6 + 0.07 * (p["avg"] / max(K_SCALE, 0.1)) + 0.17 * it))
 def dst_proj(p, w):
     g = opp(p, w)
     if not g or g == "?":
@@ -697,6 +707,10 @@ for n, p in P.items():
         itr = it_ratio(p["nfl"], w)
         vf = itr ** VEGAS_B.get(p["pos"], 0) if itr else 1.0   # Vegas implied team points, only as much as the backtest says it helps
         mine_ = round(base * f * vf, 2)
+        if p["pos"] == "K":
+            kp_ = k_proj(p, w)
+            if kp_ is not None:
+                mine_ = round(0.8 * kp_ + 0.2 * base, 2)
         if p["pos"] == "D":
             dp_ = dst_proj(p, w)
             if dp_ is not None:
