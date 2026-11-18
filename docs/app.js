@@ -690,6 +690,93 @@ function openWhy(title, lines, sub) {
   document.body.append(m);
 }
 function legRow(l) { const w = whyOf(l.label); return h('div', { class: 'leg' + (w ? ' tap' : ''), onclick: w ? (e => { e.stopPropagation(); openWhy(l.label, w, `${Math.round(l.p)}% in the sims`); }) : null }, h('span', { class: 'lp ' + (l.p >= 80 ? 'hi' : '') }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), l.lean >= 2 ? h('span', { class: 'tag real', title: 'Our sims lean this way vs the market' }, '✓ LEAN') : ''); }
+// ---------- share a parlay: image card + text, through the phone's share sheet ----------
+function legReason(label) {   // one short, plain line on why a leg is in there
+  const w = whyOf(label) || [];
+  const news = w.find(t => t.startsWith('📰')); if (news) return news.replace(/^\S+\s/, '').replace(/, and the line.*$/, '') + ', more work for him';
+  const ang = w.find(t => t.startsWith('📐')); if (ang) return ang.replace(/^\S+\s/, '').split('.')[0];
+  const PLAIN = { "Vegas: his team's expected points": ['team projected to score more', 'team projected to score less'], 'Game script (spread vs usual)': ['game script helps him', 'game script hurts him'],
+    'Opponent defense vs his position': ['soft matchup', 'tough matchup'], 'Wind forecast': ['wind helps', 'windy game'], 'Cold forecast': ['cold helps', 'cold game'],
+    'QB situation vs his usual': ['better QB situation', 'worse QB situation'] };
+  const f = w.filter(t => /^(⬆️|⬇️)/.test(t)).map(t => { const m = t.match(/^(⬆️|⬇️)\s(.+):\s([+-]\d+)%/); if (!m) return null; const k = m[2], up = m[1] === '⬆️'; const pl = PLAIN[k] || [k + ' up', k + ' down']; return `${up ? pl[0] : pl[1]} (${m[3]}%)`; }).filter(Boolean);
+  const g = (w.find(t => t.startsWith('⚖️')) || '').match(/: (\d+(?:\.\d+)?) → (\d+(?:\.\d+)?)/);
+  const gap = g ? `market avg ${(+g[1]).toFixed(1)}, ours ${(+g[2]).toFixed(1)}` : '';
+  return [f[0], gap].filter(Boolean).join(' · ').slice(0, 95);
+}
+function parlayWhy(pl) {
+  const why = (pl.why || []).slice();
+  if (!why.length) {
+    const nl = pl.legs.filter(l => (l.lean || 0) >= 2).length;
+    if (nl) why.push(`${nl} of ${pl.legs.length} legs are ones the sims like more than the market`);
+    if (pl.lift && pl.lift > 1.01) why.push(`legs from the same game move together (a QB throwing less means his receivers catch less), so they hit together ${Math.round(100 * (pl.lift - 1))}% more often than if they were unrelated`);
+    if (!nl && !(pl.lift > 1.01)) why.push('every leg is priced near the market, so the value comes from getting a better price than fair');
+  }
+  return why;
+}
+function parlayText(pl, title) {
+  const lines = [`${title}: ${Math.round(pl.p)}% to hit in 50,000 sims (fair ${odds(pl.fair)}, worth up to ${Math.max(1, Math.floor(pl.p))}¢ a share)`];
+  pl.legs.forEach((l, i) => { const r = legReason(l.label); lines.push(`${i + 1}. ${l.label} (${Math.round(l.p)}%)${r ? ': ' + r : ''}`); });
+  lines.push('Why: ' + parlayWhy(pl).join('; ') + '.');
+  lines.push('Oxtail Lab sims');
+  return lines.join('\n');
+}
+function wrapT(ctx, text, maxW) {
+  const words = (text || '').split(' '), out = []; let cur = '';
+  for (const w of words) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { out.push(cur); cur = w; } else cur = t; }
+  if (cur) out.push(cur); return out;
+}
+async function parlayImage(pl, title) {
+  const W = 1080, pad = 64, c = document.createElement('canvas'), x = c.getContext('2d');
+  const font = (sz, wt) => `${wt || 700} ${sz}px -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  const legW = W - 2 * pad - 200;
+  const legBlocks = pl.legs.map(l => { x.font = font(34, 700); const a = wrapT(x, l.label, legW); x.font = font(26, 500); const r = wrapT(x, legReason(l.label), legW); return { l, a, r }; });
+  x.font = font(30, 500);
+  const whyLines = parlayWhy(pl).flatMap(t => wrapT(x, '• ' + t, W - 2 * pad - 20));
+  const blockH = b => 40 + 44 * b.a.length + 34 * b.r.length;
+  const H = 350 + legBlocks.reduce((a, b) => a + blockH(b) + 16, 0) + 100 + 40 * whyLines.length + 110;
+  c.width = W; c.height = H;
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#24287a'); g.addColorStop(1, '#0b0c24'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#ffc83d'; x.lineWidth = 8; x.strokeRect(16, 16, W - 32, H - 32);
+  x.fillStyle = '#ffc83d'; x.font = font(40, 800); x.fillText('🏈 OXTAIL LAB', pad, 100);
+  x.fillStyle = '#cfd3ff'; x.font = font(30, 600); x.fillText(title, pad, 148);
+  x.fillStyle = '#3ddc84'; x.font = font(110, 900); x.fillText(Math.round(pl.p) + '%', pad, 268);
+  x.fillStyle = '#cfd3ff'; x.font = font(28, 500); x.fillText('hits in 50,000 sims', pad + 6, 308);
+  x.textAlign = 'right'; x.fillStyle = '#ffc83d'; x.font = font(80, 900); x.fillText(odds(pl.fair), W - pad, 248);
+  x.fillStyle = '#cfd3ff'; x.font = font(28, 500); x.fillText(`fair odds · up to ${Math.max(1, Math.floor(pl.p))}¢ a share`, W - pad, 294); x.textAlign = 'left';
+  let y = 360;
+  for (const b of legBlocks) {
+    const bh = blockH(b);
+    x.fillStyle = '#0f1138'; x.strokeStyle = '#2c3080'; x.lineWidth = 4; x.beginPath();
+    if (x.roundRect) x.roundRect(pad, y, W - 2 * pad, bh, 18); else x.rect(pad, y, W - 2 * pad, bh);
+    x.fill(); x.stroke();
+    x.fillStyle = b.l.p >= 80 ? '#3ddc84' : '#4cc9ff'; x.font = font(40, 900); x.fillText(Math.round(b.l.p) + '%', pad + 26, y + 56);
+    x.fillStyle = '#ffffff'; x.font = font(34, 700); b.a.forEach((t, i) => x.fillText(t, pad + 170, y + 52 + 44 * i));
+    x.fillStyle = '#9aa0e6'; x.font = font(26, 500); b.r.forEach((t, i) => x.fillText(t, pad + 170, y + 50 + 44 * b.a.length + 34 * i));
+    y += bh + 16;
+  }
+  y += 50; x.fillStyle = '#ffc83d'; x.font = font(32, 800); x.fillText('WHY THESE GO TOGETHER', pad, y); y += 48;
+  x.fillStyle = '#e8eaff'; x.font = font(30, 500); whyLines.forEach(t => { x.fillText(t, pad + 4, y); y += 40; });
+  x.fillStyle = '#7d82c9'; x.font = font(24, 500); x.fillText('Chances from 50,000 simulated games. Not a guarantee. Bet small.', pad, H - 50);
+  return await new Promise(r => c.toBlob(r, 'image/png'));
+}
+async function shareParlay(pl, title, btn) {
+  const text = parlayText(pl, title);
+  try {
+    const blob = await parlayImage(pl, title);
+    const file = new File([blob], 'oxtail-parlay.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    if (navigator.share) { await navigator.share({ text }); return; }
+    await navigator.clipboard.writeText(text).catch(() => {});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'oxtail-parlay.png'; a.click();
+    if (btn) { btn.textContent = '✅ Copied + saved'; setTimeout(() => btn.textContent = '📤 Share', 2000); }
+  } catch (e) { if (e && e.name === 'AbortError') return; try { await navigator.clipboard.writeText(text); if (btn) btn.textContent = '✅ Copied'; } catch (e2) {} }
+}
+function shareBtns(pl, title) {
+  const b = h('button', { class: 'btn small blue', onclick: e => { e.stopPropagation(); shareParlay(pl, title, b); } }, '📤 Share');
+  const c = h('button', { class: 'btn small', onclick: async e => { e.stopPropagation(); try { await navigator.clipboard.writeText(parlayText(pl, title)); c.textContent = '✅ Copied'; setTimeout(() => c.textContent = '📋 Copy text', 1800); } catch (x) { c.textContent = 'Copy failed'; } } }, '📋 Copy text');
+  return h('div', { class: 'tbtns', style: 'margin-top:6px' }, b, c);
+}
+
 async function renderProps() {
   if (!PLD || Date.now() - (PLD._got || 0) > 5 * 60 * 1000) {   // re-check every 5 minutes so new prices and reasons show up without restarting the app
     const f_ = await fetch('data/props_lab.json?v=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
@@ -702,13 +789,13 @@ async function renderProps() {
   const tip = h('div', { class: 'box ptip' }, h('b', {}, '💡 How to use it: '), 'On DraftKings Predictions or Kalshi, only buy when a share costs LESS than our chance (shown in cents). A 40% parlay is worth up to 40¢ a share. The sims start from the betting market and only move for things that held up over 10 seasons, so most edges are small.');
   let out = [];
   if (PLV === 'parlay') {
-    const card = pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, Math.round(pl.p) + '%'), h('div', { class: 'k' }, 'hits in the sims')),
+    const card = (pl, ttl) => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, Math.round(pl.p) + '%'), h('div', { class: 'k' }, 'hits in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
       ...pl.legs.map(legRow), ...(pl.why || []).map(w => h('div', { class: 'k', style: 'color:var(--blue)' }, '🧮 ' + w)), pl.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units)}`), h('span', { class: 'k' }, `only if a share costs under ${cents(pl.p)} (fair ${odds(pl.fair)})`))
-        : h('div', { class: 'pstake', style: 'color:var(--mut);border-color:#3a3f9e' }, h('span', {}, 'No model edge'), h('span', { class: 'k' }, `worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)})`)));
+        : h('div', { class: 'pstake', style: 'color:var(--mut);border-color:#3a3f9e' }, h('span', {}, 'No model edge'), h('span', { class: 'k' }, `worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)})`)), shareBtns(pl, ttl || `${pl.legs.length}-leg parlay`));
     const P = PLD.parlays || {};
     const srt = L => PPS === 'likely' ? [...(L || [])].sort((a, b) => b.p - a.p) : L;
-    const sect = (t, L, sub) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t, sub ? h('small', {}, sub) : ''), h('div', { class: 'bgrid' }, ...srt(L).map(card))] : [];
+    const sect = (t, L, sub) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t, sub ? h('small', {}, sub) : ''), h('div', { class: 'bgrid' }, ...srt(L).map(pl => card(pl, `${pl.legs.length}-leg parlay`)))] : [];
     const sbar = h('div', { class: 'seg', style: 'margin:0 0 6px' }, ...[['value', '💎 Best value'], ['likely', '🎯 Most likely to hit']].map(([v, t]) => h('button', { class: PPS === v ? 'on' : '', onclick: () => { PPS = v; renderProps(); } }, t)));
     out = [tip, sbar, ...sect('⭐ Best 4-leg parlays (+200 to +300)', P.best4, 'Ranked by the math: legs the sims like more than the market, plus same-game legs that hit together.'), ...sect('🪜 +200 to +300 alt ladders', P.ladder, 'Lower alt lines (86 to 94% each) stacked up. Same-game legs priced together.'), ...sect('🔥 Confident parlays', P.conf, 'Bigger payout. Every leg is one the sims like more than the market.'), ...sect('🏈 4-team game parlays', P.g4, '+100 or better'), ...sect('🏈 3-team game parlays', P.g3, '+100 or better'), ...sect('🎯 2-leg prop parlays', P['2']), ...sect('🎯 3-leg prop parlays', P['3'], 'About even money')];
     const T = PLD.teasers || [];
@@ -779,11 +866,11 @@ async function renderProps() {
     const L = PLD.longshots || { singles: [], parlays: [] };
     out = [h('div', { class: 'box ptip' }, '🎰 For fun. These hit 1 to 35% of the time, so most of them lose. Every leg here is one the sims like more than the market does. Keep it to a small bet: ', h('b', {}, usd(0.2)), ' or so.'),
       ...((L.ml_long || []).length ? [h('h3', {}, '🎰 Moneyline longshots', h('small', {}, 'Every favorite this week (and the safest 8 and 6) on one ticket')), h('div', { class: 'bgrid' }, ...L.ml_long.map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig', style: 'color:var(--gold)' }, pl.p + '%'), h('div', { class: 'k' }, `all ${pl.n} win in the sims`)),
-        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`))))] : []),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`), shareBtns(pl, `${pl.n}-team moneyline parlay`))))] : []),
       ...((L.fav_stacks || []).length ? [h('h3', {}, '💪 Favorite stacks', h('small', {}, 'Heavy favorites stacked to about +250 to +400')), h('div', { class: 'bgrid' }, ...L.fav_stacks.map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, pl.p + '%'), h('div', { class: 'k' }, 'all hit in the sims')),
-        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`))))] : []),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`), shareBtns(pl, `${pl.legs.length}-team favorite stack`))))] : []),
       h('h3', { style: 'margin-top:18px' }, '🎰 Longshot parlays'), h('div', { class: 'bgrid' }, ...(L.parlays || []).map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig', style: 'color:var(--gold)' }, pl.p + '%'), h('div', { class: 'k' }, 'hits in the sims')),
-        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`)))),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`), shareBtns(pl, `${pl.legs.length}-leg longshot`)))),
       h('h3', { style: 'margin-top:18px' }, '🎯 Longshot singles'), h('div', { class: 'leglist' }, ...(L.singles || []).map(x => h('div', { class: 'legpick tap', onclick: () => openWhy(x.label, whyOf(x.label), `${Math.round(x.p)}% in the sims, fair ${odds(x.fair)}`) }, h('span', { class: 'lp' }, Math.round(x.p) + '%'), h('span', { class: 'll' }, x.label), h('span', { class: 'mut', style: 'margin-left:auto;text-align:right' }, `fair ${odds(x.fair)}`, x.price ? h('div', { class: 'k' }, `best ${odds(x.price)}`) : ''))))];
   } else if (PLV === 'pickem') {
     const L = PLD.pickem_plays || [];
