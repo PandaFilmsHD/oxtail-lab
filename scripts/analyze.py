@@ -1156,7 +1156,7 @@ for t in IDS:
             st_g = max((P[x].get("start_pct") or 0) for x in G); st_t = max((P[x].get("start_pct") or 0) for x in T_)
             start_ok = st_g >= st_t - 25   # nobody gives up a guy they start every week for a guy the whole league benches
             soon = [w for w in WKS if CUR < w <= CUR + 3] or [CUR]
-            healthy_now = all(sum(V[x]["q"][w] for w in soon) / len(soon) >= 0.6 for x in G)   # a team still playing for something needs guys who play now
+            healthy_now = all(sum(V[x]["q"][w] for w in soon) / len(soon) >= 0.6 and V[x]["q"].get(CUR, 1) >= 0.5 for x in G)   # and he has to be able to play THIS week: managers who need to win now won't take a guy who's out   # a team still playing for something needs guys who play now
             win_now_ok = healthy_now   # every manager plays to win this week, even 2-8 teams: nobody takes a hurt guy
             real = two_for_one_ok and start_ok and win_now_ok and not (both_start and need < -3) and (ratio >= 1.15 if status[t] == "out" else (ratio >= 0.95 and need >= -1))   # within 5% = fair; eliminated teams want a clear win
             stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.85 and need >= -6 and st_g >= st_t - 45 and win_now_ok
