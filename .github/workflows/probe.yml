@@ -7,9 +7,14 @@ jobs:
       - run: |
           UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36"
           curl -sSL -A "$UA" -m 30 -o fp.html "https://www.fantasypros.com/nfl/projections/rb.php?week=11&scoring=PPR"
-          echo "=== FP table head"; grep -o '<thead>.\{0,1500\}' fp.html | head -c 1500; echo
-          echo "=== FP Gibbs row"; grep -o 'Jahmyr Gibbs.\{0,700\}' fp.html | sed -n '2p' | head -c 900; echo
-          curl -sSL -A "$UA" -m 30 -o nfl.json "https://api.fantasy.nfl.com/v2/players/weekprojectedstats?season=2026&week=11"
-          echo "=== NFL head"; head -c 1500 nfl.json; echo
           curl -sSL -A "$UA" -m 30 -o cbs.html "https://www.cbssports.com/fantasy/football/stats/RB/2026/11/projections/ppr/"
-          echo "=== CBS Gibbs"; grep -o 'Jahmyr Gibbs.\{0,1200\}' cbs.html | head -1 | sed 's/<[^>]*>/ /g' | tr -s ' ' | head -c 700; echo
+          python3 - <<'PY'
+          import re
+          for f in ("fp.html","cbs.html"):
+              t=open(f,encoding="utf-8",errors="ignore").read()
+              idx=[m.start() for m in re.finditer("Jahmyr Gibbs", t)]
+              print("=====", f, len(t), "hits", len(idx), "tables", t.count("<table"), "tr", t.count("<tr"))
+              for i in idx[:4]:
+                  s=re.sub(r"\s+"," ",t[max(0,i-300):i+900])
+                  print("---", s[:1200])
+          PY
