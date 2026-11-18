@@ -8,6 +8,13 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install requests
+      - name: Which secrets exist (true/false only, never the values)
+        run: |
+          echo "NTFY_TOPIC repo secret: ${{ secrets.NTFY_TOPIC != '' }}"
+          echo "NTFY_TOPIC variable: ${{ vars.NTFY_TOPIC != '' }}"
+          echo "NTFY secret: ${{ secrets.NTFY != '' }}"
+          echo "ODDS_API_KEY secret: ${{ secrets.ODDS_API_KEY != '' }}"
+          echo "ESPN_S2 secret: ${{ secrets.ESPN_S2 != '' }}"
       - run: python3 scripts/notify.py test
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || vars.NTFY_TOPIC || secrets.NTFY }}
