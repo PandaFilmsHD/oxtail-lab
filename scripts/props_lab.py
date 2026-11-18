@@ -757,7 +757,10 @@ def main():
         return props, legs
     _rat = {}
     price_props({}, _rat)   # pass 1: how far our average sits from the market's average, by market
-    CORR = {k: float(np.median(v)) for k, v in _rat.items() if len(v) >= 8}
+    CORR_RAW = {k: float(np.median(v)) for k, v in _rat.items() if len(v) >= 8}
+    # remove 75% of the league-wide gap between our numbers and the market's: most of it is our bias, but if the market
+    # itself leans one way on a whole stat (e.g. overs priced too high) the leftover 25% lets that show up, and the tracker tests it
+    CORR = {k: v ** 0.75 for k, v in CORR_RAW.items()}
     props, plegs = price_props(CORR, None)   # pass 2: with that systematic gap removed
     ALLP = props   # both sides, for the tracker
     LEGS += plegs
@@ -1011,6 +1014,10 @@ def main():
         if x["grade"]:
             wk[f"{x['player']}|{x['market']}"] = {k: x[k] for k in ("player", "uname", "team", "market", "side", "line", "price", "p", "p_mkt", "edge", "grade", "kick")}
     for g in games:
+        if not g["started"]:   # an angle that went away before kickoff (forecast changed): drop its old pick
+            live_ = {f"G|{g['home']}|{pl['kind']}|{pl['pick'].split()[0]}" for pl in g["plays"]}
+            for k_old in [k for k, v in wk.items() if k.startswith(f"G|{g['home']}|") and k not in live_ and not v.get("graded")]:
+                del wk[k_old]
         for pl in g["plays"]:
             if not g["started"]:
                 for k_old in [k for k, v in wk.items() if k.startswith(f"G|{g['home']}|") and v.get("kind") == pl["kind"] and v.get("result") is None and not v.get("graded")]:
@@ -1203,7 +1210,8 @@ def main():
             if x.get("graded") and x.get("result") is not None:
                 b_ = rec["games" if k.startswith("G|") else "props"]
                 b_[0 if x["result"] else 1] += 1
-                c_ = (x.get("p_mkt") or 52.4) / 100
+                pm0 = (x.get("p_mkt") or 52.4) / 100
+                c_ = min(0.99, pm0 + 0.01 + 0.07 * pm0 * (1 - pm0))   # what a share really costs: market chance + 1 cent + fee (not the flattering no-vig price)
                 b_[2] += ((1 - c_) / c_) if x["result"] else -1   # $1 bought at the market price, like a Kalshi contract
                 ww = rec["weeks"].setdefault(w_, [0, 0, 0.0])
                 ww[0 if x["result"] else 1] += 1; ww[2] += ((1 - c_) / c_) if x["result"] else -1
@@ -1249,7 +1257,7 @@ def main():
                            for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
     rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games", "auto_games", "auto_props")}
     out = {"unit": UNIT, "kalshi": kal_out, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
-           "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},
+           "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR_RAW.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),
            "props": [x for x in props if x["grade"]][:80], "all_props": len(props),
