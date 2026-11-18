@@ -238,7 +238,7 @@ function labSim(give, get, partner, out, N) {
   T.players.forEach(p => { let t = p.t; if (t === me && give.has(p.n)) t = partner; else if (t === partner && get.has(p.n)) t = me; if (ros[t]) ros[t].push(p); });
   // same math as the main sim: for each week, the 4 most uncertain starters are either in or out, weighted by their chance to play
   const lineupTot = (pl_, wi, on) => { const a = pl_.map(p => ({ pos: p.pos, v: on(p) ? p.vv[wi] : 0, n: p.n })).sort((x, y) => y.v - x.v); const u = new Set(); let s = 0; for (const [sl, k] of T.slots) { let c = k; for (const x of a) { if (!c) break; if (u.has(x.n)) continue; if ((T.elig[sl] || []).includes(x.pos)) { u.add(x.n); s += x.v; c--; } } } return s; };
-  const SC = {}, E = {};
+  const SC = {}, E = {}, SD_ = {};
   T.teams.forEach(t => {
     const pl_ = ros[t.id].map(p => ({ ...p, vv: p.v.map((v, i) => out.has(p.n) && W[i] >= T.po[0] ? 0 : v), qq: p.q.map((q, i) => out.has(p.n) && W[i] >= T.po[0] ? 0 : q) }));
     SC[t.id] = W.map((_, wi) => {
@@ -252,10 +252,16 @@ function labSim(give, get, partner, out, N) {
       return { L, cum, mean: L.reduce((a, x) => a + x[0] * x[1], 0) / tp };
     });
     E[t.id] = SC[t.id].map(x => x.mean);
+    // this team's own week-to-week swing: each starter's swing, plus teammates on the same NFL team moving together
+    SD_[t.id] = W.map((_, wi) => { if (!T.sdk) return T.sd; const a = pl_.map(p => ({ p, v: p.vv[wi] * (p.qq[wi] >= 0.5 ? 1 : 0) })).sort((x, y) => y.v - x.v), u = new Set(), st = [];
+      for (const [sl, k] of T.slots) { let c = k; for (const x of a) { if (!c) break; if (u.has(x.p.n)) continue; if ((T.elig[sl] || []).includes(x.p.pos)) { u.add(x.p.n); if (x.v > 0) st.push(x.p); c--; } } }
+      let v = st.reduce((s_, p) => s_ + p.s[wi] ** 2, 0);
+      for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) if (st[i].nfl === st[j].nfl) { const pr = [st[i].pos, st[j].pos].sort(); const r = (T.rho.find(x => x[0] === pr[0] && x[1] === pr[1]) || [0, 0, 0])[2]; v += 2 * r * st[i].s[wi] * st[j].s[wi]; }
+      return T.sdk * Math.sqrt(Math.max(v, 25)); });
   });
   const wi = w => W.indexOf(w), rn = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
   const draw = (t, w) => { const S = SC[t][wi(w)]; if (S.L.length === 1) return S.L[0][1]; const r = Math.random(); let k = 0; while (k < S.cum.length - 1 && S.cum[k] < r) k++; return S.L[k][1]; };
-  const sc = (t, w) => draw(t, w) + T.sd * rn(), g = (a, b, w) => sc(a, w) > sc(b, w) ? [a, b] : [b, a];
+  const sc = (t, w) => draw(t, w) + SD_[t][wi(w)] * rn(), g = (a, b, w) => sc(a, w) > sc(b, w) ? [a, b] : [b, a];
   const ids = T.teams.map(t => t.id); let ch = 0, fi = 0, po = 0;
   for (let n = 0; n < N; n++) {
     const Wn = {}, F = {}; T.teams.forEach(t => { Wn[t.id] = t.wins; F[t.id] = t.pf; });
@@ -363,12 +369,24 @@ function renderLeague() {
 }
 
 // ---------- how it works / settings ----------
+function rcTable(rc) {
+  const head = h('thead', {}, h('tr', {}, ['Week', 'Our model off by', 'ESPN off by', 'Team scores off by', 'Matchups called right'].map(x => h('th', {}, x))));
+  const rows = rc.slice().reverse().map(r => h('tr', {}, h('td', {}, 'Wk ' + r.w), h('td', { class: r.espn_mae == null ? '' : (r.model_mae_vs_espn <= r.espn_mae ? 'pos' : 'neg') }, f1(r.model_mae) + ' pts'), h('td', {}, r.espn_mae == null ? '—' : f1(r.espn_mae) + ' pts'),
+    h('td', {}, r.team_mae != null ? f1(r.team_mae) + ' pts' : '—'), h('td', {}, r.games ? `${r.picked_right}/${r.games}` : '—')));
+  return h('div', { class: 'tw' }, h('table', {}, head, h('tbody', {}, rows)));
+}
 function renderHow() {
+  const rc = D.summary.report_card || [], vr = D.summary.variance;
+  if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
+    rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]
+      : h('p', { class: 'sub', style: 'margin:0' }, `Starting now. This week's projections are saved, and the first grades show up after Week ${D.summary.week} is done. Until then, the backtest below is the best check.`),
+    vr ? h('p', { class: 'sub', style: 'margin:10px 0 0' }, `Week-to-week swings: teams in this league swing about ${f1(vr.league_actual_sd)} pts from week to week. The sims build each team's swing player by player (boom/bust guys swing more, and a QB and his receivers rise and fall together), then match that real number.`) : ''));
   const bt = D.summary.backtest;
   if (bt && !$('#btbox')) $('#how').append(h('div', { class: 'box', id: 'btbox', style: 'margin-top:16px' }, h('h3', {}, '🎯 How accurate are the projections?'),
     h('p', {}, `We replayed ${bt.n.toLocaleString()} past player-weeks this season: for each one, we projected him using only what we knew before that week, then checked what he actually scored.`),
     h('ul', { class: 'bwhy' }, h('li', {}, `Just using season average: off by ${bt.mae_season_avg} pts per player per week.`), h('li', {}, `Our old mix: off by ${bt.mae_old_mix}.`), h('li', {}, `Our mix now: off by ${bt.mae_used}. Best possible mix this season: ${bt.mae_best}.`)),
-    h('p', { class: 'sub', style: 'margin:0' }, `Current mix: ${Math.round(bt.w_xfp * 80)}% usage (what his targets and carries are worth, adjusted for how efficient he is), ${Math.round(bt.w_avg * 80)}% season average, ${Math.round(bt.w_recent * 80)}% last 4 games, 20% ESPN. Usage has been the best predictor every time, so it gets the most weight. It updates every run.`)));
+    h('p', { class: 'sub', style: 'margin:0' }, `Current mix: ${Math.round(bt.w_xfp * 80)}% usage (what his targets and carries are worth, adjusted for how efficient he is), ${Math.round(bt.w_avg * 80)}% season average, ${Math.round(bt.w_recent * 80)}% last 4 games, 20% ESPN. Usage has been the best predictor every time, so it gets the most weight. It updates every run.`),
+    bt.vegas ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Vegas lines (how many points each team is expected to score): ' + Object.entries(bt.vegas).map(([k, v]) => v.elasticity > 0 ? `${k} ${f1(v.mae_without)} → ${f1(v.mae_with)}` : `${k} no help yet`).join(', ') + '. We only use them as much as they actually improved past projections.') : ''));
   const s = D.summary, st = s.settings, sc = s.scoring;
   const names = { '3': 'Passing yard', '4': 'Passing TD', '20': 'Interception', '24': 'Rushing yard', '25': 'Rushing TD', '53': 'Reception', '42': 'Receiving yard', '43': 'Receiving TD', '72': 'Fumble lost', '19': 'Passing 2pt', '26': 'Rushing 2pt', '44': 'Receiving 2pt' };
   const slots = Object.entries(st.slots || {}).map(([k, v]) => `${v} ${k}`).join(', ');

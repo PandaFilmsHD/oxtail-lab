@@ -267,7 +267,17 @@ for n, p in P.items():
 print(f"fill-in guys (scored mostly while the starter was out): {len(FILLIN)}", ", ".join(f"{k} (behind {v['starter']})" for k, v in FILLIN.items()))
 
 # ---------------- backtest: which mix of season avg / last 4 / usage actually predicted past weeks best? ----------------
+# Vegas: each team's implied points for a week (spread + over/under), keyed by ESPN team code
+_RAWL = _U.get("lines") or {}
+LINES = {int(w): {TEAMFIX.get(t, t): v for t, v in d.items()} for w, d in _RAWL.items()}
+_its = [v["it"] for d in LINES.values() for v in d.values()]
+IT_AVG = sum(_its) / len(_its) if _its else 22.5
+def it_ratio(team, w):
+    v = (LINES.get(w) or {}).get(team)
+    return v["it"] / IT_AVG if v else None
+VEGAS_B = {}
 EFF_K = 8
+POSI = {"QB": 0, "RB": 1, "WR": 2, "TE": 3}
 def backtest():
     rows = []
     for n, p in P.items():
@@ -290,7 +300,13 @@ def backtest():
             act = [wk[k] for k in sorted(xw) if k < W and k in wk]
             g_ = len(act); ratio_ = sum(act) / max(1, sum(xw[k] for k in sorted(xw) if k < W and k in wk))
             xf_ *= max(0.75, min(1.35, 1 + (ratio_ - 1) * g_ / (g_ + EFF_K)))   # usage, adjusted for how efficient he's been (shrunk toward average)
-            rows.append((avg_, rec_, xf_, wk[W]))
+            ux = next((x for x in e.get("weeks", []) if x["w"] == W), None)
+            tm = None
+            if ux:   # his team that week = whoever was playing his opponent
+                o_ = TEAMFIX.get(ux.get("opp"), ux.get("opp"))
+                tm = next((t for t, v in (LINES.get(W) or {}).items() if TEAMFIX.get(v["opp"], v["opp"]) == o_), None)
+            itr = it_ratio(tm, W) if tm else None
+            rows.append((avg_, rec_, xf_, wk[W], POSI[p["pos"]], itr if itr else 0.0, opp_factor(p, W) if opp(p, W) else 1.0))
     if len(rows) < 200:
         return None
     X = np.array(rows)
@@ -306,10 +322,25 @@ def backtest():
     OLD = np.array([0.375, 0.3125, 0.3125]); fit = np.array(best[1:])
     use = 0.5 * OLD + 0.5 * fit   # lean toward what the backtest says, but don't let one season of data swing everything
     mae_use = float(np.abs(X[:, :3] @ use - X[:, 3]).mean())
+    # Vegas: does a high implied team total predict beating the projection, beyond the defense matchup?
+    vg = {}
+    pred = (X[:, :3] @ use) * X[:, 6]
+    for pos, i in POSI.items():
+        m_ = (X[:, 4] == i) & (X[:, 5] > 0) & (pred > 2)
+        if m_.sum() < 40:
+            continue
+        lx, ly = np.log(X[m_, 5]), np.log(np.clip(X[m_, 3], 0.5, None) / pred[m_])
+        b = float(np.cov(lx, ly)[0, 1] / max(1e-9, np.var(lx, ddof=1)))
+        b = max(0.0, min(1.5, b * m_.sum() / (m_.sum() + 150)))   # shrink toward no effect when the sample is small
+        before_ = float(np.abs(pred[m_] - X[m_, 3]).mean()); after_ = float(np.abs(pred[m_] * X[m_, 5] ** b - X[m_, 3]).mean())
+        if after_ > before_:
+            b = 0.0; after_ = before_
+        VEGAS_B[pos] = round(b, 2)
+        vg[pos] = {"n": int(m_.sum()), "elasticity": round(b, 2), "mae_without": round(before_, 2), "mae_with": round(after_, 2)}
     old = 0.375 * X[:, 0] + 0.3125 * X[:, 1] + 0.3125 * X[:, 2]
     return {"n": len(rows), "mae_season_avg": round(mae_avg, 2), "mae_old_mix": round(float(np.abs(old - X[:, 3]).mean()), 2),
             "mae_best": round(best[0], 2), "mae_used": round(mae_use, 2), "w_avg": round(float(use[0]), 2), "w_recent": round(float(use[1]), 2), "w_xfp": round(float(use[2]), 2),
-            "fit_avg": round(float(best[1]), 2), "fit_recent": round(float(best[2]), 2), "fit_xfp": round(float(best[3]), 2)}
+            "fit_avg": round(float(best[1]), 2), "fit_recent": round(float(best[2]), 2), "fit_xfp": round(float(best[3]), 2), "vegas": vg}
 BT = backtest()
 BW = (0.3, 0.25, 0.25) if not BT else tuple(0.8 * BT[k] for k in ("w_avg", "w_recent", "w_xfp"))   # ESPN's rest-of-season number keeps the other 0.2
 print("backtest:", BT)
@@ -344,7 +375,9 @@ for n, p in P.items():
             continue
         rk = opp_rank(p, w)
         f = opp_factor(p, w)
-        v[w] = p["proj"] if (w == CUR and p.get("proj") is not None) else round(base * f, 2)
+        itr = it_ratio(p["nfl"], w)
+        vf = itr ** VEGAS_B.get(p["pos"], 0) if itr else 1.0   # Vegas implied team points, only as much as the backtest says it helps
+        v[w] = p["proj"] if (w == CUR and p.get("proj") is not None) else round(base * f * vf, 2)
         inj = p.get("inj") or "ACTIVE"
         if av:
             q[w] = (1.0 if p.get("proj") else 0.0) if w == CUR else float(av.get(str(w), 0))
@@ -358,7 +391,11 @@ for n, p in P.items():
             q[w] = 1.0
         if w == CUR and p.get("proj") == 0:
             q[w] = 0.0
-    V[n] = {"v": v, "q": q, "base": round(base, 1), "recent": None if r is None else round(r, 1)}
+    mc = None
+    if opp(p, CUR):   # the model's own number for this week (before ESPN's projection is swapped in)
+        itr = it_ratio(p["nfl"], CUR)
+        mc = round(base * opp_factor(p, CUR) * (itr ** VEGAS_B.get(p["pos"], 0) if itr else 1.0), 2)
+    V[n] = {"v": v, "q": q, "base": round(base, 1), "recent": None if r is None else round(r, 1), "model_cur": mc}
 
 
 def ev(n, w):
@@ -405,6 +442,45 @@ def scen(rost):
     return sc
 
 
+# ---------------- how much each team's score swings week to week (player by player, teammates move together) ----------------
+CV = {"QB": 0.40, "RB": 0.55, "WR": 0.60, "TE": 0.65, "D": 0.65, "K": 0.45}
+RHO = {frozenset(("QB", "WR")): 0.35, frozenset(("QB", "TE")): 0.30, frozenset(("QB", "RB")): 0.10, frozenset(("WR",)): -0.05, frozenset(("RB",)): -0.10, frozenset(("WR", "TE")): -0.05}
+def p_sd(n, mu):
+    pr = PROF.get(n) or {}
+    g_, sd_ = pr.get("games") or 0, pr.get("sd")
+    prior = CV.get(P[n]["pos"], 0.55) * max(mu, 1.0)
+    if sd_ is None:
+        return prior
+    # his own game log, scaled to this week's projection, blended with a normal swing for his position
+    own = sd_ * (mu / max(1.0, P[n]["avg"])) if P[n]["avg"] > 0 else prior
+    return math.sqrt((g_ * own ** 2 + 4 * prior ** 2) / (g_ + 4))
+_TSD = {}
+def team_sd_raw(names, w):
+    key = (tuple(sorted(names)), w)
+    if key in _TSD:
+        return _TSD[key]
+    _, lu_ = lineup(names, w, detail=True)
+    pl_ = [(x["player"], P[x["player"]]["pos"], P[x["player"]]["nfl"], p_sd(x["player"], x["pts"])) for x in lu_ if x["pts"] > 0]
+    var = sum(sd_ ** 2 for *_, sd_ in pl_)
+    for i in range(len(pl_)):
+        for j in range(i + 1, len(pl_)):
+            if pl_[i][2] == pl_[j][2]:
+                var += 2 * RHO.get(frozenset((pl_[i][1], pl_[j][1])), 0) * pl_[i][3] * pl_[j][3]
+    _TSD[key] = math.sqrt(max(var, 25))
+    return _TSD[key]
+# calibrate to how much teams in this league really swung week to week this season
+_res = []
+for t, tm in TEAMS.items():
+    sc_ = [v for k, v in (tm.get("scores") or {}).items() if int(k) < CUR and v > 0]
+    if len(sc_) >= 4:
+        mu_ = sum(sc_) / len(sc_); _res += [x - mu_ for x in sc_]
+EMP_SD = math.sqrt(sum(x * x for x in _res) / max(1, len(_res) - len(TEAMS))) if len(_res) > 30 else SD
+_raw = [team_sd_raw(ROSTER[t], w) for t in TEAMS for w in WKS]
+SD_K = EMP_SD / (sum(_raw) / len(_raw))
+def team_sd(names, w):
+    return SD_K * team_sd_raw(names, w)
+print(f"weekly swing: league actual {EMP_SD:.1f}, player-level model avg {sum(_raw) / len(_raw):.1f} -> scale {SD_K:.2f}")
+
 IDS = sorted(TEAMS)
 IX = {t: i for i, t in enumerate(IDS)}
 W0 = np.array([TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0) for t in IDS], float)
@@ -423,7 +499,8 @@ def run(rost, N):
             pr = np.array([x[0] for x in L]); pr = pr / pr.sum()
             mu = np.array([x[1] for x in L])
             arr[:, IX[t]] = mu[rng.choice(len(L), N, p=pr)] if len(L) > 1 else mu[0]
-        S[w] = arr + SD * rng.standard_normal((N, T))
+        sdv = np.array([team_sd(rost[t], w) for t in IDS])
+        S[w] = arr + sdv[None, :] * rng.standard_normal((N, T))
     wins = np.tile(W0, (N, 1)); pf = np.tile(PF0, (N, 1))
     wkwin = np.zeros(T)
     for wk, h, a in REM:
@@ -893,7 +970,7 @@ def team_week(t, w):
         o = g[0] if g[1] == t else g[1]
         me_, op_ = base[t]["means"][w], base[o]["means"][w]
         row.update({"opp_id": o, "opponent": TNAME[o], "opp_expected": r1(op_), "opp_record": f'{TEAMS[o]["w"]}-{TEAMS[o]["l"]}',
-                    "win_pct": r1(base[t]["wk"]) if w == CUR else r1(50 * (1 + _erf((me_ - op_) / (SD * 2))))})
+                    "win_pct": r1(base[t]["wk"]) if w == CUR else r1(50 * (1 + _erf((me_ - op_) / (math.sqrt(team_sd(ROSTER[t], w) ** 2 + team_sd(ROSTER[o], w) ** 2) * math.sqrt(2)))))})
     return row
 team_cards = {}
 for t in IDS:
@@ -975,7 +1052,7 @@ for w in WKS:
         o = g[0] if g[1] == ME else g[1]
         ot, olu = lu_rows(ROSTER[o], w)
         row.update({"opponent": TNAME[o], "opp_id": o, "opp_total": r1(ot), "opp_lineup": olu,
-                    "win_pct": r1(mine["wk"]) if w == CUR else r1(50 * (1 + erf((tot_ - ot) / (SD * sqrt(2) * sqrt(2)))))})
+                    "win_pct": r1(mine["wk"]) if w == CUR else r1(50 * (1 + erf((base[ME]["means"][w] - base[o]["means"][w]) / (sqrt(team_sd(ROSTER[ME], w) ** 2 + team_sd(ROSTER[o], w) ** 2) * sqrt(2)))))})
     if w == PO1 and SET.get("playoff_teams") != 4:
         row["note"] = f"You have a {mine['bye']:.0f}% chance at a bye this week."
     schedule.append(row)
@@ -1078,6 +1155,50 @@ if PREV_P.exists():
         q = next((x for x in prev["players"] if x["n"] == n), None)
         if q and p["t"] and q.get("inj") != p.get("inj") and p["pos"] in SKILL:
             changes.append({"type": "injury", "text": f"{n} ({TNAME.get(p['t'], 'FA')}): {q.get('inj')} → {p.get('inj')}"})
+
+# ---------------- weekly report card: save this week's projections, grade past weeks against what happened ----------------
+ARCH_P = ROOT / "data" / LID / "proj_archive.json"
+ARCH = json.loads(ARCH_P.read_text()) if ARCH_P.exists() else {}
+snap_ = {"players": {}, "teams": {str(t): r1(base[t]["means"][CUR]) for t in IDS}, "games": []}
+for n, p in P.items():
+    if p["pos"] in ("QB", "RB", "WR", "TE") and V[n].get("model_cur") is not None and (p["t"] or (p.get("proj") or 0) >= 5):
+        snap_["players"][n] = [V[n]["model_cur"], p.get("proj")]
+for wk, h, a in REM:
+    if wk == CUR:
+        snap_["games"].append([h, a, r1(base[h]["wk"])])
+_has_e = lambda sn: sum(1 for v in sn["players"].values() if v[1] is not None)
+if str(CUR) not in ARCH or _has_e(snap_) >= _has_e(ARCH[str(CUR)]):   # once games start ESPN drops its projections; keep the pre-kickoff snapshot
+    ARCH[str(CUR)] = snap_
+ARCH_P.write_text(json.dumps(ARCH, separators=(",", ":")))
+report = []
+for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
+    W = int(wk_s)
+    if W >= CUR:
+        continue
+    pe_m, pe_e, n_, ne_, pm_e = 0.0, 0.0, 0, 0, 0.0
+    for n, (m_, e_) in sn["players"].items():
+        act = (P.get(n) or {}).get("wk", {}).get(str(W))
+        if not act:
+            continue
+        pe_m += abs(m_ - act); n_ += 1
+        if e_ is not None:
+            pe_e += abs(e_ - act); pm_e += abs(m_ - act); ne_ += 1
+    te, tn = 0.0, 0
+    for t, pr_ in sn["teams"].items():
+        a_ = (TEAMS.get(int(t)) or {}).get("scores", {}).get(str(W))
+        if a_:
+            te += abs(pr_ - a_); tn += 1
+    calls, right, brier = 0, 0, 0.0
+    for h, a, ph in sn["games"]:
+        sh, sa = (TEAMS.get(h) or {}).get("scores", {}).get(str(W)), (TEAMS.get(a) or {}).get("scores", {}).get(str(W))
+        if sh is None or sa is None:
+            continue
+        hw = 1.0 if sh > sa else 0.0
+        calls += 1; right += int((ph >= 50) == (hw == 1)); brier += (ph / 100 - hw) ** 2
+    if n_:
+        report.append({"w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
+                       "games": calls, "picked_right": right, "brier": round(brier / calls, 3) if calls else None})
+
 hist_p = OUT / "history.json"
 hist = json.loads(hist_p.read_text()) if hist_p.exists() else {"runs": [], "moves": []}
 stamp = M["at"]
@@ -1120,12 +1241,12 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
            "playoff_weeks": [PO1, PO2, PO3], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
            "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy, "ideal_lineups": ideal, "tiers": TIERS,
            "expected_lineup": {w: r1(mine["means"][w]) for w in (PO1, PO2, PO3)}, "take": take, "this_week": this_week, "swing": swing,
-           "sims": A["sims"], "backtest": BT, "assumptions": {"avail": AVAIL, "override": OVR},
+           "sims": A["sims"], "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
-tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
+tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k, v in RHO.items()], "weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
-          "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS], "v": [r1(V[n]["v"][w]) for w in WKS], "q": [round(V[n]["q"][w], 2) for w in WKS]}
+          "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS], "v": [r1(V[n]["v"][w]) for w in WKS], "q": [round(V[n]["q"][w], 2) for w in WKS], "s": [r1(p_sd(n, ev(n, w))) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
 latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
           "my_players": my_players, "tester": tester}

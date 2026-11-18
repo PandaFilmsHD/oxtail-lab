@@ -12,7 +12,8 @@ Sources (all public GitHub releases, updated through the season):
 
 Writes data/usage.json ({players: {...}, teams: {...}}). Every source fails soft.
 """
-import csv, gzip, io, json, re, pathlib, collections, traceback
+import csv
+import os, gzip, io, json, re, pathlib, collections, traceback
 import requests
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -211,18 +212,35 @@ def depth():
                 P[k]["depth"] = {"pos": r["pos_abb"], "rank": rank, "espn_id": r.get("espn_id")}
 
 
+LINES = {}  # week -> team -> Vegas implied points (from the spread + over/under)
+def lines():
+    src = os.environ.get("GAMES_CSV") or "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
+    rd = csv.DictReader(open(src)) if os.path.exists(src) else rows(src)
+    for g in rd:
+        if g.get("season") != str(SEASON) or g.get("game_type") != "REG":
+            continue
+        tot, spr = f(g.get("total_line")), f(g.get("spread_line"))
+        if tot is None or spr is None:
+            continue
+        w = int(g["week"]); h, a = g["home_team"], g["away_team"]
+        hs, as_ = f(g.get("home_score")), f(g.get("away_score"))
+        LINES.setdefault(str(w), {})[h] = {"it": round(tot / 2 + spr / 2, 2), "opp": a, "total": tot, "spread": spr, "pts": hs}
+        LINES[str(w)][a] = {"it": round(tot / 2 - spr / 2, 2), "opp": h, "total": tot, "spread": -spr, "pts": as_}
+    return LINES
+
+
 def main():
     print("nflverse:")
     if soft("weekly box scores", box) is None and not P:
         return
     for name, fn in (("snap counts", snaps), ("expected fantasy points", xfp), ("play by play", pbp), ("next gen stats", ngs),
-                     ("pfr advanced", pfr), ("injury reports", injuries), ("depth charts", depth)):
+                     ("pfr advanced", pfr), ("injury reports", injuries), ("depth charts", depth), ("vegas lines", lines)):
         soft(name, fn)
     for e in P.values():
         e["weeks"] = [e["weeks"][w] for w in sorted(e["weeks"])]
     out = ROOT / "data" / "usage.json"
     out.parent.mkdir(exist_ok=True)
-    txt = json.dumps({"players": P, "teams": TEAMS}, separators=(",", ":"), sort_keys=True)
+    txt = json.dumps({"players": P, "teams": TEAMS, "lines": LINES}, separators=(",", ":"), sort_keys=True)
     if not out.exists() or out.read_text() != txt:
         out.write_text(txt)
     print(f"usage.json: {len(P)} players, {len(TEAMS)} teams")
