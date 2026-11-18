@@ -5,21 +5,14 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T06:11:35Z",
-   "champ_pct": 16.5,
+   "at": "2026-11-18T06:16:16Z",
+   "champ_pct": 24.7,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Thu 5:15 PM PT",
      "detail": "C.J. Stroud, Ka'imi Fairbairn, Seth McGowan, Xavier Hutchinson play first. Players lock when their game starts.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Brock Bowers might not play (75%)",
-     "detail": "Check his status before kickoff.",
      "tab": "home"
     },
     {
@@ -33,8 +26,15 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Michael Wilson, drop Chimere Dike",
-     "detail": "Real upgrade: about +1.9 pts a week in your lineup the rest of the way, title odds +5.2%.",
+     "detail": "Real upgrade: about +1.7 pts a week in your lineup the rest of the way, title odds +6.2%.",
      "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Jeremiyah Love + Rhamondre Stevenson for DeVonta Smith + Keenan Allen (Sussy Nutcrackers)",
+     "detail": "Title odds +7.2%. Would you do Jeremiyah Love and Rhamondre Stevenson for DeVonta Smith and Keenan Allen? I think Stevenson slides right into your FLEX spot.",
+     "tab": "trades"
     }
    ]
   },
@@ -43,8 +43,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T06:11:45Z",
-   "champ_pct": 12.0,
+   "at": "2026-11-18T06:16:26Z",
+   "champ_pct": 11.6,
    "todo": [
     {
      "urgent": true,
@@ -74,14 +74,14 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T06:11:49Z",
-   "champ_pct": 5.5,
+   "at": "2026-11-18T06:16:31Z",
+   "champ_pct": 4.7,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.8%.",
+     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
     },
     {
@@ -94,8 +94,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Kyren Williams for George Pickens (Ryan's Rad Team)",
-     "detail": "Title odds +1.7%. Would you do Kyren Williams for George Pickens? I think Williams slides right into your RB spot, and you're deep at WR so you can cover Pickens' spot.",
+     "title": "Offer Kyren Williams + Darren Waller for Dak Prescott + DeVonta Smith (Warrent Acquired )",
+     "detail": "Title odds +1.7%. Would you do Kyren Williams and Darren Waller for Dak Prescott and DeVonta Smith? I think Williams slides right into your FLEX spot over Corum, and Prescott is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -105,8 +105,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T06:11:40Z",
-   "champ_pct": 32.8,
+   "at": "2026-11-18T06:16:21Z",
+   "champ_pct": 32.3,
    "todo": [
     {
      "urgent": false,
