@@ -258,7 +258,7 @@ $('#rq').addEventListener('input', e => { RK.q = e.target.value; renderRanks(); 
 // ---------- my team ----------
 function renderTeam() {
   const sm = D.summary, po = sm.playoff_weeks, hl = sm.healthy_lineup || {}, ex = sm.expected_lineup || {};
-  const lt = (c, k, a, b) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(a)), h('div', { style: 'font-size:13px;font-weight:800' }, `${f1(b)} after injury odds`));
+  const lt = (c, k, a, b) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(a)), h('div', { style: 'font-size:13px;font-weight:800' }, `${f1(b)} expected after injury odds (what League shows)`));
   $('#lusum').replaceChildren(lt('t1', `Wk ${po[1]} semis · full strength`, hl[po[1]], ex[po[1]]), lt('t3', `Wk ${po[2]} final · full strength`, hl[po[2]], ex[po[2]]));
   const IL = sm.ideal_lineups || {};
   $('#ideal').replaceChildren(...po.filter(w => IL[w]).map(w => { const L = IL[w];
@@ -283,7 +283,7 @@ function renderLeague() {
   table($('#ltable'), [
     { k: 'team', h: 'Team (tap one)', l: 1, f: r => h('b', {}, r.team + ' ›') }, { k: 'record', h: 'Record' }, { k: 'pf', h: 'PF', f: r => f1(r.pf) }, { k: 'playoffs_pct', h: 'Playoffs', f: r => pct(r.playoffs_pct) }, { k: 'bye_pct', h: 'Bye', f: r => pct(r.bye_pct) },
     { k: 'champ_pct', h: 'Title', f: r => pct(r.champ_pct) }, { k: 'final_pct', h: 'Final', f: r => pct(r.final_pct) }, { k: 'win_this_week_pct', h: 'Win this week', f: r => pct(r.win_this_week_pct) },
-    { k: 'wk16_lineup', h: 'Semis lineup', f: r => f1(r.wk16_lineup) }, { k: 'wk17_lineup', h: 'Final lineup', f: r => f1(r.wk17_lineup) }
+    { k: 'wk16_lineup', h: 'Semis (expected)', t: 'Best lineup with injury odds built in. Full-strength numbers are on My Team.', f: r => f1(r.wk16_lineup) }, { k: 'wk17_lineup', h: 'Final (expected)', t: 'Best lineup with injury odds built in. Full-strength numbers are on My Team.', f: r => f1(r.wk17_lineup) }
   ], D.league, { rowClass: r => r.me ? 'me' : '', onRow: r => openTeam(r.id) });
   table($('#btable'), [
     { k: 'team', h: 'Team', l: 1 }, { k: 'record', h: 'Record' }, { k: 'playoffs_pct', h: 'Playoff %', f: r => pct(r.playoffs_pct) }, { k: 'needs', h: 'Weakest spot', l: 1 },

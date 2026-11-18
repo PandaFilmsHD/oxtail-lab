@@ -137,13 +137,31 @@ ${METHOD}`;
       history[history.length - 1].content = '⚠️ ' + e.message;
     } finally { clearInterval(tick); busy = false; render(); }
   }
+  // ask Google which models this key can actually use, then pick the best Flash ones
+  let MODELS_CACHE = null;
+  async function geminiModels() {
+    if (MODELS_CACHE) return MODELS_CACHE;
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': getKey() } });
+      const j = await r.json();
+      if (r.status === 400 && /API key/i.test(JSON.stringify(j))) throw new Error('Google says that key isn\'t valid. Tap 🔑, remove it, and paste the key again (it starts with AIza).');
+      const ok = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace('models/', ''))
+        .filter(n => /gemini/.test(n) && !/(image|tts|audio|live|embedding|vision|exp-|thinking|computer|robotics|nano)/.test(n));
+      const score = n => (/flash/.test(n) ? 100 : /pro/.test(n) ? 40 : 0) + (/lite/.test(n) ? -15 : 0) + (/latest/.test(n) ? 8 : 0) + (/preview/.test(n) ? -3 : 0) + parseFloat((n.match(/gemini-(\d+(\.\d+)?)/) || [0, 0])[1]) * 4;
+      ok.sort((a, b) => score(b) - score(a));
+      if (ok.length) { MODELS_CACHE = [...new Set([...ok.slice(0, 6), ...GEMINI_MODELS])]; return MODELS_CACHE; }
+      if (j.error) throw new Error('Google: ' + j.error.message + ' Make a fresh key at aistudio.google.com/apikey and paste it again.');
+    } catch (e) { if (/key/i.test(e.message) || /Google:/.test(e.message)) throw e; }
+    return GEMINI_MODELS;
+  }
   async function askGemini(onText) {
     const base = { systemInstruction: { parts: [{ text: SYS + '\n\n===== LEAGUE DATA =====\n' + context() }] },
       contents: history.slice(0, -1).slice(-12).map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })) };
     // fast settings first (no slow "thinking" step); if a model doesn't accept them, retry plain
     const configs = [{ maxOutputTokens: 2048, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } }, { maxOutputTokens: 2048, temperature: 0.6 }];
     let last = '';
-    for (const model of GEMINI_MODELS) {
+    const models = await geminiModels();
+    for (const model of models) {
       for (const gc of configs) {
         const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
         let r;
@@ -157,7 +175,7 @@ ${METHOD}`;
           const msg = (j.error && j.error.message) || ('Request failed (' + r.status + ')');
           if (r.status === 400 && /API key/i.test(msg)) throw new Error('Google says that key isn\'t valid. Tap 🔑, remove it, and paste the key again (it starts with AIza).');
           if (r.status === 429) throw new Error('You hit Gemini\'s free limit for the moment. Wait a minute and try again.');
-          if (r.status === 403) throw new Error('Google blocked the request: ' + msg);
+          if (r.status === 403 || r.status === 404) { last = last || `Your key can't use ${model}.`; break; }   // this key can't use this model: try the next
           if (r.status === 503 || r.status === 500) { last = 'Google\'s free models are all busy right now. Give it a minute and try again.'; await new Promise(z => setTimeout(z, 1200)); break; }   // busy: next model
           last = `${model}: ${msg}`; continue;   // unsupported setting: retry this model without it
         }
@@ -168,6 +186,7 @@ ${METHOD}`;
         last = `${model}: empty answer (${c.finishReason || 'no reason given'})`;
       }
     }
+    if (/can't use/.test(last)) throw new Error('Your Google key doesn\'t have access to any of the Gemini chat models. Go to aistudio.google.com/apikey, click Create API key (pick "Create in new project"), and paste that new key here.');
     throw new Error(last.startsWith('Google') ? last : 'Gemini didn\'t answer. ' + last);
   }
   function toggle(open) { panel.hidden = !open; fab.hidden = open; if (open) { render(); setTimeout(() => { const i = $c('#chatq'); if (i) i.focus(); }, 50); } }
