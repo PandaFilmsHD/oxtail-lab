@@ -353,10 +353,11 @@ def auto_avail(n):
         why = "Ruled out this week" + (", news says it's a multi-week injury" if lg else "") + (f", ESPN says return around Wk {ret}" if ret else "") + "."
     elif inj == "DOUBTFUL":
         for i, w in enumerate(WKS):
-            q[str(w)] = [0.25, 0.75, 0.92][min(i, 2)]
-        why = "Doubtful this week."
+            q[str(w)] = [0.03, 0.7, 0.9][min(i, 2)]   # 2022-25: regular starters listed Doubtful played 1% of the time
+        why = "Doubtful this week (starters listed Doubtful almost never play)."
     else:   # QUESTIONABLE
-        c0 = 0.9 if "Full" in prac else 0.5 if "Did Not" in prac else 0.75
+        # 2022-25 injury reports, regular starters listed Questionable: played 87% after a full practice, 69% limited, 56% no practice, 70% overall
+        c0 = 0.87 if "Full" in prac else 0.56 if "Did Not" in prac else 0.69 if "Limited" in prac else 0.70
         if SHORT.search(txt): c0 = max(c0, 0.85)
         for i, w in enumerate(WKS):
             q[str(w)] = c0 if i == 0 else 0.95
@@ -545,7 +546,8 @@ if _ap.exists():
         W = int(wk_s)
         if W >= CUR:
             continue
-        for n, (m_, e_) in sn["players"].items():
+        for n, vals in sn["players"].items():
+            m_, e_ = vals[0], vals[1]
             act = (P.get(n) or {}).get("wk", {}).get(str(W))
             if act and e_ is not None and n in P:
                 _rows.setdefault(P[n]["pos"], []).append((m_, e_, act))
@@ -590,6 +592,27 @@ print(f"rules: {len(QBSTART)} QBs judged on real starts, {len(HURT_LAST)} left l
 
 def nxt_game(p):
     return next((w for w in WKS if opp(p, w)), None)
+# ---------------- Sleeper's projections for this week (3rd opinion) ----------------
+_sp = ROOT / "data" / "sleeper_proj.json"
+SLP = {}
+if _sp.exists():
+    _sj = json.loads(_sp.read_text())
+    if int(_sj.get("week") or 0) == CUR:
+        _byname = {}
+        for key, st_ in _sj.get("players", {}).items():
+            nm_, tm_ = key.split("|")
+            pts_ = (st_.get("pass_yd", 0) * SC.get("3", 0) + st_.get("pass_td", 0) * SC.get("4", 0) + st_.get("pass_int", 0) * SC.get("20", 0) +
+                    st_.get("rush_yd", 0) * SC.get("24", 0) + st_.get("rush_td", 0) * SC.get("25", 0) + st_.get("rec", 0) * SC.get("53", 0) +
+                    st_.get("rec_yd", 0) * SC.get("42", 0) + st_.get("rec_td", 0) * SC.get("43", 0) + st_.get("fum_lost", 0) * SC.get("72", 0) +
+                    (st_.get("pass_2pt", 0) + st_.get("rush_2pt", 0) + st_.get("rec_2pt", 0)) * SC.get("19", 2))
+            _byname.setdefault(norm(nm_), []).append((TEAMFIX.get(tm_, tm_), round(pts_, 2)))
+        for n, p in P.items():
+            c_ = _byname.get(norm(n)) or []
+            hit = [v for t_, v in c_ if t_ == p["nfl"]] or ([c_[0][1]] if len(c_) == 1 else [])
+            if hit:
+                SLP[n] = hit[0]
+print(f"sleeper projections matched: {len(SLP)}")
+
 V = {}
 for n, p in P.items():
     r = recent(p)
@@ -640,6 +663,10 @@ for n, p in P.items():
         if w == CUR and p.get("proj") is not None:
             wm = STACK.get(p["pos"], 0.5)   # our weight vs ESPN's for this week, learned from graded weeks
             v[w] = round(wm * mine_ + (1 - wm) * p["proj"], 2) if p["proj"] > 0 else 0.0
+            if n in SLP and p["proj"] > 0:
+                v[w] = round(v[w] * 2 / 3 + SLP[n] / 3, 2)   # plain average with Sleeper too: consensus beats any one source
+        elif w == CUR and n in SLP:
+            v[w] = round(0.5 * mine_ + 0.5 * SLP[n], 2)
         else:
             v[w] = mine_
         if w == nxt_game(p) and n in HURT_LAST:
@@ -1571,7 +1598,7 @@ ARCH = json.loads(ARCH_P.read_text()) if ARCH_P.exists() else {}
 snap_ = {"players": {}, "teams": {str(t): r1(base[t]["means"][CUR]) for t in IDS}, "games": []}
 for n, p in P.items():
     if p["pos"] in ("QB", "RB", "WR", "TE") and V[n].get("model_cur") is not None and (p["t"] or (p.get("proj") or 0) >= 5):
-        snap_["players"][n] = [V[n]["model_cur"], p.get("proj")]
+        snap_["players"][n] = [V[n]["model_cur"], p.get("proj"), SLP.get(n)]
 for wk, h, a in REM:
     if wk == CUR:
         snap_["games"].append([h, a, r1(base[h]["wk"])])
@@ -1585,10 +1612,14 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
     if W >= CUR:
         continue
     pe_m, pe_e, n_, ne_, pm_e = 0.0, 0.0, 0, 0, 0.0
-    for n, (m_, e_) in sn["players"].items():
+    pe_s, ns_ = 0.0, 0
+    for n, vals in sn["players"].items():
+        m_, e_ = vals[0], vals[1]; s_ = vals[2] if len(vals) > 2 else None
         act = (P.get(n) or {}).get("wk", {}).get(str(W))
         if not act:
             continue
+        if s_ is not None:
+            pe_s += abs(s_ - act); ns_ += 1
         pe_m += abs(m_ - act); n_ += 1
         if e_ is not None:
             pe_e += abs(e_ - act); pm_e += abs(m_ - act); ne_ += 1
@@ -1606,7 +1637,8 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
         calls += 1; right += int((ph >= 50) == (hw == 1)); brier += (ph / 100 - hw) ** 2
     pairs_ok, pairs_n = 0, 0
     byp = {}
-    for n, (m_, e_) in sn["players"].items():
+    for n, vals in sn["players"].items():
+        m_ = vals[0]
         act = (P.get(n) or {}).get("wk", {}).get(str(W))
         if act and n in P: byp.setdefault(P[n]["pos"], []).append((m_, act))
     for L_ in byp.values():
@@ -1615,7 +1647,7 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
                 if abs(L_[i][0] - L_[j][0]) <= 3 and L_[i][1] != L_[j][1]:
                     pairs_n += 1; pairs_ok += int((L_[i][0] > L_[j][0]) == (L_[i][1] > L_[j][1]))
     if n_:
-        report.append({"startsit_pct": r1(100 * pairs_ok / pairs_n) if pairs_n else None, "w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
+        report.append({"startsit_pct": r1(100 * pairs_ok / pairs_n) if pairs_n else None, "w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "sleeper_mae": r1(pe_s / ns_) if ns_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
                        "games": calls, "picked_right": right, "brier": round(brier / calls, 3) if calls else None})
 
 hist_p = OUT / "history.json"

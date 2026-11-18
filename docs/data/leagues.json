@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 11,
    "at": "2026-11-18T06:45:24Z",
-   "champ_pct": 32.0,
+   "champ_pct": 31.9,
    "todo": [
     {
      "urgent": false,
@@ -44,13 +44,13 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:36Z",
-   "champ_pct": 7.7,
+   "champ_pct": 7.5,
    "todo": [
     {
      "urgent": true,
      "icon": "\ud83d\udea8",
      "title": "Drake Maye is on bye",
-     "detail": "Add Bo Nix and drop Corey Kiner (+19.4 pts).",
+     "detail": "Add Bo Nix and drop Corey Kiner (+19.3 pts).",
      "tab": "home"
     },
     {
@@ -64,7 +64,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
-     "detail": "Title odds +7.8%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
+     "detail": "Title odds +8.0%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -111,7 +111,7 @@
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
-     "title": "Kenneth Walker III might not play (75%)",
+     "title": "Kenneth Walker III might not play (70%)",
      "detail": "If he's ruled out, start Saquon Barkley (10.9).",
      "tab": "home"
     },

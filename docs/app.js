@@ -398,8 +398,8 @@ function renderLeague() {
 
 // ---------- how it works / settings ----------
 function rcTable(rc) {
-  const head = h('thead', {}, h('tr', {}, ['Week', 'Our model off by', 'ESPN off by', 'Team scores off by', 'Matchups called right', 'Close start/sit calls right'].map(x => h('th', {}, x))));
-  const rows = rc.slice().reverse().map(r => h('tr', {}, h('td', {}, 'Wk ' + r.w), h('td', { class: r.espn_mae == null ? '' : (r.model_mae_vs_espn <= r.espn_mae ? 'pos' : 'neg') }, f1(r.model_mae) + ' pts'), h('td', {}, r.espn_mae == null ? '—' : f1(r.espn_mae) + ' pts'),
+  const head = h('thead', {}, h('tr', {}, ['Week', 'Our model off by', 'ESPN off by', 'Sleeper off by', 'Team scores off by', 'Matchups called right', 'Close start/sit calls right'].map(x => h('th', {}, x))));
+  const rows = rc.slice().reverse().map(r => h('tr', {}, h('td', {}, 'Wk ' + r.w), h('td', { class: r.espn_mae == null ? '' : (r.model_mae_vs_espn <= r.espn_mae ? 'pos' : 'neg') }, f1(r.model_mae) + ' pts'), h('td', {}, r.espn_mae == null ? '—' : f1(r.espn_mae) + ' pts'), h('td', {}, r.sleeper_mae == null ? '—' : f1(r.sleeper_mae) + ' pts'),
     h('td', {}, r.team_mae != null ? f1(r.team_mae) + ' pts' : '—'), h('td', {}, r.games ? `${r.picked_right}/${r.games}` : '—'), h('td', {}, r.startsit_pct != null ? r.startsit_pct + '%' : '—')));
   return h('div', { class: 'tw' }, h('table', {}, head, h('tbody', {}, rows)));
 }

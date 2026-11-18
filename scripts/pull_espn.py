@@ -21,6 +21,7 @@ s2, swid = os.environ.get("ESPN_S2", "").strip(), os.environ.get("SWID", "").str
 if not s2 or not swid:
     sys.exit("Missing ESPN_S2 or SWID. Add them as repo secrets (see README).")
 S = requests.Session()
+SLEEPER = {}
 NEWS = {}   # player id -> latest ESPN injury/news note, shared across leagues in one run
 S.cookies.set("espn_s2", s2, domain=".espn.com")
 S.cookies.set("SWID", swid, domain=".espn.com")
@@ -223,6 +224,22 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         print(f"  news {x['n']}: {json.dumps(x.get('news'))[:400]}")
     print(f"  injury news: {sum(1 for x in hurt if (x.get('news') or {}).get('text'))}/{len(hurt)} hurt players have fresh notes")
 
+    # Sleeper's weekly projections (a 3rd opinion to average with ours and ESPN's)
+    if cur not in SLEEPER:
+        try:
+            sr = requests.get(f"https://api.sleeper.app/projections/nfl/{SEASON}/{cur}", params=[("season_type", "regular")] + [("position[]", x) for x in ("QB", "RB", "WR", "TE")], timeout=60)
+            sr.raise_for_status()
+            sp_ = {}
+            for x in sr.json():
+                pl = x.get("player") or {}; st_ = x.get("stats") or {}
+                if pl.get("first_name") and st_:
+                    sp_[f"{pl.get('first_name')} {pl.get('last_name')}|{pl.get('team') or ''}"] = {k: v for k, v in st_.items() if k in ("pass_yd", "pass_td", "pass_int", "rush_yd", "rush_td", "rec", "rec_yd", "rec_td", "fum_lost", "pass_2pt", "rush_2pt", "rec_2pt", "pts_ppr")}
+            SLEEPER[cur] = sp_
+            (ROOT / "data" / "sleeper_proj.json").write_text(json.dumps({"week": cur, "players": sp_}, sort_keys=True, separators=(",", ":")))
+            print(f"  sleeper projections: {len(sp_)} players for week {cur}")
+        except Exception as e:
+            SLEEPER[cur] = {}
+            print(f"  sleeper projections: skipped ({e})")
     # FantasyCalc market values (built from millions of real trades), for this league's size / PPR / superflex
     try:
         ppr_ = scoring.get("53", 0); ppr_ = 1 if ppr_ >= 0.75 else 0.5 if ppr_ >= 0.25 else 0
