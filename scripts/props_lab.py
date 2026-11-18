@@ -12,7 +12,7 @@ Writes docs/data/props_lab.json and keeps every pick in data/props_picks.json fo
 import json, math, pathlib, datetime, re, statistics
 import numpy as np
 from scipy.special import ndtr
-from scipy.stats import nbinom
+from scipy.stats import nbinom, binom as _binom, poisson as _poisson
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 D = ROOT / "data"
@@ -529,6 +529,18 @@ def main():
     # Receivers' etas are independent (WR1~WR2 residual r = -0.004 in 2016-25). Uniforms = Phi(latent), so every marginal is unchanged.
     # 2023-25 check: QB~WR1 rec yds r 0.08 -> 0.45 (data 0.48), QB~WR2 0.04 -> 0.40 (0.38), QB~TE1 0.03 -> 0.36 (0.35), WR1~WR2 ~0 (0).
     LATQ, LATR = {}, {}
+    # same-game TD link: one shared "scoring through the air" shock per team. QB pass TDs load 0.7, WR TDs 0.6, TE 0.48,
+    # RB -0.3 (RB TDs come at the expense of passing TDs). Fit so sim correlations match 2016-25 residuals:
+    # QB pass TDs ~ WR1 anytime TD 0.43, ~ TE1 0.36, ~ RB1 0.00.
+    TDLAT = {t_: rng.standard_normal(N).astype(np.float32) for t_ in lines}
+    TD_LOAD = {"QB": 0.7, "WR": 0.6, "TE": 0.48, "RB": -0.3}
+    def count_ppf(st_, pos_, lam_, u_):
+        fit_ = DIST2.get(f"{st_}|{pos_}") or {}
+        v_ = fit_.get("var_over_mean_gs", 1.0); lam_ = np.maximum(lam_, 1e-9); u_ = np.clip(u_, 1e-9, 1 - 1e-9)
+        if v_ < 0.99:
+            q_ = float(np.clip(1 - v_, 0.01, 0.99)); n_ = np.maximum(np.round(lam_ / q_), 1)
+            return _binom.ppf(u_, n_, np.minimum(lam_ / n_, 1.0))
+        return _poisson.ppf(u_, lam_)
     def _cv(st_, pos_, m_):
         B_ = (DIST2.get(f"{st_}|{pos_}") or {}).get("buckets")
         if not B_:
@@ -670,6 +682,10 @@ def main():
                     r_nb = float((DIST2.get(f"rec|{p['pos']}") or {}).get("nb_r_gs", 10.0)); lam_ = np.maximum(fin * f, 1e-9)
                     u_ = ndtr(REC_RHO * LATR[key(nm)].astype(float) + math.sqrt(1 - REC_RHO ** 2) * rng.standard_normal(N))
                     X = nbinom.ppf(np.clip(u_, 1e-9, 1 - 1e-9), r_nb, r_nb / (r_nb + lam_))
+                elif V2A and tm in TDLAT and ((st == "pass_tds" and p["pos"] == "QB") or (st == "td" and p["pos"] in ("WR", "TE", "RB"))):
+                    ld_ = TD_LOAD["QB" if st == "pass_tds" else p["pos"]]
+                    u_ = ndtr(ld_ * TDLAT[tm].astype(float) + math.sqrt(1 - ld_ ** 2) * rng.standard_normal(N))
+                    X = count_ppf(st, p["pos"], np.maximum(0, fin * f), u_)
                 else:
                     X = (V2A.sample_count(st, p["pos"], np.maximum(0, fin * f), rng) if V2A else rng.poisson(np.maximum(0, fin * f))) if st in ("pass_tds", "td", "rec") else fin * base
                 if RAT is None and not big_gap:
