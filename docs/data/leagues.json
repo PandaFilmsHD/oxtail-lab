@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T08:32:33Z",
+   "at": "2026-11-18T12:33:06Z",
    "champ_pct": 28.9,
    "todo": [
     {
@@ -25,16 +25,16 @@
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
-     "title": "Claim Elic Ayomanor, drop Chimere Dike",
-     "detail": "Fills a hole this week (+3.3 pts). You can drop him again after.",
+     "title": "Claim Elic Ayomanor, drop Tre' Harris",
+     "detail": "Fills a hole this week (+3.1 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Chimere Dike or Seth McGowan",
-     "detail": "Chimere Dike 6.3 vs Seth McGowan 5.5. ",
-     "tab": "home"
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Rhamondre Stevenson + KC Concepcion for Davante Adams (JELQING MY KING JD5)",
+     "detail": "Title odds +4.8%. Would you do Rhamondre Stevenson and KC Concepcion for Davante Adams? I think you get depth for injuries and byes down the stretch, and Adams is just sitting on your bench.",
+     "tab": "trades"
     }
    ]
   },
@@ -43,14 +43,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T08:32:53Z",
-   "champ_pct": 14.4,
+   "at": "2026-11-18T12:33:30Z",
+   "champ_pct": 14.3,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +1.4 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "detail": "Real upgrade: about +1.4 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
@@ -67,14 +67,14 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T08:33:01Z",
-   "champ_pct": 4.2,
+   "at": "2026-11-18T12:33:40Z",
+   "champ_pct": 3.4,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
-     "title": "Claim Steelers D/ST, drop Ravens D/ST",
-     "detail": "Fills a hole this week (+3.9 pts). You can drop him again after.",
+     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
      "tab": "waivers"
     },
     {
@@ -95,7 +95,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Kyren Williams + Bijan Robinson for D'Andre Swift + George Pickens (Ryan's Rad Team)",
-     "detail": "Title odds +2.1%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
+     "detail": "Title odds +2.2%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
      "tab": "trades"
     }
    ]
@@ -105,8 +105,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T08:32:44Z",
-   "champ_pct": 31.0,
+   "at": "2026-11-18T12:33:18Z",
+   "champ_pct": 30.1,
    "todo": [
     {
      "urgent": false,
@@ -119,14 +119,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way, title odds +1.1%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.1%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Saquon Barkley + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
-     "detail": "Title odds +5.5%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
+     "title": "Offer Rhamondre Stevenson + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
+     "detail": "Title odds +5.3%. Would you do Rhamondre Stevenson and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
      "tab": "trades"
     }
    ]
