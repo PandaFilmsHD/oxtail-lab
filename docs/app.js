@@ -724,6 +724,12 @@ async function renderProps() {
         ...g.angles.map(a => h('div', { class: 'k', style: 'color:var(--gold)' }, '📐 ' + a)),
         ...(g.plays.length ? g.plays.map(p => h('div', { class: 'leg' }, h('span', { class: 'tag real' }, 'PLAY'), h('span', { class: 'll' }, `${p.pick}: ${Math.round(p.p)}% vs market ${Math.round(p.p_mkt)}%, pay up to ${p.max_c}¢. Bet ${usd(p.units || 0.5)}`))) : [h('div', { class: 'k mut' }, g.angles.length ? `Leans under (${Math.round(100 - s.over)}% in the sims), but not by enough to beat the price.` : 'No edge on the spread or total. The line is the best guess here.')]));
     }))];
+  } else if (PLV === 'long') {
+    const L = PLD.longshots || { singles: [], parlays: [] };
+    out = [h('div', { class: 'box ptip' }, '🎰 For fun. These hit 1 to 35% of the time, so most of them lose. Every leg here is one the sims like more than the market does. Keep it to a small bet: ', h('b', {}, usd(0.2)), ' or so.'),
+      h('h3', {}, '🎰 Longshot parlays'), h('div', { class: 'bgrid' }, ...(L.parlays || []).map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig', style: 'color:var(--gold)' }, pl.p + '%'), h('div', { class: 'k' }, 'hits in the sims')),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth it only if DraftKings pays more than ${odds(pl.fair)}.`)))),
+      h('h3', { style: 'margin-top:18px' }, '🎯 Longshot singles'), h('div', { class: 'leglist' }, ...(L.singles || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'lp' }, Math.round(x.p) + '%'), h('span', { class: 'll' }, x.label), h('span', { class: 'mut', style: 'margin-left:auto;text-align:right' }, `fair ${odds(x.fair)}`, x.price ? h('div', { class: 'k' }, `best ${odds(x.price)}`) : ''))))];
   } else if (PLV === 'pickem') {
     const L = PLD.pickem_plays || [];
     out = [h('div', { class: 'box ptip' }, `Pick'em apps (PrizePicks, Underdog, Pick6) pay a fixed amount, so all that matters is the chance each leg hits. Rough break-even per leg: 2-pick at 3x needs 57.7%, 3-pick at 6x needs 55%, 5-pick flex needs about 54%. Lines on those apps can differ from these, so check the number.`),
@@ -733,6 +739,8 @@ async function renderProps() {
     const R = PLD.record || {}; const row = (n, b) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${b[0]}-${b[1]}`), h('b', { class: b[2] >= 0 ? 'pos' : 'neg' }, `${b[2] >= 0 ? '+' : '-'}${usd(Math.abs(b[2]))}`));
     out = [h('div', { class: 'box' }, h('h3', {}, '📊 How the picks have done'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Every graded play at 1 unit (${usd(1)}), bought at the market price. Small samples swing a lot: give it a few weeks before trusting it.`),
       row('Player props', R.props || [0, 0, 0]), row('Game lines', R.games || [0, 0, 0]),
+      h('h3', { style: 'margin-top:14px' }, '🧾 Every-bet tracker'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Pretend 1 unit (${usd(1)}) on every game line where the sims like a side more than the market and it's -150 or better, and every prop the sims like by 1+ point at -150 or better, at DraftKings' price. This is the honest test of whether the model has an edge.${R.auto_open ? ` Open this week: ${R.auto_open.games} game bets, ${R.auto_open.props} props.` : ''}`),
+      row('All game lines', R.auto_games || [0, 0, 0]), row('All props', R.auto_props || [0, 0, 0]),
       h('div', { class: 'k', style: 'margin-top:10px' }, `Backtest: ${PLD.backtest.ats_model}. The closing line missed by ${PLD.backtest.line_mae} pts on average vs ${PLD.backtest.model_mae} for a ratings model, so game sims start from the line.`)),
       h('div', { class: 'leglist', style: 'margin-top:12px' }, ...(PLD.recent || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'tag ' + (x.void || x.result == null ? 'no' : x.result ? 'real' : 'stretch') }, x.void ? 'VOID' : x.result == null ? 'PUSH' : x.result ? 'WIN' : 'LOSS'),
         h('span', { class: 'll' }, x.pick ? `Wk ${x.week} ${x.game}: ${x.pick}` : `Wk ${x.week} ${x.player} ${x.side} ${x.line ?? ''} ${x.market.toLowerCase()}${x.actual != null ? ` (had ${x.actual})` : ''}`)))),

@@ -308,6 +308,17 @@ def main():
     if IS.get("lines_at") != RAW.get("at"):
         IS = {"lines_at": RAW.get("at"), "out": [k for k, v in INJ.items() if v in OUTS]}
     newly_out = {k for k, v in INJ.items() if v in OUTS} - set(IS["out"])
+    # v2 projections (usage + Vegas + defense + teammate injuries + weather; 2-6% more accurate than v1 out of sample)
+    DIST2 = load(D / "prop_dists_v2.json", {}) or {}
+    V2A = V2B = None
+    if DIST2:
+        try:
+            from props_v2 import V2
+            all_out = {k for k, v in INJ.items() if v in OUTS}
+            V2A = V2(U, DIST2, cur, out_keys=all_out, key=key)                 # everyone who's out right now
+            V2B = V2(U, DIST2, cur, out_keys=all_out - newly_out, key=key)     # as of when the lines went up
+        except Exception as ex_:
+            print("props_lab: v2 projections unavailable", ex_); V2A = V2B = None
     (D / "props_inj_state.json").write_text(json.dumps(IS, separators=(",", ":")))
     NEWS = {}   # team -> list of (position, player entry) newly ruled out
     for k in newly_out:
@@ -353,6 +364,20 @@ def main():
             edge = p - pm
             if edge >= MIN_EDGE and ((side == "tot" and angles) or (side == "spr" and s_angles)):   # only the angles that held up in the backtest create game plays
                 plays.append({"pick": label, "p": round(100 * p, 1), "p_mkt": round(100 * pm, 1), "edge": round(100 * edge, 1), "max_c": int(100 * p - 2), "kind": side})
+        auto = []   # every-bet tracker: on each market, the side the sims like more than the market, if it's -150 or better
+        for i in (0, 2, 4):
+            sides = []
+            for j in (i, i + 1):
+                side, tag, pt, label, p_, pr_ = opts[j]
+                o_ = opts[j + 1 if j % 2 == 0 else j - 1][5]
+                if pr_ is None or o_ is None:
+                    continue
+                pm_ = imp(pr_) / (imp(pr_) + imp(o_))
+                sides.append((p_ - pm_, label, pr_, p_, pm_, side))
+            if sides:
+                e_, label, pr_, p_, pm_, side = max(sides)
+                if pr_ >= -150 and e_ > 0:
+                    auto.append({"pick": label, "price": int(pr_), "p": round(100 * p_, 1), "p_mkt": round(100 * pm_, 1), "edge": round(100 * e_, 1), "kind": side})
         if not started:
             gk = tuple(sorted((h, a)))
             for t in teaser_legs(h, a, spr, mar, k_):
@@ -370,7 +395,7 @@ def main():
                       "sim": {"home_win": round(100 * p_home_win, 1), "home_cover": round(100 * p_home_cover, 1), "over": round(100 * p_over, 1),
                               "home_pts": round(float(np.mean(hp)), 1), "away_pts": round(float(np.mean(ap)), 1), "fair_total": round(float(np.median(totl)), 1),
                               "fair_home_ml": amer(p_home_win), "blowout": round(100 * float(np.mean(np.abs(mar) >= 17)), 1), "one_score": round(100 * float(np.mean(np.abs(mar) <= 8)), 1)},
-                      "plays": sorted(plays, key=lambda x: -x["edge"])})
+                      "plays": sorted(plays, key=lambda x: -x["edge"]), "auto": auto})
 
     # ---------------- player props ----------------
     ev_team = {}
@@ -392,8 +417,10 @@ def main():
         parts = re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", nm.lower()).split()
         c = [v for t in teams for v in BYLAST.get((re.sub(r"[^a-z]", "", parts[-1]) if parts else "", t), [])]
         return c[0] if len(c) == 1 else None   # Drew/Andrew Ogletree, Zonovan/Bam Knight, Greg/Gregory Desrosiers
+    LONGS = []
     def price_props(CORR, RAT):
         props, legs = [], []
+        longs = LONGS if RAT is None else []
         for nm, mks in (RAW.get("props") or {}).items() if RAW.get("week") == int(cur or 0) or str(RAW.get("week")) == cur else []:
             p = match(nm, mks)
             if not p or p.get("team") not in sims or INJ.get(key(nm)) in OUTS or INJ.get(key(p["name"])) in OUTS:
@@ -412,21 +439,26 @@ def main():
                 k_ = kick.get(tm)
                 if k_ and datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) <= now:
                     continue
-                ours = [v for v in (our_mean(p, st), sl_mean(nm, st, tm)) if v is not None]
-                if not ours:
+                def proj(model):
+                    om_ = None
+                    if model is not None:
+                        try:
+                            om_ = model.our_mean(p, st)
+                        except Exception:
+                            om_ = None
+                    if om_ is None:
+                        om_ = our_mean(p, st)
+                    v_ = [v for v in (om_, sl_mean(nm, st, tm)) if v is not None]
+                    return float(np.mean(v_)) if v_ else None
+                ours_raw = proj(V2A)
+                if ours_raw is None:
                     continue
-                ours_m = float(np.mean(ours)) / CORR.get(st, 1.0)
-                ours_raw = float(np.mean(ours))
-                why_news, w_, base_m = [], W, ours_m
-                for q in news:   # a teammate got ruled out after the line went up
-                    if q["pos"] == "QB" and p["pos"] in ("WR", "TE", "RB") and st in ("rec", "rec_yds", "td"):
-                        ours_m *= 0.86; why_news.append(f"{q['name']} (QB) is out")   # backup QB: pass catchers -14% (fantasy backtest)
-                    elif q["pos"] == p["pos"] or (q["pos"] in ("WR", "TE") and p["pos"] in ("WR", "TE") and st in ("rec", "rec_yds")):
-                        qm = our_mean(q, st)
-                        if qm:
-                            mates = max(1, sum(1 for z in PL.values() if z.get("team") == p["team"] and z.get("pos") == q["pos"] and z["name"] != q["name"] and z.get("depth", {}).get("rank", 9) <= 3))
-                            ours_m += (0.45 if q["pos"] == p["pos"] == "RB" else 0.3) * qm / mates
-                            why_news.append(f"{q['name']} is out")
+                ours_m = ours_raw / CORR.get(st, 1.0)
+                base_raw = proj(V2B) if news else ours_raw
+                base_m = (base_raw if base_raw is not None else ours_raw) / CORR.get(st, 1.0)
+                why_news, w_ = [], W
+                if news and abs(ours_m - base_m) > 0.03 * max(base_m, 0.3):   # the model's own teammate-injury effect, measured on 2016-25
+                    why_news = [f"{q['name']} is out" for q in news]
                 if why_news:
                     w_ = 0.6   # the line was set before the news, so trust our number a lot more
                 if st != "td" and (x.get("line") is None or x.get("p_over") is None):
@@ -436,22 +468,33 @@ def main():
                 else:
                     line = x["line"]; p_mkt = x["p_over"]
                 # game script: he does more when his team scores more
-                f = (np.maximum(own, 1) / max(1, pts_mean)) ** BETA[st]
+                bet_ = (DIST2.get(f"{st}|{p['pos']}") or {}).get("beta_gs") if V2A else None
+                f = (np.maximum(own, 1) / max(1, pts_mean)) ** (bet_ if bet_ is not None else BETA[st])
                 if st == "rush_yds" and p["pos"] == "RB":
-                    f = f * (1 + 0.008 * np.clip(mar, -21, 21))
+                    f = f * (np.exp(V2A.RB_MARGIN * np.clip(mar, -21, 21)) if V2A else (1 + 0.008 * np.clip(mar, -21, 21)))
                 f = f / f.mean()
                 if st in ("pass_tds", "td", "rec"):   # counts: Poisson around his mean, mixed over the game sims
                     fs = f[:4000]; k = math.floor(line)
-                    def P(m, fs=fs, k=k, whole=(line % 1 == 0)):
-                        lam = np.maximum(1e-9, m * fs); cdf = np.zeros_like(lam); term = np.exp(-lam); last = term
-                        for i in range(k + 1):
-                            cdf += term; last = term; term = term * lam / (i + 1)
-                        ov = float(np.mean(1 - cdf))
-                        return ov / max(1e-9, 1 - float(np.mean(last))) if whole else ov   # whole line: chance given no push
+                    if V2A:   # receptions: negative binomial; TDs: binomial (pass TDs are under-dispersed once team points are known)
+                        def P(m, fs=fs, line=line, whole=(line % 1 == 0), st=st, pos=p["pos"]):
+                            ov = V2A.p_over_count(st, pos, m * fs, line)
+                            if not whole:
+                                return ov
+                            push = V2A.p_over_count(st, pos, m * fs, line - 1) - ov
+                            return ov / max(1e-9, 1 - push)
+                    else:
+                        def P(m, fs=fs, k=k, whole=(line % 1 == 0)):
+                            lam = np.maximum(1e-9, m * fs); cdf = np.zeros_like(lam); term = np.exp(-lam); last = term
+                            for i in range(k + 1):
+                                cdf += term; last = term; term = term * lam / (i + 1)
+                            ov = float(np.mean(1 - cdf))
+                            return ov / max(1e-9, 1 - float(np.mean(last))) if whole else ov   # whole line: chance given no push
                 else:                                  # yards: real past outcomes vs projection, times game script, same draws every time
                     ru = rng.random(N)                 # same draws for every shape, so the two passes are comparable
                     def mkP(bm):
-                        r_ = ratios(st, p["pos"], max(bm, 1)); b_ = r_[(ru * len(r_)).astype(int)] * f
+                        r_ = (V2A.ratios(st, p["pos"], max(bm, 1)) if V2A else None)
+                        r_ = r_ if r_ is not None else ratios(st, p["pos"], max(bm, 1))
+                        b_ = r_[(ru * len(r_)).astype(int)] * f
                         return b_, (lambda m, b_=b_, line=line: float(np.mean(m * b_ > line)))
                     base, P = mkP(line)
                 def invert(P):
@@ -474,7 +517,7 @@ def main():
                 fin = mm + W * (base_m - mm) + 0.8 * (ours_m - base_m)   # news part trusted, the rest at W
                 big_gap = bool(abs(ours_m - mm) > MAX_GAP * max(mm, 0.5)) and not why_news
                 po = P(fin)
-                X = rng.poisson(np.maximum(0, fin * f)) if st in ("pass_tds", "td", "rec") else fin * base
+                X = (V2A.sample_count(st, p["pos"], np.maximum(0, fin * f), rng) if V2A else rng.poisson(np.maximum(0, fin * f))) if st in ("pass_tds", "td", "rec") else fin * base
                 if not big_gap and st != "td":
                     # alt lines he hits about 75-82% of the time, for parlays
                     for side_, q in (("Over", 0.22), ("Over", 0.17), ("Under", 0.78), ("Under", 0.83)):
@@ -486,6 +529,18 @@ def main():
                         pa = float(ind.mean())
                         if 0.72 <= pa <= 0.86:
                             legs.append({"lean": (po - p_mkt) * (1 if side_ == "Over" else -1), "label": f"{nm} {side_} {alt:g} {label.lower()}", "game": tuple(sorted((tm, lines[tm]["opp"]))), "who": nm, "p": pa, "ind": ind, "type": "prop", "kick": k_})
+                if not big_gap and st != "td" and po > p_mkt:
+                    # longshots: the big alt over (hits 15-30%) on guys the sims like more than the market
+                    for q in (0.75, 0.82):
+                        v = float(np.quantile(X, q)); alt = math.floor(v) + 0.5
+                        ind = X > alt; pa = float(ind.mean())
+                        if 0.12 <= pa <= 0.32:
+                            longs.append({"label": f"{nm} Over {alt:g} {label.lower()}", "p": round(100 * pa, 1), "fair": amer(pa), "lean": round(100 * (po - p_mkt), 1), "kick": k_,
+                                          "game": tuple(sorted((tm, lines[tm]["opp"]))), "who": nm, "ind": ind})
+                if st == "td" and po > p_mkt and 0.12 <= po <= 0.40:
+                    longs.append({"label": f"{nm} anytime TD", "p": round(100 * po, 1), "fair": amer(po), "lean": round(100 * (po - p_mkt), 1), "kick": k_, "price": x["yes"],
+                                  "game": tuple(sorted((tm, lines[tm]["opp"]))), "who": nm, "ind": X >= 1})
+                dk_ = x.get("dk") or {}
                 if st == "td":
                     cand = [("Yes", po, x["yes"])]
                 else:
@@ -494,7 +549,7 @@ def main():
                     ev = pp * dec(price) - 1
                     pm_ = p_mkt if side in ("Over", "Yes") else 1 - p_mkt
                     props.append({"news": why_news, "edge": round(100 * (pp - pm_), 1), "max_c": int(100 * pp - 2), "pickem": st != "td" and 100 * pp >= PICKEM and not big_gap, "big_gap": big_gap, "player": nm, "team": tm, "opp": lines[tm]["opp"], "pos": p["pos"], "market": label, "side": side, "line": line if st != "td" else None,
-                                  "price": price, "books": x.get("books"), "p": round(100 * pp, 1), "p_mkt": round(100 * (p_mkt if side in ("Over", "Yes") else 1 - p_mkt), 1),
+                                  "price": price, "dk": (dk_.get("over") if side == "Over" else dk_.get("under")) if dk_.get("line") == line else None, "books": x.get("books"), "p": round(100 * pp, 1), "p_mkt": round(100 * (p_mkt if side in ("Over", "Yes") else 1 - p_mkt), 1),
                                   "ev": round(100 * ev, 1), "ours": round(ours_m, 2), "mkt": round(mm, 2), "final": round(fin, 2), "kick": k_,
                                   "median": round(float(np.median(X)), 1), "p10": round(float(np.percentile(X, 10)), 1), "p90": round(float(np.percentile(X, 90)), 1)})
         return props, legs
@@ -612,6 +667,38 @@ def main():
             break
     import base64
     bits = lambda L_: base64.b64encode(np.packbits(L_["ind"][:4096]).tobytes()).decode()
+    # longshot parlays for fun: 2 or 3 of the longshot singles (big alt overs, anytime TDs), priced together from the sims
+    LONGS.sort(key=lambda z: -(z["lean"] + 0.05 * z["p"]))
+    _seen = set(); LONGS[:] = [L_ for L_ in LONGS if not (L_["label"] in _seen or _seen.add(L_["label"]))]
+    LS = [dict(L_, p_=L_["p"] / 100) for L_ in LONGS[:20]]
+    lp = []
+    for n_ in (2, 3):
+        for combo in itertools.combinations(LS, n_):
+            if len({c["who"] for c in combo}) < n_:
+                continue
+            by_g = {}
+            for c in combo:
+                by_g.setdefault(c["game"], []).append(c["ind"])
+            pj = 1.0
+            for inds in by_g.values():
+                m_ = inds[0]
+                for z in inds[1:]:
+                    m_ = m_ & z
+                pj *= float(m_.mean())
+            if (0.03 if n_ == 2 else 0.01) <= pj <= 0.15:
+                lp.append((sum(c["lean"] for c in combo), pj, n_, combo))
+    lp.sort(key=lambda z: -(z[0] + 30 * z[1])); used = {}; long_parlays = []; per_n = {2: 0, 3: 0}
+    for sc_, pj, n_, combo in lp:
+        if per_n[n_] >= 3 or any(used.get(c["label"], 0) >= 2 for c in combo):
+            continue
+        per_n[n_] += 1
+        for c in combo:
+            used[c["label"]] = used.get(c["label"], 0) + 1
+        long_parlays.append({"p": round(100 * pj, 1), "fair": amer(pj), "legs": [{"label": c["label"], "p": c["p"], "lean": c["lean"]} for c in combo]})
+        if len(long_parlays) >= 6:
+            break
+    LONGS.sort(key=lambda z: -(z["lean"] + 0.05 * z["p"]))
+    longshots = {"singles": [{k: v for k, v in L_.items() if k not in ("ind", "game", "who")} for L_ in LONGS[:30]], "parlays": long_parlays}
     legs_out = [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": L_["type"], "kick": L_["kick"], "lean": round(100 * L_["lean"], 1),
                  "game": "-".join(L_["game"]), "bits": bits(L_)} for L_ in pool]
 
@@ -619,7 +706,7 @@ def main():
     PK = load(D / "props_picks.json", {}) or {}
     wk = PK.setdefault(cur, {})
     live = {f"{x['player']}|{x['market']}" for x in props if x["grade"]}
-    for k_old in [k for k, v in wk.items() if not k.startswith("G|") and k not in live and not v.get("graded") and v.get("kick") and v["kick"] > now.isoformat()]:
+    for k_old in [k for k, v in wk.items() if not k.startswith(("G|", "GA|", "PA|")) and k not in live and not v.get("graded") and v.get("kick") and v["kick"] > now.isoformat()]:
         del wk[k_old]
     for x in props:
         if x["grade"]:
@@ -631,16 +718,25 @@ def main():
                     del wk[k_old]
                 wk[f"G|{g['home']}|{pl['kind']}|{pl['pick'].split()[0]}"] = {"game": f"{g['away']} @ {g['home']}", "home": g["home"], "pick": pl["pick"], "kind": pl["kind"],
                                                     "p": pl["p"], "p_mkt": pl["p_mkt"], "edge": pl["edge"], "spread": g["spread"], "total": g["total"], "kick": g["kick"]}
+    for g in games:   # every-bet tracker: game lines
+        if not g["started"]:
+            for au in g.get("auto", []):
+                wk[f"GA|{g['home']}|{au['kind']}"] = {"game": f"{g['away']} @ {g['home']}", "home": g["home"], "pick": au["pick"], "kind": au["kind"], "price": au["price"],
+                                                      "p": au["p"], "p_mkt": au["p_mkt"], "edge": au["edge"], "spread": g["spread"], "total": g["total"], "kick": g["kick"], "auto": True}
+    for x in props:   # every-bet tracker: props the sims like by 1+ point, -150 or better, at DraftKings' price when we have it
+        pr_ = x.get("dk") or x.get("price")
+        if pr_ and pr_ >= -150 and x["edge"] >= 1.0 and not x["big_gap"] and x["kick"] and x["kick"] > now.isoformat():
+            wk[f"PA|{x['player']}|{x['market']}"] = {k: x[k] for k in ("player", "team", "market", "side", "line", "p", "p_mkt", "edge", "kick")} | {"price": int(pr_), "auto": True}
     stat_by = {}
     for v in (U.get("players") or {}).values():
         for w in v.get("weeks", []):
             stat_by[(key(v["name"]), str(w["w"]))] = w
     box_in = {(v.get("team"), str(w["w"])) for v in (U.get("players") or {}).values() for w in v.get("weeks", []) if "pts" in w}
-    rec = {"props": [0, 0, 0.0], "games": [0, 0, 0.0], "weeks": {}}
+    rec = {"props": [0, 0, 0.0], "games": [0, 0, 0.0], "auto_games": [0, 0, 0.0], "auto_props": [0, 0, 0.0], "weeks": {}}
     for w_, picks in PK.items():
         for k, x in picks.items():
             if x.get("result") is None:
-                if k.startswith("G|"):
+                if k.startswith(("G|", "GA|")):
                     Lh = (U.get("lines") or {}).get(w_, {}).get(x["home"], {})
                     La = (U.get("lines") or {}).get(w_, {}).get(Lh.get("opp"), {})
                     if Lh.get("pts") is None or La.get("pts") is None:
@@ -671,6 +767,10 @@ def main():
                     x["actual"] = stv
                     x["result"] = (stv >= 1) if x["market"] == "Anytime TD" else (None if stv == x["line"] else ((stv > x["line"]) == (x["side"] == "Over")))
                     x["graded"] = True
+            if x.get("graded") and x.get("result") is not None and x.get("auto"):   # 1 unit at the posted price
+                b_ = rec["auto_games" if k.startswith("GA|") else "auto_props"]
+                b_[0 if x["result"] else 1] += 1; b_[2] += (dec(x["price"]) - 1) if x["result"] else -1
+                continue
             if x.get("graded") and x.get("result") is not None:
                 b_ = rec["games" if k.startswith("G|") else "props"]
                 b_[0 if x["result"] else 1] += 1
@@ -679,11 +779,12 @@ def main():
                 ww = rec["weeks"].setdefault(w_, [0, 0, 0.0])
                 ww[0 if x["result"] else 1] += 1; ww[2] += ((1 - c_) / c_) if x["result"] else -1
     (D / "props_picks.json").write_text(json.dumps(PK, separators=(",", ":"), sort_keys=True))
-    for b_ in (rec["props"], rec["games"]):
+    for b_ in (rec["props"], rec["games"], rec["auto_games"], rec["auto_props"]):
         b_[2] = round(b_[2], 2)
     for k in rec["weeks"]:
         rec["weeks"][k][2] = round(rec["weeks"][k][2], 2)
-    graded = [dict(x, week=w_) for w_, pk in PK.items() for k, x in pk.items() if x.get("graded")]
+    graded = [dict(x, week=w_) for w_, pk in PK.items() for k, x in pk.items() if x.get("graded") and not x.get("auto")]
+    rec["auto_open"] = {"games": sum(1 for k, x in wk.items() if k.startswith("GA|") and not x.get("graded")), "props": sum(1 for k, x in wk.items() if k.startswith("PA|") and not x.get("graded"))}
     UNIT = float((load(ROOT / "config.json", {}) or {}).get("unit", 25))
     STAKE = {"A": 1.0, "B": 0.5, "C": 0.25}
     for x in props:
@@ -700,9 +801,9 @@ def main():
     legs_out = legs_out + [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": "game", "kick": L_["kick"], "lean": round(100 * L_["lean"], 1),
                             "game": "-".join(L_["game"]), "bits": bits(L_)}
                            for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
-    rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games")}
+    rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games", "auto_games", "auto_props")}
     out = {"unit": UNIT, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
-           "parlays": parlays, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},
+           "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),
            "props": [x for x in props if x["grade"]][:80], "all_props": len(props),
