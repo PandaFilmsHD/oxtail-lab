@@ -682,6 +682,26 @@ if _pp.exists():
             PROPS[n] = round(pts_, 2)
 print(f"sportsbook props matched: {len(PROPS)}")
 
+# ---------------- FantasyPros consensus (top players only) -> 5th opinion ----------------
+_fpp = ROOT / "data" / "fp_proj.json"
+FPC = {}
+if _fpp.exists():
+    _fj = json.loads(_fpp.read_text())
+    if int(_fj.get("week") or 0) == CUR:
+        _fb = {}
+        for key, st_ in _fj.get("players", {}).items():
+            nm_, tm_ = key.split("|")
+            pts_ = (st_.get("pass_yds", 0) * SC.get("3", 0) + st_.get("pass_tds", 0) * SC.get("4", 0) + st_.get("pass_ints", 0) * SC.get("20", 0) +
+                    st_.get("rush_yds", 0) * SC.get("24", 0) + st_.get("rush_tds", 0) * SC.get("25", 0) + st_.get("rec_att", 0) * SC.get("53", 0) +
+                    st_.get("rec_yds", 0) * SC.get("42", 0) + st_.get("rec_tds", 0) * SC.get("43", 0) + st_.get("fumbles", 0) * SC.get("72", 0))
+            _fb.setdefault(norm(nm_), []).append((TEAMFIX.get(tm_, tm_), round(pts_, 2)))
+        for n, p in P.items():
+            c_ = _fb.get(norm(n)) or []
+            hit = [v for t_, v in c_ if t_ == p["nfl"]] or ([c_[0][1]] if len(c_) == 1 else [])
+            if hit:
+                FPC[n] = hit[0]
+print(f"fantasypros consensus matched: {len(FPC)}")
+
 V = {}
 for n, p in P.items():
     r = recent(p)
@@ -740,13 +760,13 @@ for n, p in P.items():
         if w == CUR and p.get("proj") is not None:
             wm = STACK.get(p["pos"], 0.5)   # our weight vs ESPN's for this week, learned from graded weeks
             v[w] = round(wm * mine_ + (1 - wm) * p["proj"], 2) if p["proj"] > 0 else 0.0
-            others = [x_[n] for x_ in (SLP, PROPS) if n in x_]
+            others = [x_[n] for x_ in (SLP, PROPS, FPC) if n in x_]
             if others and p["proj"] > 0:
                 v[w] = round((2 * v[w] + sum(others)) / (2 + len(others)), 2)   # plain average with Sleeper + sportsbook props: consensus beats any one source
             if v[w] > 0 and BIAS.get(p["pos"]):
                 v[w] = round(max(0.0, v[w] + BIAS[p["pos"]]), 2)
-        elif w == CUR and (n in SLP or n in PROPS):
-            others = [x_[n] for x_ in (SLP, PROPS) if n in x_]
+        elif w == CUR and (n in SLP or n in PROPS or n in FPC):
+            others = [x_[n] for x_ in (SLP, PROPS, FPC) if n in x_]
             v[w] = round((mine_ + sum(others)) / (1 + len(others)), 2)
         else:
             v[w] = mine_
