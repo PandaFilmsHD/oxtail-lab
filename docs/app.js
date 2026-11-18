@@ -714,9 +714,10 @@ function parlayWhy(pl) {
   return why;
 }
 function parlayText(pl, title) {
-  const lines = [`${title}: ${Math.round(pl.p)}% to hit in 50,000 sims (fair ${odds(pl.fair)}, worth up to ${Math.max(1, Math.floor(pl.p))}¢ a share)`];
-  pl.legs.forEach((l, i) => { const r = legReason(l.label); lines.push(`${i + 1}. ${l.label} (${Math.round(l.p)}%)${r ? ': ' + r : ''}`); });
-  lines.push('Why: ' + parlayWhy(pl).join('; ') + '.');
+  const lines = [`${pl.legs.length > 1 ? title : pl.legs[0].label}: ${Math.round(pl.p)}% to hit in 50,000 sims (fair ${odds(pl.fair)}, worth up to ${Math.max(1, Math.floor(pl.p))}¢ a share)`];
+  if (pl.legs.length > 1) pl.legs.forEach((l, i) => { const r = legReason(l.label); lines.push(`${i + 1}. ${l.label} (${Math.round(l.p)}%)${r ? ': ' + r : ''}`); });
+  if (pl.sub) lines.push(pl.sub);
+  lines.push(pl.legs.length > 1 ? 'Why: ' + parlayWhy(pl).join('; ') + '.' : parlayWhy(pl).map(t => '• ' + t).join('\n'));
   lines.push('Oxtail Lab sims');
   return lines.join('\n');
 }
@@ -740,6 +741,7 @@ async function parlayImage(pl, title) {
   x.fillStyle = '#ffc83d'; x.font = font(40, 800); x.fillText('🏈 OXTAIL LAB', pad, 100);
   x.fillStyle = '#cfd3ff'; x.font = font(30, 600); x.fillText(title, pad, 148);
   x.fillStyle = '#3ddc84'; x.font = font(110, 900); x.fillText(Math.round(pl.p) + '%', pad, 268);
+  if (pl.sub) { x.fillStyle = '#ffc83d'; x.font = font(28, 700); x.textAlign = 'right'; x.fillText(pl.sub, W - pad, 334); x.textAlign = 'left'; }
   x.fillStyle = '#cfd3ff'; x.font = font(28, 500); x.fillText('hits in 50,000 sims', pad + 6, 308);
   x.textAlign = 'right'; x.fillStyle = '#ffc83d'; x.font = font(80, 900); x.fillText(odds(pl.fair), W - pad, 248);
   x.fillStyle = '#cfd3ff'; x.font = font(28, 500); x.fillText(`fair odds · up to ${Math.max(1, Math.floor(pl.p))}¢ a share`, W - pad, 294); x.textAlign = 'left';
@@ -754,7 +756,7 @@ async function parlayImage(pl, title) {
     x.fillStyle = '#9aa0e6'; x.font = font(26, 500); b.r.forEach((t, i) => x.fillText(t, pad + 170, y + 50 + 44 * b.a.length + 34 * i));
     y += bh + 16;
   }
-  y += 50; x.fillStyle = '#ffc83d'; x.font = font(32, 800); x.fillText('WHY THESE GO TOGETHER', pad, y); y += 48;
+  y += 50; x.fillStyle = '#ffc83d'; x.font = font(32, 800); x.fillText(pl.legs.length > 1 ? 'WHY THESE GO TOGETHER' : 'WHY WE LIKE IT', pad, y); y += 48;
   x.fillStyle = '#e8eaff'; x.font = font(30, 500); whyLines.forEach(t => { x.fillText(t, pad + 4, y); y += 40; });
   x.fillStyle = '#7d82c9'; x.font = font(24, 500); x.fillText('Chances from 50,000 simulated games. Not a guarantee. Bet small.', pad, H - 50);
   return await new Promise(r => c.toBlob(r, 'image/png'));
@@ -770,6 +772,13 @@ async function shareParlay(pl, title, btn) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'oxtail-parlay.png'; a.click();
     if (btn) { btn.textContent = '✅ Copied + saved'; setTimeout(() => btn.textContent = '📤 Share', 2000); }
   } catch (e) { if (e && e.name === 'AbortError') return; try { await navigator.clipboard.writeText(text); if (btn) btn.textContent = '✅ Copied'; } catch (e2) {} }
+}
+function itemPl(label, p, why, sub) {   // a single pick shaped like a 1-leg parlay, so the same image/text code works
+  return { p, fair: fairOf(p / 100), legs: [{ label, p, lean: 0 }], why: (why || []).map(t => t.replace(/^\S+\s/, '')).slice(0, 6), sub };
+}
+function shareIcon(label, p, why, title, sub) {   // small 📤 for list rows
+  const b = h('button', { class: 'shr', 'aria-label': 'Share', onclick: e => { e.stopPropagation(); shareParlay(itemPl(label, p, why, sub), title || label, b); } }, '📤');
+  return b;
 }
 function shareBtns(pl, title) {
   const b = h('button', { class: 'btn small blue', onclick: e => { e.stopPropagation(); shareParlay(pl, title, b); } }, '📤 Share');
@@ -800,7 +809,7 @@ async function renderProps() {
     out = [tip, sbar, ...sect('⭐ Best 4-leg parlays (+200 to +300)', P.best4, 'Ranked by the math: legs the sims like more than the market, plus same-game legs that hit together.'), ...sect('🪜 +200 to +300 alt ladders', P.ladder, 'Lower alt lines (86 to 94% each) stacked up. Same-game legs priced together.'), ...sect('🔥 Confident parlays', P.conf, 'Bigger payout. Every leg is one the sims like more than the market.'), ...sect('🏈 4-team game parlays', P.g4, '+100 or better'), ...sect('🏈 3-team game parlays', P.g3, '+100 or better'), ...sect('🎯 2-leg prop parlays', P['2']), ...sect('🎯 3-leg prop parlays', P['3'], 'About even money')];
     const T = PLD.teasers || [];
     if (T.length) out.push(h('h3', { style: 'margin-top:18px' }, '🧷 6-point teaser legs'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Underdogs of +1.5 to +2.5 teased up 6 points have covered about 78% since 2006. A 2-team teaser at -120 needs ${T[0].breakeven}% per leg, so pair two of these from different games.`),
-      h('div', { class: 'leglist' }, ...T.map(t => h('div', { class: 'legpick' }, h('span', { class: 'lp hi' }, Math.round(t.p) + '%'), h('span', { class: 'll' }, t.label), h('span', { class: 'mut', style: 'margin-left:auto' }, kickT(t.kick))))));
+      h('div', { class: 'leglist' }, ...T.map(t => h('div', { class: 'legpick' }, h('span', { class: 'lp hi' }, Math.round(t.p) + '%'), h('span', { class: 'll' }, t.label), h('span', { class: 'mut', style: 'margin-left:auto' }, kickT(t.kick)), shareIcon(t.label, t.p, [`Underdogs of +1.5 to +2.5 teased up 6 points covered about ${t.hist}% since 2006`, `A 2-team teaser at -120 needs ${t.breakeven}% per leg`], 'Teaser leg')))));
     // build your own
     const legs = PLD.legs || [];
     const chosen = legs.filter(l => PLPICK.has(l.label));
@@ -825,7 +834,8 @@ async function renderProps() {
           h('div', {}, h('b', { class: 'gold' }, x.max_c + '¢'), h('span', { class: 'k' }, 'max ¢ a share'))),
         x.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(x.units)}`), h('span', { class: 'k' }, `${x.units} unit${x.units === 1 ? '' : 's'}`)) : '',
         (x.news || []).length ? h('div', { class: 'k', style: 'color:var(--gold)' }, '📰 ' + x.news.join(', ') + '. Line is from before the news.') : '',
-        x.market !== 'Anytime TD' ? h('div', { class: 'k' }, `Sims: usually ${x.p10} to ${x.p90}, middle ${x.median}. Our avg ${x.ours} vs market ${x.mkt}.`) : h('div', { class: 'k' }, `Market ${Math.round(x.p_mkt)}%, ours ${Math.round(x.p)}%.`))))];
+        x.market !== 'Anytime TD' ? h('div', { class: 'k' }, `Sims: usually ${x.p10} to ${x.p90}, middle ${x.median}. Our avg ${x.ours} vs market ${x.mkt}.`) : h('div', { class: 'k' }, `Market ${Math.round(x.p_mkt)}%, ours ${Math.round(x.p)}%.`),
+        shareBtns(itemPl(`${x.player} ${x.side} ${x.line != null ? x.line + ' ' : ''}${x.market.toLowerCase()}`, x.p, x.why, `market ${Math.round(x.p_mkt)}% · max ${x.max_c}¢ a share`), 'Prop'))))];
     if (!L.length) out.push(h('div', { class: 'box mut' }, 'No props clear the bar right now.'));
   } else if (PLV === 'games') {
     const now = Date.now();
@@ -848,14 +858,17 @@ async function renderProps() {
           h('div', {}, h('b', {}, odds(s.fair_home_ml)), h('span', { class: 'k' }, `fair ${g.home} ML`))),
         h('div', { class: 'k' }, `One-score game ${Math.round(s.one_score)}% · blowout (17+) ${Math.round(s.blowout)}%${g.weather ? ` · ${g.weather.temp}°F, wind ${g.weather.wind} mph` : g.roof === 'dome' ? ' · indoors' : ''}`),
         ...g.angles.map(a => h('div', { class: 'k', style: 'color:var(--gold)' }, '📐 ' + a)),
-        ...(g.plays.length ? g.plays.map(p => h('div', { class: 'leg' }, h('span', { class: 'tag real' }, 'PLAY'), h('span', { class: 'll' }, `${p.pick}: ${Math.round(p.p)}% vs market ${Math.round(p.p_mkt)}%, pay up to ${p.max_c}¢. Bet ${usd(p.units || 0.5)}`))) : [h('div', { class: 'k mut' }, g.angles.length && s.over < 50 ? `Leans under (${Math.round(100 - s.over)}% in the sims), but not by enough to beat the price.` : g.angles.length ? 'Leans with the angle, but not by enough to beat the price.' : 'No edge on the spread or total. The line is the best guess here.')]));
+        ...(g.plays.length ? g.plays.map(p => h('div', { class: 'leg' }, h('span', { class: 'tag real' }, 'PLAY'), h('span', { class: 'll' }, `${p.pick}: ${Math.round(p.p)}% vs market ${Math.round(p.p_mkt)}%, pay up to ${p.max_c}¢. Bet ${usd(p.units || 0.5)}`))) : [h('div', { class: 'k mut' }, g.angles.length && s.over < 50 ? `Leans under (${Math.round(100 - s.over)}% in the sims), but not by enough to beat the price.` : g.angles.length ? 'Leans with the angle, but not by enough to beat the price.' : 'No edge on the spread or total. The line is the best guess here.')]),
+        (() => { const bp = g.plays[0]; const fav = s.home_win >= 50 ? g.home : g.away;
+          return shareBtns(itemPl(bp ? `${bp.pick} (${g.away} @ ${g.home})` : `${fav} to win (${g.away} @ ${g.home})`, bp ? bp.p : Math.max(s.home_win, 100 - s.home_win), gw, bp ? `market ${Math.round(bp.p_mkt)}% · max ${bp.max_c}¢` : kickT(g.kick)), 'Game'); })());
     }))];
   } else if (PLV === 'kalshi') {
     const K = PLD.kalshi || {};
     const mins = K.at ? Math.round((Date.now() - new Date(K.at)) / 6e4) : null;
     const row = x => h('div', { class: 'legpick tap', onclick: () => openWhy(x.label, x.why, `${Math.round(x.p)}% ours vs ${x.cost}¢ a share`) }, h('span', { class: 'lp ' + (x.edge >= 5 ? 'hi' : '') }, Math.round(x.p) + '%'),
       h('span', { class: 'll' }, x.label, h('div', { class: 'k' }, `${kickT(x.kick)} · edge +${x.edge} pts · fee ${x.fee}¢`)),
-      h('span', { style: 'margin-left:auto;text-align:right' }, h('b', { class: 'gold' }, x.cost + '¢'), h('div', { class: 'k' }, `+${x.ev}% EV`)));
+      h('span', { style: 'margin-left:auto;text-align:right' }, h('b', { class: 'gold' }, x.cost + '¢'), h('div', { class: 'k' }, `+${x.ev}% EV`)),
+      shareIcon(x.label, x.p, x.why, 'Kalshi buy', `Kalshi YES ${x.cost}¢ · worth ~${Math.floor(x.p)}¢`));
     const sec = (t, sub, L, bet) => L && L.length ? [h('h3', { style: 'margin-top:16px' }, t, h('small', {}, sub)), h('div', { class: 'leglist' }, ...L.map(row)), bet ? h('div', { class: 'k', style: 'margin-top:6px' }, bet) : ''] : [];
     out = [h('div', { class: 'box ptip' }, h('b', {}, '💸 Real Kalshi prices. '), `Every rung of every Kalshi NFL ladder (${K.n || 0} prices${mins != null ? `, updated ${mins} min ago` : ''}) checked against our 50,000 sims. The gold number is what a YES share costs now. Buy only at or under it; prices move.`),
       ...sec('✅ Best buys', 'Our chance beats the share price by 3+ points, after the fee', K.buys, `Bet size: ${usd(0.5)} each, ${usd(1)} if the edge is 6+ points.`),
@@ -871,11 +884,11 @@ async function renderProps() {
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`), shareBtns(pl, `${pl.legs.length}-team favorite stack`))))] : []),
       h('h3', { style: 'margin-top:18px' }, '🎰 Longshot parlays'), h('div', { class: 'bgrid' }, ...(L.parlays || []).map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig', style: 'color:var(--gold)' }, pl.p + '%'), h('div', { class: 'k' }, 'hits in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`), shareBtns(pl, `${pl.legs.length}-leg longshot`)))),
-      h('h3', { style: 'margin-top:18px' }, '🎯 Longshot singles'), h('div', { class: 'leglist' }, ...(L.singles || []).map(x => h('div', { class: 'legpick tap', onclick: () => openWhy(x.label, whyOf(x.label), `${Math.round(x.p)}% in the sims, fair ${odds(x.fair)}`) }, h('span', { class: 'lp' }, Math.round(x.p) + '%'), h('span', { class: 'll' }, x.label), h('span', { class: 'mut', style: 'margin-left:auto;text-align:right' }, `fair ${odds(x.fair)}`, x.price ? h('div', { class: 'k' }, `best ${odds(x.price)}`) : ''))))];
+      h('h3', { style: 'margin-top:18px' }, '🎯 Longshot singles'), h('div', { class: 'leglist' }, ...(L.singles || []).map(x => h('div', { class: 'legpick tap', onclick: () => openWhy(x.label, whyOf(x.label), `${Math.round(x.p)}% in the sims, fair ${odds(x.fair)}`) }, h('span', { class: 'lp' }, Math.round(x.p) + '%'), h('span', { class: 'll' }, x.label), h('span', { class: 'mut', style: 'margin-left:auto;text-align:right' }, `fair ${odds(x.fair)}`, x.price ? h('div', { class: 'k' }, `best ${odds(x.price)}`) : ''), shareIcon(x.label, x.p, whyOf(x.label), 'Longshot', `fair ${odds(x.fair)} · up to ${Math.floor(x.p)}¢`))))];
   } else if (PLV === 'pickem') {
     const L = PLD.pickem_plays || [];
     out = [h('div', { class: 'box ptip' }, `Pick'em apps (PrizePicks, Underdog, Pick6) pay a fixed amount, so all that matters is the chance each leg hits. Rough break-even per leg: 2-pick at 3x needs 57.7%, 3-pick at 6x needs 55%, 5-pick flex needs about 54%. Lines on those apps can differ from these, so check the number.`),
-      h('div', { class: 'leglist' }, ...L.map(x => h('div', { class: 'legpick tap', onclick: () => openWhy(`${x.player} ${x.side} ${x.line} ${x.market.toLowerCase()}`, x.why, `${Math.round(x.p)}% in the sims`) }, h('span', { class: 'lp ' + (x.p >= 57.7 ? 'hi' : '') }, Math.round(x.p) + '%'), h('span', { class: 'll' }, `${x.player} ${x.side} ${x.line} ${x.market.toLowerCase()}`), h('span', { class: 'mut', style: 'margin-left:auto' }, `${x.team} vs ${x.opp}`))))];
+      h('div', { class: 'leglist' }, ...L.map(x => h('div', { class: 'legpick tap', onclick: () => openWhy(`${x.player} ${x.side} ${x.line} ${x.market.toLowerCase()}`, x.why, `${Math.round(x.p)}% in the sims`) }, h('span', { class: 'lp ' + (x.p >= 57.7 ? 'hi' : '') }, Math.round(x.p) + '%'), h('span', { class: 'll' }, `${x.player} ${x.side} ${x.line} ${x.market.toLowerCase()}`), h('span', { class: 'mut', style: 'margin-left:auto' }, `${x.team} vs ${x.opp}`), shareIcon(`${x.player} ${x.side} ${x.line} ${x.market.toLowerCase()}`, x.p, x.why, "Pick'em leg", `pick'em leg · needs ~55-58%`))))];
     if (!L.length) out.push(h('div', { class: 'box mut' }, `Nothing at ${PLD.pickem_cut}%+ right now.`));
   } else {
     const R = PLD.record || {}; const row = (n, b) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${b[0]}-${b[1]}`), h('b', { class: b[2] >= 0 ? 'pos' : 'neg' }, `${b[2] >= 0 ? '+' : '-'}${usd(Math.abs(b[2]))}`));
