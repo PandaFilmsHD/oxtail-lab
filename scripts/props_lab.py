@@ -61,6 +61,11 @@ def load(p, d=None):
         return d
 
 
+def half(x):
+    """Alt lines on the half point so they can't push."""
+    return x if x % 1 else x - 0.5
+
+
 def weather(team, kick):
     """Forecast wind (mph) and temp at kickoff from Open-Meteo. None if indoors or unavailable."""
     if team in ROOF or team not in LOC:
@@ -245,13 +250,13 @@ def main():
             gk = tuple(sorted((h, a)))
             fav, dog, fm = (h, a, mar) if spr > 0 else (a, h, -mar)
             for lab, ind in ((f"{fav} moneyline", fm > 0),
-                             *[(f"{fav} {-x:+g} alt spread", fm > x) for x in (0.5, 2.5, 3.5, 6.5) if x < abs(spr)],
-                             *[(f"{dog} {x:+g} alt spread", -fm > -x) for x in (9.5, 13.5, 16.5, 20.5) if x > abs(spr)],
-                             *[(f"Over {x:g} alt total", totl > x) for x in (tot - 6.5, tot - 9.5, tot - 13.5)],
-                             *[(f"Under {x:g} alt total", totl < x) for x in (tot + 6.5, tot + 9.5, tot + 13.5)]):
+                             *[(f"{fav} {-x:+g} alt spread", fm > x) for x in (1.5, 2.5, 3.5, 4.5, 6.5, 7.5) if x < abs(spr)],
+                             *[(f"{dog} {x:+g} alt spread", -fm > -x) for x in (7.5, 9.5, 10.5, 13.5, 14.5, 16.5, 17.5, 20.5) if x > abs(spr)],
+                             *[(f"{a} @ {h} Over {x:g}", totl > x) for x in [half(tot - k) for k in (5, 7, 9, 11)]],
+                             *[(f"{a} @ {h} Under {x:g}", totl < x) for x in [half(tot + k) for k in (5, 7, 9, 11)]]):
                 pa = float(ind.mean())
-                if 0.72 <= pa <= 0.86:
-                    LEGS.append({"lean": 0.0, "label": lab, "game": gk, "who": lab.split()[0], "p": pa, "ind": ind, "type": "game", "kick": k_})
+                if 0.70 <= pa <= 0.90:
+                    LEGS.append({"kindg": "total" if (" Over " in lab or " Under " in lab) else "ml" if "moneyline" in lab else "spread", "lean": (0.004 if (" Under " in lab and angles) else 0.0), "label": lab, "game": gk, "who": lab.split()[0], "p": pa, "ind": ind, "type": "game", "kick": k_})
         games.append({"home": h, "away": a, "kick": k_, "started": started, "spread": spr, "total": tot, "roof": roof, "weather": wx, "angles": angles,
                       "sim": {"home_win": round(100 * p_home_win, 1), "home_cover": round(100 * p_home_cover, 1), "over": round(100 * p_over, 1),
                               "home_pts": round(float(np.mean(hp)), 1), "away_pts": round(float(np.mean(ap)), 1), "fair_total": round(float(np.median(totl)), 1),
@@ -395,7 +400,7 @@ def main():
     parlays = {2: [], 3: []}
     for n_ in (2, 3):
         cand = []
-        lo_, hi_ = (0.52, 0.72) if n_ == 2 else (0.38, 0.62)   # pays around -110 to +180: worth building
+        lo_, hi_ = (0.52, 0.72) if n_ == 2 else (0.34, 0.52)   # 2-leg around -110 to -250, 3-leg around even money or better
         for combo in itertools.combinations(pool[:32 if n_ == 3 else 45], n_):
             if len({c["who"] for c in combo}) < n_:
                 continue
@@ -417,6 +422,34 @@ def main():
                                 "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "type": c["type"], "lean": round(100 * c["lean"], 1)} for c in combo]})
             if len(parlays[n_]) >= 8:
                 break
+    # game-line parlays: 3 or 4 games, one leg each (different games = independent), paying +100 or better
+    gpool = [L_ for L_ in LEGS if L_["type"] == "game"]
+    by_game = {}
+    for L_ in gpool:
+        by_game.setdefault(L_["game"], []).append(L_)
+    for n_ in (3, 4):
+        cand = []
+        gl = sorted(gpool, key=lambda z: (-z["lean"], -z["p"]))
+        for combo in itertools.combinations(gl[:40], n_):
+            if len({c["game"] for c in combo}) < n_:
+                continue
+            pj = math.prod(c["p"] for c in combo)
+            kinds = [c["kindg"] for c in combo]
+            if 0.34 <= pj <= 0.50 and max(kinds.count(k) for k in set(kinds)) <= (2 if n_ == 4 else 1 if n_ == 3 else 2):
+                cand.append((pj, combo))
+        # mix of bet types reads better and spreads the risk; then the highest chance wins
+        cand.sort(key=lambda z: -(z[0] + sum(c["lean"] for c in z[1])))
+        used, outp = {}, []
+        for pj, combo in cand:
+            if any(used.get(c["label"], 0) >= 2 for c in combo):
+                continue
+            for c in combo:
+                used[c["label"]] = used.get(c["label"], 0) + 1
+            outp.append({"p": round(100 * pj, 1), "fair": amer(pj), "lift": 1.0, "same_game": False, "units": 0.5,
+                         "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "type": "game", "lean": round(100 * c["lean"], 1)} for c in combo]})
+            if len(outp) >= 6:
+                break
+        parlays[f"g{n_}"] = outp
     legs_out = [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": L_["type"], "kick": L_["kick"], "lean": round(100 * L_["lean"], 1)} for L_ in pool]
 
     # ---------------- record: save picks until kickoff, grade after ----------------
@@ -488,6 +521,8 @@ def main():
     for n_ in parlays:
         for pl in parlays[n_]:
             pl["units"] = 0.5
+    legs_out = legs_out + [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": "game", "kick": L_["kick"], "lean": round(100 * L_["lean"], 1)}
+                           for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
     rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games")}
     out = {"unit": UNIT, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
            "parlays": parlays, "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},

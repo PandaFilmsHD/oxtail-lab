@@ -670,14 +670,15 @@ async function renderProps() {
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
       ...pl.legs.map(legRow), h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units || 0.5)}`), h('span', { class: 'k' }, `only if it pays better than ${odds(pl.fair)}`)));
     const P = PLD.parlays || {};
-    out = [tip, h('h3', {}, '🎯 2-leg parlays'), h('div', { class: 'bgrid' }, ...((P['2'] || []).map(card))), h('h3', { style: 'margin-top:18px' }, '🎯🎯 3-leg parlays'), h('div', { class: 'bgrid' }, ...((P['3'] || []).map(card)))];
+    const sect = (t, L) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t), h('div', { class: 'bgrid' }, ...L.map(card))] : [];
+    out = [tip, ...sect('🏈 4-team game parlays (+100 or better)', P.g4), ...sect('🏈 3-team game parlays', P.g3), ...sect('🎯 2-leg player props', P['2']), ...sect('🎯 3-leg player props (+100ish)', P['3'])];
     // build your own
     const legs = PLD.legs || [];
     const chosen = legs.filter(l => PLPICK.has(l.label));
     const pj = chosen.reduce((a, l) => a * l.p / 100, 1);
     const sum = h('div', { class: 'pbuild' }, chosen.length ? h('span', {}, `${chosen.length} legs: `, h('b', {}, Math.round(pj * 100) + '%'), ` to hit, fair odds `, h('b', { class: 'pos' }, odds(fairOf(pj)))) : h('span', { class: 'mut' }, 'Tap legs below to build your own.'),
       chosen.length ? h('button', { class: 'btn small', onclick: () => { PLPICK.clear(); renderProps(); } }, 'CLEAR') : '');
-    out.push(h('h3', { style: 'margin-top:18px' }, '🧱 Build your own'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Every leg here hits 72 to 86% of the time in the sims. Legs from different games are treated as independent.'), sum,
+    out.push(h('h3', { style: 'margin-top:18px' }, '🧱 Build your own'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Every leg here hits 70 to 90% of the time in the sims: moneylines, alt spreads, alt totals and alt player lines. Legs from different games are treated as independent.'), sum,
       h('div', { class: 'leglist' }, ...legs.map(l => h('label', { class: 'legpick' + (PLPICK.has(l.label) ? ' on' : '') }, h('input', { type: 'checkbox', ...(PLPICK.has(l.label) ? { checked: '' } : {}), onchange: e => { e.target.checked ? PLPICK.add(l.label) : PLPICK.delete(l.label); renderProps(); } }),
         h('span', { class: 'lp' }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), h('span', { class: 'mut', style: 'margin-left:auto' }, odds(l.fair))))));
   } else if (PLV === 'props') {
