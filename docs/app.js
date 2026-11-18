@@ -442,6 +442,8 @@ function alertsBox() {
 }
 function renderHow() {
   if (!$('#alertsbox')) $('#how').prepend(alertsBox());
+  if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · alert fix 3'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]
@@ -786,6 +788,24 @@ document.addEventListener('visibilitychange', () => setTimeout(checkPendingAlert
 addEventListener('focus', () => setTimeout(checkPendingAlert, 250));
 addEventListener('pageshow', () => setTimeout(checkPendingAlert, 400));
 setTimeout(checkPendingAlert, 900);
+// safety net: when the app comes on screen, show any alert from the last 20 minutes you haven't opened yet
+// (keeps checking for 2 minutes, since the site can take a minute to publish a brand-new alert)
+let FRESH_T = 0;
+async function showFreshAlert() {
+  if (document.hidden || $$('.asheetwrap').length) return;
+  const t0 = Date.now(); FRESH_T = t0;
+  for (let i = 0; i < 9 && FRESH_T === t0 && !document.hidden; i++) {
+    ALERTS = null;
+    const seen = seenAlerts();
+    const a = (await loadAlerts()).find(x => !seen.has(x.id) && Date.now() - new Date(x.at) < 20 * 60 * 1000);
+    if (a) { if (!$$('.asheetwrap').length) { $$('.modal').forEach(m => m.remove()); openAlert(a); renderAlertList(); } return; }
+    if ($$('.asheetwrap').length) return;
+    await new Promise(r => setTimeout(r, 15000));
+  }
+}
+try { if (!localStorage.getItem(SEEN_K)) localStorage.setItem(SEEN_K, '[]'); } catch (e) {}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(showFreshAlert, 1500); });
+setTimeout(showFreshAlert, 2500);
 let _hiddenAt = 0;
 document.addEventListener('visibilitychange', () => { if (document.hidden) _hiddenAt = Date.now(); else if (_hiddenAt && Date.now() - _hiddenAt > 10 * 60 * 1000) location.reload(); });
 
@@ -802,7 +822,11 @@ async function loadAlerts() {
   }
   return ALERTS.alerts || [];
 }
+const SEEN_K = 'oxtail_seen_alerts';
+const seenAlerts = () => { try { return new Set(JSON.parse(localStorage.getItem(SEEN_K) || '[]')); } catch (e) { return new Set(); } };
+const markSeen = id => { try { const s = seenAlerts(); s.add(id); localStorage.setItem(SEEN_K, JSON.stringify([...s].slice(-200))); } catch (e) {} };
 function openAlert(a) {
+  markSeen(a.id);
   const ago = m => { const d = (Date.now() - new Date(m)) / 6e4; return d < 60 ? Math.round(d) + ' min ago' : d < 1440 ? Math.round(d / 60) + ' hr ago' : Math.round(d / 1440) + ' days ago'; };
   const sec = (k, t) => t ? h('div', { class: 'arep' }, h('div', { class: 'k' }, k), h('p', {}, t)) : '';
   const m = h('div', { class: 'modal asheetwrap', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'asheet' },
