@@ -5,28 +5,28 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T06:35:06Z",
-   "champ_pct": 28.6,
+   "at": "2026-11-18T06:45:24Z",
+   "champ_pct": 28.5,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Thu 5:15 PM PT",
-     "detail": "C.J. Stroud, Ka'imi Fairbairn, Seth McGowan, Xavier Hutchinson play first. Players lock when their game starts.",
+     "detail": "C.J. Stroud, Ka'imi Fairbairn, Xavier Hutchinson play first. Players lock when their game starts.",
      "tab": "home"
     },
     {
      "urgent": true,
      "icon": "\ud83d\udea8",
      "title": "Seahawks D/ST is on bye",
-     "detail": "Stream 49ers D/ST this week: add him, drop Seahawks D/ST (+9.2 pts). Grab your guy back after if he's still there.",
+     "detail": "Stream Jets D/ST this week: add him, drop Seahawks D/ST (+6.2 pts). Grab your guy back after if he's still there.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer D'Andre Swift for Jonah Coleman + Harold Fannin Jr. (BO liever)",
-     "detail": "Title odds +2.9%. Would you do D'Andre Swift for Jonah Coleman and Harold Fannin Jr.? I think Swift slides right into your RB spot, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "detail": "Title odds +3.0%. Would you do D'Andre Swift for Jonah Coleman and Harold Fannin Jr.? I think Swift slides right into your RB spot, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
      "tab": "trades"
     }
    ]
@@ -36,14 +36,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T06:35:16Z",
-   "champ_pct": 10.6,
+   "at": "2026-11-18T06:45:36Z",
+   "champ_pct": 10.9,
    "todo": [
     {
      "urgent": true,
      "icon": "\ud83d\udea8",
      "title": "Drake Maye is on bye",
-     "detail": "Add Bo Nix and drop Corey Kiner (+19.4 pts).",
+     "detail": "Add Bo Nix and drop Corey Kiner (+20.8 pts).",
      "tab": "home"
     },
     {
@@ -52,6 +52,13 @@
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
      "detail": "Real upgrade: about +3.8 pts a week in your lineup the rest of the way.",
      "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at FLEX: Emmett Johnson or Josh Downs",
+     "detail": "Emmett Johnson 9.3 vs Josh Downs 9.1. Josh Downs has the higher ceiling (12.7 vs 9.4). Go with him if you need a big week.",
+     "tab": "home"
     },
     {
      "urgent": false,
@@ -67,22 +74,36 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T06:35:21Z",
-   "champ_pct": 3.4,
+   "at": "2026-11-18T06:45:43Z",
+   "champ_pct": 3.7,
    "todo": [
     {
      "urgent": false,
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Thu 5:15 PM PT",
+     "detail": "David Montgomery plays first. Players lock when their game starts.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83d\udce5",
-     "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "title": "Claim Steelers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +2.8 pts a week in your lineup the rest of the way, title odds +1.4%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Kyren Williams + Darren Waller for Dak Prescott + DeVonta Smith (Warrent Acquired )",
-     "detail": "Title odds +1.7%. Would you do Kyren Williams and Darren Waller for Dak Prescott and DeVonta Smith? I think Williams slides right into your FLEX spot over Corum, and Prescott is just sitting on your bench.",
-     "tab": "trades"
+     "icon": "\ud83d\udce5",
+     "title": "Claim Caleb Douglas, drop Darren Waller",
+     "detail": "Breakout radar gives him 46% to become a weekly starter. Cheap lottery ticket for Darren Waller.",
+     "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at FLEX: David Montgomery or Rashee Rice",
+     "detail": "David Montgomery 13.7 vs Rashee Rice 12.8. Rashee Rice has the higher ceiling (15.8 vs 6.8). Go with him if you need a big week.",
+     "tab": "home"
     }
    ]
   },
@@ -91,28 +112,28 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T06:35:11Z",
-   "champ_pct": 35.7,
+   "at": "2026-11-18T06:45:30Z",
+   "champ_pct": 37.4,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Kenneth Walker III might not play (75%)",
-     "detail": "If he's ruled out, start Emmett Johnson (11.2).",
+     "detail": "If he's ruled out, start Saquon Barkley (12.0).",
      "tab": "home"
     },
     {
      "urgent": true,
      "icon": "\ud83d\udea8",
      "title": "Seahawks D/ST is on bye",
-     "detail": "Stream 49ers D/ST this week: add him, drop Seahawks D/ST (+9.2 pts). Grab your guy back after if he's still there.",
+     "detail": "Stream Bills D/ST this week: add him, drop Seahawks D/ST (+7.1 pts). Grab your guy back after if he's still there.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Rhamondre Stevenson + Zay Flowers for Puka Nacua (Ethan)",
-     "detail": "Title odds +6.3%. Would you do Rhamondre Stevenson and Zay Flowers for Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Flowers slides right into your WR spot over Odunze.",
+     "detail": "Title odds +5.8%. Would you do Rhamondre Stevenson and Zay Flowers for Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Flowers slides right into your WR spot over Odunze.",
      "tab": "trades"
     }
    ]
