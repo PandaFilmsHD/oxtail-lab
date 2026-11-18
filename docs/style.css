@@ -413,3 +413,14 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 /* close buttons stay on screen: the X sticks to the top while you scroll, and the box starts below the notch */
 .modal{padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 .mbox .x{position:sticky;top:calc(8px + env(safe-area-inset-top));float:right;margin:-6px -4px 0 8px;z-index:6;width:44px;height:44px}
+/* Prop Lab: menus never wider than the screen, cards full width */
+#props{max-width:100%;overflow-x:hidden}
+#pview,#pbody .seg{display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#pview::-webkit-scrollbar,#pbody .seg::-webkit-scrollbar{display:none}
+#pview button,#pbody .seg button{flex:none;white-space:nowrap}
+#pbody .box,#pbody .bgrid,#pbody .leglist,#pbody .pbuild{width:100%;box-sizing:border-box}
+#pbody .bgrid{grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))}
+#pbody h3 small{display:block;font-family:var(--body);font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px}
+@media(max-width:600px){#pview button{padding:8px 10px;font-size:13px}}
+.leg .tag{font-size:10px;padding:2px 7px;flex:none}
+.leg{padding:6px 8px}

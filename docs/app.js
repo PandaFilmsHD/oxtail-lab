@@ -674,9 +674,9 @@ async function renderProps() {
         : h('div', { class: 'pstake', style: 'color:var(--mut);border-color:#3a3f9e' }, h('span', {}, 'No model edge'), h('span', { class: 'k' }, `fair is ${odds(pl.fair)}: only worth it if DraftKings pays more`)));
     const P = PLD.parlays || {};
     const srt = L => PPS === 'likely' ? [...(L || [])].sort((a, b) => b.p - a.p) : L;
-    const sect = (t, L) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t), h('div', { class: 'bgrid' }, ...srt(L).map(card))] : [];
+    const sect = (t, L, sub) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t, sub ? h('small', {}, sub) : ''), h('div', { class: 'bgrid' }, ...srt(L).map(card))] : [];
     const sbar = h('div', { class: 'seg', style: 'margin:0 0 6px' }, ...[['value', '💎 Best value'], ['likely', '🎯 Most likely to hit']].map(([v, t]) => h('button', { class: PPS === v ? 'on' : '', onclick: () => { PPS = v; renderProps(); } }, t)));
-    out = [tip, sbar, ...sect('🔥 Model\'s confident parlays (bigger payout, every leg is one the sims like more than the market)', P.conf), ...sect('🏈 4-team game parlays (+100 or better)', P.g4), ...sect('🏈 3-team game parlays', P.g3), ...sect('🎯 2-leg player props', P['2']), ...sect('🎯 3-leg player props (+100ish)', P['3'])];
+    out = [tip, sbar, ...sect('🔥 Confident parlays', P.conf, 'Bigger payout. Every leg is one the sims like more than the market.'), ...sect('🏈 4-team game parlays', P.g4, '+100 or better'), ...sect('🏈 3-team game parlays', P.g3, '+100 or better'), ...sect('🎯 2-leg prop parlays', P['2']), ...sect('🎯 3-leg prop parlays', P['3'], 'About even money')];
     const T = PLD.teasers || [];
     if (T.length) out.push(h('h3', { style: 'margin-top:18px' }, '🧷 6-point teaser legs'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Underdogs of +1.5 to +2.5 teased up 6 points have covered about 78% since 2006. A 2-team teaser at -120 needs ${T[0].breakeven}% per leg, so pair two of these from different games.`),
       h('div', { class: 'leglist' }, ...T.map(t => h('div', { class: 'legpick' }, h('span', { class: 'lp hi' }, Math.round(t.p) + '%'), h('span', { class: 'll' }, t.label), h('span', { class: 'mut', style: 'margin-left:auto' }, kickT(t.kick))))));
@@ -727,7 +727,7 @@ async function renderProps() {
   } else if (PLV === 'long') {
     const L = PLD.longshots || { singles: [], parlays: [] };
     out = [h('div', { class: 'box ptip' }, '🎰 For fun. These hit 1 to 35% of the time, so most of them lose. Every leg here is one the sims like more than the market does. Keep it to a small bet: ', h('b', {}, usd(0.2)), ' or so.'),
-      ...((L.fav_stacks || []).length ? [h('h3', {}, '💪 Favorite stacks (about +250 to +400)'), h('div', { class: 'bgrid' }, ...L.fav_stacks.map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, pl.p + '%'), h('div', { class: 'k' }, 'all hit in the sims')),
+      ...((L.fav_stacks || []).length ? [h('h3', {}, '💪 Favorite stacks', h('small', {}, 'Heavy favorites stacked to about +250 to +400')), h('div', { class: 'bgrid' }, ...L.fav_stacks.map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, pl.p + '%'), h('div', { class: 'k' }, 'all hit in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth it only if DraftKings pays more than ${odds(pl.fair)}.`))))] : []),
       h('h3', { style: 'margin-top:18px' }, '🎰 Longshot parlays'), h('div', { class: 'bgrid' }, ...(L.parlays || []).map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig', style: 'color:var(--gold)' }, pl.p + '%'), h('div', { class: 'k' }, 'hits in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth it only if DraftKings pays more than ${odds(pl.fair)}.`)))),
