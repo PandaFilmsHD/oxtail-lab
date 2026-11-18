@@ -130,7 +130,9 @@ for n, x in mine.items():
 # ---- Prop Lab: injury news that makes a line stale, plus the weekly digest ----
 PLB = ROOT / "docs" / "data" / "props_lab.json"
 if PLB.exists():
-    for a_ in (json.loads(PLB.read_text()).get("alerts") or [])[:4]:
+    _al = json.loads(PLB.read_text()).get("alerts") or []
+    _al = sorted(_al, key=lambda a: 0 if a["key"].startswith("kal|") else 1 if a["key"].startswith("prop|") else 2)   # live-price news first
+    for a_ in _al[:5]:
         fire(a_["key"], a_["title"], a_["body"], a_["report"], None, (), [{"label": "PROP LAB", "tab": "props"}], 4 if a_["key"].startswith("prop|") else 3)
 
 # keep things tidy

@@ -222,6 +222,10 @@ def ex_price(pm):
     return amer(c_)
 
 
+def usd_(u):
+    return "$" + format(u * float(_CFG.get("unit", 25)), ".2f").replace(".00", "")
+
+
 def kfee(c):
     """Kalshi taker fee per $1 contract: 7% x price x (1 - price), rounded up to the cent on real orders."""
     return 0.07 * c * (1 - c)
@@ -683,7 +687,7 @@ def main():
                             KBUY.append({"label": f"{nm} {n_}+ {label.lower()}" if side_k == "Yes" else f"{nm} under {n_} {label.lower()}", "side": side_k, "p": round(100 * pk_, 1),
                                          "cost": round(100 * c_), "fee": round(100 * kfee(c_), 1), "ev": round(100 * ev_k, 1), "edge": round(100 * (pk_ - c_), 1), "kick": k_,
                                          "ticker": q_.get("ticker"), "type": "prop", "player": nm, "team": tm, "market": label, "strike": sk_, "spread": round(100 * ((q_.get("ask") or 0) - (q_.get("bid") or 0))) if q_.get("bid") else None,
-                                         "game": "-".join(sorted((tm, lines[tm]["opp"])))})
+                                         "game": "-".join(sorted((tm, lines[tm]["opp"]))), "news": why_news})
                 if not big_gap and st != "td":
                     # alt lines he hits about 75-82% of the time, for parlays
                     for side_, q in (("Over", 0.28), ("Over", 0.22), ("Over", 0.17), ("Under", 0.72), ("Under", 0.78), ("Under", 0.83)):
@@ -1268,6 +1272,14 @@ def main():
                    "body": f"Top 2-leg: {' + '.join(l['label'] for l in b2['legs'])} ({round(b2['p'])}%, fair {b2['fair']:+d}).",
                    "report": {"what": f"New lines are in and every game ran {N:,} times.", "means": "Best 2-leg: " + "; ".join(f"{l['label']} ({round(l['p'])}%)" for l in b2["legs"]) + f". Hits {round(b2['p'])}% in the sims, fair odds {b2['fair']:+d}.",
                               "todo": f"Only take it if the app pays better than {b2['fair']:+d}. More parlays, props and pick'em plays in the Prop Lab tab."}})
+    # late news vs LIVE Kalshi prices: a teammate was ruled out after the lines went up and the share hasn't caught up
+    for x in sorted([x for x in KBUY if x.get("news") and x["edge"] >= 4 and x["ev"] >= 6 and 15 <= x["p"] <= 90 and (x.get("spread") is None or x["spread"] <= 6)], key=lambda x: -x["edge"])[:3]:
+        if x.get("kick") and 0 < (datetime.datetime.fromisoformat(x["kick"].replace("Z", "+00:00")) - now).total_seconds() < 6 * 3600:
+            al.append({"key": f"kal|{cur}|{x['ticker']}|{x['side']}", "title": f"📈 {x['news'][0]}: {x['label']} under {x['cost'] + 1}¢",
+                       "body": f"Sims {round(x['p'])}% vs {x['cost']}¢ on Kalshi. Buy before it moves.",
+                       "report": {"what": f"{', '.join(x['news'])}. Kalshi's {x['label']} share is still {x['cost']}¢.",
+                                  "means": f"Re-running 50,000 sims with the extra work he gets: {round(x['p'])}% to hit. After the {x['fee']}¢ fee that's +{x['ev']}% expected value.",
+                                  "todo": f"Buy YES at {x['cost']}¢ or less ({usd_(0.5)} is a normal bet). If the price already jumped, skip it."}})
     out["alerts"] = al
     old = load(OUT, {}) or {}
     if {k: v for k, v in old.items() if k != "at"} != json.loads(json.dumps({k: v for k, v in out.items() if k != "at"})):   # only write when something changed
