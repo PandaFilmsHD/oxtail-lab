@@ -984,7 +984,7 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
 tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
-          "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS]}
+          "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS], "v": [r1(V[n]["v"][w]) for w in WKS], "q": [round(V[n]["q"][w], 2) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
 latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts,
           "my_players": my_players, "tester": tester}

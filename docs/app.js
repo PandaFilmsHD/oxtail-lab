@@ -215,10 +215,26 @@ function labSim(give, get, partner, out, N) {
   const T = D.tester, me = T.me, W = T.weeks, ros = {};
   T.teams.forEach(t => ros[t.id] = []);
   T.players.forEach(p => { let t = p.t; if (t === me && give.has(p.n)) t = partner; else if (t === partner && get.has(p.n)) t = me; if (ros[t]) ros[t].push(p); });
-  const tot = (pl_, wi) => { const a = pl_.map(p => ({ pos: p.pos, v: out.has(p.n) && W[wi] >= T.po[0] ? 0 : p.e[wi], n: p.n })).sort((x, y) => y.v - x.v); const u = new Set(); let s = 0; for (const [sl, k] of T.slots) { let c = k; for (const x of a) { if (!c) break; if (u.has(x.n)) continue; if ((T.elig[sl] || []).includes(x.pos)) { u.add(x.n); s += x.v; c--; } } } return s; };
-  const E = {}; T.teams.forEach(t => E[t.id] = W.map((_, i) => tot(ros[t.id], i)));
+  // same math as the main sim: for each week, the 4 most uncertain starters are either in or out, weighted by their chance to play
+  const lineupTot = (pl_, wi, on) => { const a = pl_.map(p => ({ pos: p.pos, v: on(p) ? p.vv[wi] : 0, n: p.n })).sort((x, y) => y.v - x.v); const u = new Set(); let s = 0; for (const [sl, k] of T.slots) { let c = k; for (const x of a) { if (!c) break; if (u.has(x.n)) continue; if ((T.elig[sl] || []).includes(x.pos)) { u.add(x.n); s += x.v; c--; } } } return s; };
+  const SC = {}, E = {};
+  T.teams.forEach(t => {
+    const pl_ = ros[t.id].map(p => ({ ...p, vv: p.v.map((v, i) => out.has(p.n) && W[i] >= T.po[0] ? 0 : v), qq: p.q.map((q, i) => out.has(p.n) && W[i] >= T.po[0] ? 0 : q) }));
+    SC[t.id] = W.map((_, wi) => {
+      const unc = pl_.filter(p => p.qq[wi] > 0 && p.qq[wi] < 1 && p.vv[wi] > 4).sort((a, b) => b.vv[wi] - a.vv[wi]).slice(0, 4), L = [];
+      for (let m = 0; m < (1 << unc.length); m++) {
+        let pr = 1; const on = new Set();
+        unc.forEach((p, i) => { if (m >> i & 1) { pr *= p.qq[wi]; on.add(p.n); } else pr *= 1 - p.qq[wi]; });
+        L.push([pr, lineupTot(pl_, wi, p => unc.includes(p) ? on.has(p.n) : p.qq[wi] >= 0.5)]);
+      }
+      const tp = L.reduce((a, x) => a + x[0], 0); let c = 0; const cum = L.map(x => (c += x[0] / tp));
+      return { L, cum, mean: L.reduce((a, x) => a + x[0] * x[1], 0) / tp };
+    });
+    E[t.id] = SC[t.id].map(x => x.mean);
+  });
   const wi = w => W.indexOf(w), rn = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
-  const sc = (t, w) => E[t][wi(w)] + T.sd * rn(), g = (a, b, w) => sc(a, w) > sc(b, w) ? [a, b] : [b, a];
+  const draw = (t, w) => { const S = SC[t][wi(w)]; if (S.L.length === 1) return S.L[0][1]; const r = Math.random(); let k = 0; while (k < S.cum.length - 1 && S.cum[k] < r) k++; return S.L[k][1]; };
+  const sc = (t, w) => draw(t, w) + T.sd * rn(), g = (a, b, w) => sc(a, w) > sc(b, w) ? [a, b] : [b, a];
   const ids = T.teams.map(t => t.id); let ch = 0, fi = 0, po = 0;
   for (let n = 0; n < N; n++) {
     const Wn = {}, F = {}; T.teams.forEach(t => { Wn[t.id] = t.wins; F[t.id] = t.pf; });
@@ -513,6 +529,10 @@ function renderBoom() {
     c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; }) : [h('div', { class: 'box mut' }, 'Nobody in this group right now.')]));
 }
 seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBoom(); });
+// tab bar: fade + arrows on whichever side has more tabs
+(() => { const nav = $('#tabs'), wrap = nav.parentElement; const upd = () => { const l = nav.scrollLeft > 4, r = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4; [nav, wrap].forEach(e => { e.classList.toggle('fl', l); e.classList.toggle('fr', r); }); };
+  nav.addEventListener('scroll', upd, { passive: true }); addEventListener('resize', upd); setTimeout(upd, 50); setTimeout(upd, 600);
+  $$('.navarr').forEach(b => b.addEventListener('click', () => nav.scrollBy({ left: (b.classList.contains('l') ? -1 : 1) * nav.clientWidth * 0.7, behavior: 'smooth' }))); })();
 const RENDER = { boom: renderBoom, sched: renderSched, home: renderHome, trades: renderTrades, lab: renderLab, waivers: renderWaivers, ranks: renderRanks, team: renderTeam, league: renderLeague, how: renderHow };
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const t = $('nav.tabs button.on').dataset.tab; if (['home', 'trades', 'league'].includes(t)) RENDER[t](); }, 200); });
 
