@@ -348,3 +348,6 @@ tbody tr:nth-child(even) td{background:#ffffff06}
 /* installed app: respect the iPhone notch / home bar */
 body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .chatfab{bottom:calc(18px + env(safe-area-inset-bottom))}
+
+.installbar{display:flex;align-items:center;gap:10px;justify-content:space-between;background:linear-gradient(90deg,#2a1f63,#13163f);border:2px solid #ffc83d;border-radius:14px;padding:8px 10px;margin:8px 0;font-weight:800;font-size:14px}
+.isteps{padding-left:22px;line-height:1.5}.isteps li{margin:8px 0;font-size:15px}

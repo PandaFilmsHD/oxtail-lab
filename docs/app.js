@@ -638,3 +638,34 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 let _hiddenAt = 0;
 document.addEventListener('visibilitychange', () => { if (document.hidden) _hiddenAt = Date.now(); else if (_hiddenAt && Date.now() - _hiddenAt > 10 * 60 * 1000) location.reload(); });
+
+// ---------- "Install app" button + step-by-step help for each phone/browser ----------
+(() => {
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (standalone) return;
+  let deferred = null;
+  const ua = navigator.userAgent, iOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const crios = /CriOS/.test(ua), fxios = /FxiOS/.test(ua), android = /Android/.test(ua), inApp = /Instagram|FBAN|FBAV|Snapchat|Line\/|GSA\//.test(ua);
+  const steps = () => iOS && inApp ? ['This is opening inside another app. Tap ••• or the compass icon and pick "Open in Safari" first.', 'Then come back to this button.']
+    : iOS && crios ? ['Tap the Share icon at the top right, next to the address bar (a square with an arrow).', 'Scroll down and tap "Add to Home Screen".', 'Tap "Add". The Oxtail icon shows up on your home screen.']
+    : iOS && fxios ? ['Tap the ☰ menu at the bottom right.', 'Tap Share, then "Add to Home Screen".', 'Tap "Add".']
+    : iOS ? ['Tap the ••• button in the address bar (bottom of the screen on newer iPhones). On older iPhones, tap the Share icon at the bottom (square with an arrow).', 'Tap Share if you see it, then scroll down and tap "Add to Home Screen".', 'Make sure "Open as Web App" is on, then tap "Add".']
+    : android ? ['Tap the ⋮ menu at the top right of Chrome.', 'Tap "Install app" or "Add to Home screen".', 'Tap "Install".']
+    : ['In Chrome or Edge, click the install icon at the right end of the address bar (a screen with a down arrow).', 'Click "Install".'];
+  const help = () => {
+    const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox', style: 'max-width:420px' },
+      h('button', { class: 'x', onclick: () => m.remove() }, '×'), h('h2', { style: 'font-size:24px' }, '📲 Get the Oxtail app'),
+      h('p', { class: 'sub' }, 'It goes on your home screen, opens full screen and updates itself. No App Store needed.'),
+      h('ol', { class: 'isteps' }, steps().map(t => h('li', {}, t))),
+      h('p', { class: 'sub', style: 'margin-top:10px' }, 'Can\'t find it? Copy the link and open it in Safari (iPhone) or Chrome (Android).'),
+      h('button', { class: 'btn small blue', onclick: e => { navigator.clipboard.writeText(location.origin + location.pathname).then(() => e.target.textContent = 'LINK COPIED ✓'); } }, 'COPY LINK')));
+    document.body.append(m);
+  };
+  const bar = h('div', { class: 'installbar' }, h('span', {}, '📲 Put Oxtail on your home screen'),
+    h('button', { class: 'btn small', onclick: async () => { if (deferred) { deferred.prompt(); const r = await deferred.userChoice; if (r.outcome === 'accepted') bar.remove(); deferred = null; } else help(); } }, 'INSTALL APP'),
+    h('button', { class: 'chatx', title: 'Hide', onclick: () => { try { localStorage.setItem('hideInstall', Date.now()); } catch (e) {} bar.remove(); } }, '×'));
+  let hidden = 0; try { hidden = +localStorage.getItem('hideInstall') || 0; } catch (e) {}
+  if (Date.now() - hidden > 3 * 864e5) $('#installbar').append(bar);
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; });
+  addEventListener('appinstalled', () => bar.remove());
+})();
