@@ -365,3 +365,18 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 .asx{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:2px solid #6b6fd0;background:#2c3080;color:#fff;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
 .asbody{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 14px}
 .asbody .arep{padding:8px 10px;margin:8px 0}.asbody .arep p{font-size:13.5px}
+
+/* UI review fixes */
+.navwrap{top:env(safe-area-inset-top)}
+body:after{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top);background:#0a0b1e;z-index:11;pointer-events:none}
+@media(max-width:600px){.modal{padding:12px 6px}.mbox{padding:14px 10px}}
+nav.tabs button,.seg button,.btn.small,.asx,.chatx{min-height:44px}
+.asx,.chatx{min-width:44px}
+.tdone{width:24px;height:24px;margin:-6px 0 -6px -4px;padding:10px;box-sizing:content-box}
+.tw{max-height:75vh;overflow:auto}
+.tw td:first-child,.tw th:first-child{position:sticky;left:0;background:#181a4a;z-index:1}
+.tw thead th{position:sticky;top:0;z-index:2;background:#23266e}
+.tw thead th:first-child{z-index:3}
+body.loading #home .hero,body.loading #home .grid2{opacity:.25}
+body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.chatp{height:100dvh;max-height:100dvh}

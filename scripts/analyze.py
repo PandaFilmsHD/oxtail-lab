@@ -1181,9 +1181,9 @@ def first(n):
     return parts[-1] if len(parts) > 1 else n
 def poss(n):
     return n + ("'" if n.endswith("s") else "'s")
-def took_spot(n, leaving):
-    """The guy at the same position he replaces in the trade, if any."""
-    return next((x for x in leaving if P[x]["pos"] == P[n]["pos"]), None)
+def took_spot(n, leaving, starting=None):
+    """The guy at the same position he replaces in the trade, if any (and only if that guy was actually starting)."""
+    return next((x for x in leaving if P[x]["pos"] == P[n]["pos"] and (starting is None or x in starting)), None)
 def slot_swap(before_lu, after_lu, new_players, leaving=()):
     """For a lineup before/after a trade: which new guy starts, in what slot, and who he pushes out (or whose spot he takes over)."""
     out = []
@@ -1218,7 +1218,7 @@ def trade_story(c):
     why_them = [sit[0].upper() + sit[1:] + "."]
     if fills:
         n, sl, pts, rep = fills[0]
-        why_them.append(f"{n} would start at {sl} for them" + (f" over {rep['player']} ({rep['pts']:.1f} pts)" if rep else f" in {poss(first(took_spot(n, T_)))} spot" if took_spot(n, T_) else "") + f", about {pts:.1f} pts a week.")
+        why_them.append(f"{n} would start at {sl} for them" + (f" over {rep['player']} ({rep['pts']:.1f} pts)" if rep else f" in {poss(first(took_spot(n, T_, their_starting)))} spot" if took_spot(n, T_, their_starting) else "") + f", about {pts:.1f} pts a week.")
     elif weak:
         why_them.append(f"Their weakest starter is {weak['player']} at {nice_slot(weak['slot'])} ({weak['pts']:.1f} pts).")
     spare = []
@@ -1632,7 +1632,7 @@ for x in waivers:
     elif b and b["score"] >= 40 and x["drop"] not in {y["player"] for y in (sw0["lineup"] if sw0 else [])} and x["drop"] not in {t["alt"] for t in tossups} | {t["start"] for t in tossups} and x["ros_gain"] >= -1:
         x["verdict"], x["why"] = "CLAIM", f"Breakout radar gives him {b['score']}% to become a weekly starter. Cheap lottery ticket for {x['drop']}."
     else:
-        x["verdict"], x["why"] = "SKIP", f"Barely moves the needle ({x['this_week_gain']:+.1f} this week, {x['ros_gain']:+.1f} rest of season)."
+        x["verdict"], x["why"] = "SKIP", f"Small upgrade: {x['this_week_gain']:+.1f} this week, about {x['ros_gain'] / WEQ:+.1f} a week after that."
 waivers.sort(key=lambda x: (x["verdict"] != "CLAIM", -(x["ros_gain"] + 2 * x["this_week_gain"])))
 CLAIMED = {x["player"] for x in waivers if x["verdict"] == "CLAIM"}
 seen_drop = {}
@@ -1814,9 +1814,11 @@ else:
     take.append(f"Playoffs aren't safe ({r1(mine['po'])}%). Win now beats playoff matchups right now.")
 take.append(f"You win it all in {r1(ch)}% of sims" + (f" ({'up' if ch > prev_run['champ_pct'] else 'down'} from {prev_run['champ_pct']}% last update)" if prev_run and abs(ch - prev_run["champ_pct"]) >= 1 else "") + f". Your biggest threat is {lead['team']} at {lead['champ_pct']}%.")
 okr = [x for x in trades if x["kind"] == "realistic" and not x["blocked"] and x["change_pts"] > 0]
+if rt and rt in okr:
+    okr = [rt] + [x for x in okr if x is not rt]   # same "best trade" as the to-do list
 if okr:
     b = okr[0]
-    take.append(f"Best trade they should actually accept: {b['give']} for {b['get']} with {b['partner']}. Title odds +{b['change_pts']} and their lineup moves {b['partner_weekly_gain']:+} a week.")
+    take.append(f"Best trade they'd likely accept ({b.get('accept_pct', '?')}% yes): {b['give']} for {b['get']} with {b['partner']}. Title odds +{b['change_pts']}.")
     if len(okr) > 1:
         b2 = next((x for x in okr[1:] if not set(x["give"].split(" + ")) & set(b["give"].split(" + "))), okr[1])
         take.append(f"Backup plan: {b2['give']} for {b2['get']} ({b2['partner']}), +{b2['change_pts']}.")

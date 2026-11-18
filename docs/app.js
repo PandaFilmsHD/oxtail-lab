@@ -60,7 +60,7 @@ function hbar(el, rows, { label, value, fmt, color, tipText }) {
   el.replaceChildren(); if (!rows.length) { el.append(h('div', { class: 'mut' }, 'Nothing to show')); return; }
   const W = Math.max(300, el.clientWidth - 20), bh = 22, gap = 6, H_ = rows.length * (bh + gap) + 6;
   const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H_}`);
-  const lw = Math.min(W * 0.55, Math.max(...rows.map(r => label(r).length)) * 6.4 + 10);
+  const lw = Math.min(W * 0.5, Math.max(...rows.map(r => label(r).length)) * 7.8 + 12);   // a bit generous so names never get chopped
   const vals = rows.map(value), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals) || 1;
   const x = v => lw + (v - lo) / (hi - lo) * (W - lw - 54);
   rows.forEach((r, i) => {
@@ -119,7 +119,7 @@ function renderHome() {
   $('#kpis').replaceChildren(tile('t1', '🏁 Make the final', k.fi, prev && prev.final_pct), tile('t2', '✅ Make playoffs', k.po, prev && prev.playoffs_pct), ...(PV()[0] ? [tile('t3', '😴 First round bye', k.bye, prev && prev.bye_pct)] : []), tile('t4', '👑 1 seed', k.s1, prev && prev.seed1_pct));
   $('#take').replaceChildren(...s.take.map((t, i) => { const li = h('li', {}, t); li.style.animationDelay = i * 70 + 'ms'; return li; }));
   const tw = s.this_week; $('#tw-h').textContent = `🗓️ Week ${tw.week} best lineup`;
-  const lu = h('table', {}, h('tbody', {}, tw.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), x.slot, VAL(x.player), 26), pl(x.player), tierEl((x.player)))), h('td', {}, f1(x.pts))))));
+  const lu = h('table', {}, h('tbody', {}, tw.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), x.slot, VAL(x.player), 26), pl(x.player), tierEl((x.player)))), h('td', {}, f1(x.pts), x.opp === 'BYE' ? h('span', { class: 'opp neg' }, 'bye') : x.chance != null && x.chance < 1 ? h('span', { class: 'opp ' + (x.chance < 0.7 ? 'neg' : '') }, Math.round(x.chance * 100) + '% to play') : '')))));
   const sw = (D.schedule || []).find(x => x.w === tw.week), alerts = [];
   if (sw) sw.lineup.forEach(x => { if (x.opp !== 'BYE' && x.chance >= 0.8) return;
     const fa = (D.waivers || []).filter(w => w.pos === POS(x.player) && w.this_week_gain > 0).sort((a, b) => b.this_week_gain - a.this_week_gain)[0];
@@ -137,6 +137,8 @@ function renderHome() {
 
 // ---------- trades ----------
 let TK = 'realistic';
+const LIM = { trades: 8, boom: 6, ranks: 40 };
+const moreBtn = (key, total, redraw) => total > LIM[key] ? h('button', { class: 'btn small blue', style: 'margin:10px auto;display:block', onclick: () => { LIM[key] += key === 'ranks' ? 40 : 8; redraw(); } }, `SHOW MORE (${total - LIM[key]} left)`) : '';
 function deadlineEl() {
   const dl = D.summary.trade_deadline; if (!dl) return '';
   const days = (dl - Date.now()) / 864e5; if (days < 0) return h('div', { class: 'alert' }, '🔒 The trade deadline has passed. Trades are locked for the season.');
@@ -147,7 +149,7 @@ function renderTrades() {
   const rows = D.trades.filter(t => TK === 'all' || t.kind === TK);
   const names = s => s.split(' + ');
   const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 34), h('div', { class: 'pn' }, pl(n), h('div', {}, h('span', { class: 'pp2' }, POS(n) + ' · ' + (NFL(n) || '')), ' ', tierEl((n)))))));
-  $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, 24).map((r, i) => { const why = h('div', { class: 'why', hidden: '' }); const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
+  $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, LIM.trades).map((r, i) => { const why = h('div', { class: 'why', hidden: '' }); const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
       h('div', { class: 'who' }, h('span', {}, '🤝 ' + r.partner), h('span', {}, r.accept_pct != null ? h('span', { class: 'tag ' + (r.accept_pct >= 60 ? 'real' : r.accept_pct >= 35 ? 'stretch' : 'no'), title: 'Rough chance they say yes' }, `${r.accept_pct}% YES`) : '', ' ', h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'BLOCKED' : r.kind === 'realistic' ? 'REALISTIC' : 'STRETCH'))),
       h('div', { class: 'swap' }, side('give', 'YOU GIVE', r.give), h('div', { class: 'arrow' }, '➜'), side('get', 'YOU GET', r.get)),
       r.why_them && r.why_them.length ? h('div', { class: 'tpitch' }, h('div', { class: 'k' }, '🎯 WHY ' + r.partner.toUpperCase()), h('div', {}, r.why_them.slice(0, 2).join(' '))) : '',
@@ -157,7 +159,7 @@ function renderTrades() {
         h('div', { class: 'meta' }, `Their lineup ${sgn(r.partner_weekly_gain)}/wk`, h('br'), r.wk16_before != null ? `Your Wk${PV()[1]}: ${f1(r.wk16_before)} → ${f1(r.wk16)}` : `Your Wk${PV()[1]}: ${f1(r.wk16)}`, h('br'), r.wk17_before != null ? `Your Wk${PV()[2]}: ${f1(r.wk17_before)} → ${f1(r.wk17)}` : `Your Wk${PV()[2]}: ${f1(r.wk17)}`),
         h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => { why.hidden = !why.hidden; if (!why.hidden && !why.childNodes.length) why.append(...whyTrade(r)); } }, 'WHY?'),
           h('button', { class: 'btn small', onclick: () => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); setTimeout(() => { $('#run').click(); $('#run').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120); } }, 'TEST IT'))), why); c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; })
-    : [h('div', { class: 'box mut' }, 'No trades in this group right now.')]));
+    : [h('div', { class: 'box mut' }, 'No trades in this group right now.')]), moreBtn('trades', rows.length, renderTrades));
   table($('#ttable'), [
     { k: 'give', h: 'You give', l: 1, f: r => h('span', {}, ...names(r.give).flatMap((n, i) => [i ? ' + ' : '', pl(n)])) },
     { k: 'get', h: 'You get', l: 1, f: r => h('span', {}, ...names(r.get).flatMap((n, i) => [i ? ' + ' : '', pl(n)])) },
@@ -165,7 +167,7 @@ function renderTrades() {
     { k: 'change_pts', h: 'Title +pts', f: r => sgn(r.change_pts), c: r => cls(r.change_pts) },
     { k: 'title_pct', h: 'Title %', f: r => pct(r.title_pct) },
     { k: 'partner_weekly_gain', h: 'Their pts/wk', t: "How much the other team's best lineup changes per week for the rest of the regular season", f: r => sgn(r.partner_weekly_gain), c: r => r.partner_weekly_gain >= -1 ? 'pos' : 'neg' },
-    { k: 'value_ratio', h: 'Value ratio', t: 'Trade value you send ÷ value you get (over 1 = you overpay, so they should like it)', f: r => (+r.value_ratio).toFixed(2) },
+    { k: 'value_ratio', h: 'You pay / you get', t: 'Trade value you send ÷ value you get (over 1 = you overpay, so they should like it)', f: r => (+r.value_ratio).toFixed(2) },
     { k: 'wk16', h: `Your Wk${PV()[1]}`, f: r => f1(r.wk16) }, { k: 'wk17', h: `Your Wk${PV()[2]}`, f: r => f1(r.wk17) },
     { k: 'accept_pct', h: 'Chance they say yes', f: r => r.accept_pct != null ? r.accept_pct + '%' : '—' },
     { k: 'kind', h: 'Type', l: 1, f: r => h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'Blocked' : r.kind === 'realistic' ? 'Realistic' : 'Stretch') }
@@ -220,7 +222,7 @@ function openTeam(id) {
       h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Why ${f1(L.expected)}: their top scorers that week are ${top.map(x => `${x.player} ${f1(x.pts)}`).join(', ')}.` + (easy.length ? ` Easy matchups for ${easy.join(', ')}.` : '') + (risky.length ? ` Might not play: ${risky.join(', ')}.` : '') + (Math.abs(L.total - L.expected) >= 0.5 ? ` The ${f1(L.expected)} on the League page is a bit ${L.expected < L.total ? 'lower' : 'higher'} because it also covers bench guys stepping in if someone sits.` : '')),
       h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot),
         h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), POS(x.player), VAL(x.player), 26), h('span', {}, pl(x.player), ' ', tierEl(x.player),
-          h('div', { class: 'mut', style: 'font-size:12px' }, x.opp, x.rank ? h('span', { class: x.rank >= 22 ? 'pos' : x.rank <= 11 ? 'neg' : '' }, ` #${x.rank}`) : '')))),
+          h('div', { class: 'mut', style: 'font-size:12px' }, x.opp, x.rank ? h('span', { class: x.rank >= 22 ? 'pos' : x.rank <= 11 ? 'neg' : 'mut' }, x.rank >= 22 ? ' · easy' : x.rank <= 11 ? ' · tough' : ' · avg') : '')))),
         h('td', {}, f1(x.pts), x.chance < 1 ? h('span', { class: 'opp ' + (x.chance < 0.7 ? 'neg' : '') }, Math.round(x.chance * 100) + '% to play') : ''))),
         h('tr', {}, h('td', {}), h('td', { class: 'l' }, h('b', {}, 'TOTAL')), h('td', {}, h('b', {}, f1(L.total))))))));
     setTimeout(() => { const on = wkBtns.querySelector('.on'); if (on) wkBtns.scrollLeft = on.offsetLeft - wkBtns.clientWidth / 2 + on.clientWidth / 2; }, 30);
@@ -326,7 +328,7 @@ function renderWaivers() {
     { k: 'verdict', h: 'Call', l: 1, f: r => h('span', { class: 'tag ' + (r.verdict === 'CLAIM' ? 'real' : 'no'), title: r.why }, r.verdict === 'CLAIM' ? '✅ CLAIM' : 'SKIP') },
     { k: 'player', h: 'Add', l: 1, f: r => h('span', {}, pl(r.player), h('div', { class: 'mut', style: 'font-size:12px;max-width:260px;white-space:normal' }, r.why)) }, { k: 'drop', h: 'Drop', l: 1 },
     { k: 'this_week_gain', h: 'This week', f: r => sgn(r.this_week_gain), c: r => cls(r.this_week_gain) }, { k: 'ros_gain', h: 'Rest of season', t: 'Lineup points gained, playoff weeks count double', f: r => sgn(r.ros_gain), c: r => cls(r.ros_gain) },
-    { k: 'change_pts', h: 'Title odds', f: r => r.change_pts == null ? '—' : sgn(r.change_pts) + '%' }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'ros_ppg', h: 'ROS ppg', f: r => f1(r.ros_ppg) },
+    { k: 'change_pts', h: 'Title odds', f: r => r.change_pts == null ? '—' : sgn(r.change_pts) + '%' }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'ros_ppg', h: 'Pts/wk rest of yr', f: r => f1(r.ros_ppg) },
     { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) }, { k: 'opp16', h: 'Semis', l: 1 }, { k: 'opp17', h: 'Final', l: 1 }, { k: 'own_pct', h: 'Rostered', f: r => r.own_pct + '%' }
   ], D.waivers);
 }
@@ -335,14 +337,16 @@ function renderWaivers() {
 const RK = { pos: 'ALL', sort: 'po', q: '', fa: false };
 function renderRanks() {
   const q = RK.q.toLowerCase();
-  const rows = D.rankings.filter(r => (RK.pos === 'ALL' || r.pos === RK.pos) && (!RK.fa || r.owner === 'Free agent') && (!q || r.player.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q)));
+  const allRows = D.rankings.filter(r => (RK.pos === 'ALL' || r.pos === RK.pos) && (!RK.fa || r.owner === 'Free agent') && (!q || r.player.toLowerCase().includes(q) || r.owner.toLowerCase().includes(q)));
+  const rows = allRows.slice(0, LIM.ranks);
+  setTimeout(() => { const old = document.getElementById('rmore'); if (old) old.remove(); const b = moreBtn('ranks', allRows.length, renderRanks); if (b) { b.id = 'rmore'; $('#rtable').closest('.tw').after(b); } }, 0);
   const sosC = v => v === 'Easy' ? 'pos' : v === 'Tough' ? 'neg' : '';
   table($('#rtable'), [
     { k: 'player', h: 'Player', l: 1, f: r => h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(r.player, r.nfl, r.pos, r.value, 26), pl(r.player)) }, { k: 'tier', h: 'Tier', l: 1, sv: r => ['common', 'uncommon', 'rare', 'epic', 'legendary'].indexOf(TIERS[r.player]), f: r => tierEl(r.player) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'owner', h: 'Team', l: 1 },
     { k: 'value', h: 'Trade value', t: '0-100. Points over a replacement starter for the rest of the season, adjusted for usage trend', f: r => r.value == null ? '—' : r.value },
     { k: 'my_value', h: 'Value to you', t: '0-100. Same idea but weighted to the playoff weeks you will actually play', f: r => r.my_value == null ? '—' : r.my_value },
     { k: 'po_n', h: 'Playoff rk', sv: r => -r.po_n, f: r => r.pos + r.po_n }, { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) },
-    { k: 'ros_n', h: 'ROS rk', sv: r => -r.ros_n, f: r => r.pos + r.ros_n }, { k: 'ros_ppg', h: 'ROS ppg', f: r => f1(r.ros_ppg) },
+    { k: 'ros_n', h: 'ROS rk', sv: r => -r.ros_n, f: r => r.pos + r.ros_n }, { k: 'ros_ppg', h: 'Pts/wk rest of yr', f: r => f1(r.ros_ppg) },
     { k: 'xfp', h: 'xFP/g', t: 'Expected fantasy points per game from usage (this league\'s scoring)', f: r => f1(r.xfp) },
     { k: 'fpoe', h: 'Luck', t: 'Actual minus expected points per game. Big plus = running hot, may cool off. Big minus = due to bounce back.', f: r => sgn(r.fpoe), c: r => r.fpoe > 2 ? 'neg' : r.fpoe < -2 ? 'pos' : '' },
     { k: 'trend', h: 'Usage trend', t: 'Last 3 games touches+targets vs season average', f: r => r.trend == null ? '—' : (r.trend > 1 ? '▲ ' : r.trend < 1 ? '▼ ' : '') + Math.round((r.trend - 1) * 100) + '%', c: r => r.trend > 1.08 ? 'pos' : r.trend < 0.92 ? 'neg' : '' },
@@ -367,13 +371,13 @@ function renderTeam() {
     return h('div', { class: 'box' }, h('h3', {}, (w === po[0] ? '😴 Wk ' + w + ' (bye if you get it)' : w === po[1] ? '⚔️ Wk ' + w + ' semis' : '🏆 Wk ' + w + ' final') + ` · ${f1(L.total)}`),
       h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot),
         h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), POS(x.player), VAL(x.player), 26), h('span', {}, pl(x.player),
-          h('div', { class: 'mut', style: 'font-size:12px', title: x.rank ? `defense rank vs his position: ${x.rank} (32 = easiest)` : '' }, x.opp, x.rank ? h('span', { class: x.rank >= 22 ? 'pos' : x.rank <= 11 ? 'neg' : '' }, ` #${x.rank}`) : '')))),
+          h('div', { class: 'mut', style: 'font-size:12px', title: x.rank ? `defense rank vs his position: ${x.rank} (32 = easiest)` : '' }, x.opp, x.rank ? h('span', { class: x.rank >= 22 ? 'pos' : x.rank <= 11 ? 'neg' : 'mut' }, x.rank >= 22 ? ' · easy' : x.rank <= 11 ? ' · tough' : ' · avg') : '')))),
         h('td', {}, f1(x.pts), x.chance < 1 ? h('span', { class: 'opp ' + (x.chance < 0.7 ? 'neg' : '') }, Math.round(x.chance * 100) + '% to play') : '')))))),
       L.next_up.length ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Next up: ' + L.next_up.map(b => `${b.player} ${f1(b.pts)}`).join(', ')) : ''); }));
   const wk = (r, k) => { const ch = r[k + '_chance']; return h('span', {}, f1(r[k + '_proj']) + (ch < 1 ? ` (${Math.round(ch * 100)}%)` : ''), h('span', { class: 'opp' }, `${r[k + '_opp']}${r[k + '_rank'] ? ' · ' + r[k + '_rank'] : ''}`)); };
   table($('#ptable'), [
     { k: 'player', h: 'Player', l: 1, f: r => h('span', {}, pl(r.player), ' ', tierEl((r.player))) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'status', h: 'Status', l: 1 },
-    { k: 'season_avg', h: 'Season avg', f: r => f1(r.season_avg) }, { k: 'recent', h: 'Last 4', f: r => f1(r.recent) }, { k: 'ros_ppg', h: 'ROS ppg', f: r => f1(r.ros_ppg) },
+    { k: 'season_avg', h: 'Season avg', f: r => f1(r.season_avg) }, { k: 'recent', h: 'Last 4', f: r => f1(r.recent) }, { k: 'ros_ppg', h: 'Pts/wk rest of yr', f: r => f1(r.ros_ppg) },
     ...(po[0] ? [{ k: 'wk15', h: `Wk ${po[0]}`, f: r => wk(r, 'wk15') }] : []), { k: 'wk16', h: `Wk ${po[1]} semis`, f: r => wk(r, 'wk16') }, { k: 'wk17', h: `Wk ${po[2]} final`, f: r => wk(r, 'wk17') },
     { k: 'playoff_expected', h: 'Expected semis+final', f: r => f1(r.playoff_expected) }
   ], D.my_players, { onRow: r => openCard(r.player) });
@@ -383,7 +387,7 @@ function renderTeam() {
 function renderLeague() {
   hbar($('#lchart'), D.league.filter(r => r.champ_pct > 0.05), { label: r => r.team.length > 18 ? r.team.slice(0, 17) + '…' : r.team, value: r => r.champ_pct, fmt: v => v.toFixed(1) + '%', color: r => r.me ? '#ffc83d' : '#4cc9ff' });
   table($('#ltable'), [
-    { k: 'team', h: 'Team (tap one)', l: 1, f: r => h('b', {}, r.team + ' ›') }, { k: 'record', h: 'Record' }, { k: 'pf', h: 'PF', f: r => f1(r.pf) }, { k: 'playoffs_pct', h: 'Playoffs', f: r => pct(r.playoffs_pct) }, { k: 'bye_pct', h: 'Bye', f: r => pct(r.bye_pct) },
+    { k: 'team', h: 'Team (tap one)', l: 1, f: r => h('b', {}, r.team + ' ›') }, { k: 'record', h: 'Record' }, { k: 'pf', h: 'Pts scored', f: r => f1(r.pf) }, { k: 'playoffs_pct', h: 'Playoffs', f: r => pct(r.playoffs_pct) }, { k: 'bye_pct', h: 'Bye', f: r => pct(r.bye_pct) },
     { k: 'champ_pct', h: 'Title', f: r => pct(r.champ_pct) }, { k: 'final_pct', h: 'Final', f: r => pct(r.final_pct) }, { k: 'win_this_week_pct', h: 'Win this week', f: r => pct(r.win_this_week_pct) },
     { k: 'wk16_lineup', h: 'Semis (expected)', t: 'Best lineup with injury odds built in. Full-strength numbers are on My Team.', f: r => f1(r.wk16_lineup) }, { k: 'wk17_lineup', h: 'Final (expected)', t: 'Best lineup with injury odds built in. Full-strength numbers are on My Team.', f: r => f1(r.wk17_lineup) }
   ], D.league, { rowClass: r => r.me ? 'me' : '', onRow: r => openTeam(r.id) });
@@ -586,7 +590,7 @@ function renderSched() {
   const x = S.find(r => r.w === SW), i = S.indexOf(x);
   const lu = (L, mine) => h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.map(p => h('tr', {}, h('td', { class: 'mut' }, p.slot),
     h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(p.player, p.nfl, p.pos, VAL(p.player), 26), h('span', {}, mine ? pl(p.player) : p.player,
-      h('div', { class: 'mut', style: 'font-size:12px', title: p.rank ? `defense rank vs his position: ${p.rank} (32 = easiest)` : '' }, p.opp, p.rank ? h('span', { class: p.rank >= 22 ? 'pos' : p.rank <= 11 ? 'neg' : '' }, ` #${p.rank}`) : '')))),
+      h('div', { class: 'mut', style: 'font-size:12px', title: p.rank ? `defense rank vs his position: ${p.rank} (32 = easiest)` : '' }, p.opp, p.rank ? h('span', { class: p.rank >= 22 ? 'pos' : p.rank <= 11 ? 'neg' : 'mut' }, p.rank >= 22 ? ' · easy' : p.rank <= 11 ? ' · tough' : ' · avg') : '')))),
     h('td', {}, f1(p.pts), p.chance < 1 ? h('span', { class: 'opp ' + (p.chance < 0.7 ? 'neg' : '') }, Math.round(p.chance * 100) + '% to play') : '')))))); 
   const nav = h('div', { class: 'wknav' }, h('button', { class: 'btn small blue', disabled: i === 0 ? '' : null, onclick: () => { SW = S[i - 1].w; renderSched(); } }, '◀ PREV'),
     h('div', { class: 'wkt' }, x.label), h('button', { class: 'btn small blue', disabled: i === S.length - 1 ? '' : null, onclick: () => { SW = S[i + 1].w; renderSched(); } }, 'NEXT ▶'));
@@ -596,7 +600,9 @@ function renderSched() {
     : h('div', { class: 'vs' }, h('div', { class: 'side' }, h('div', { class: 'k' }, 'YOUR BEST LINEUP'), h('div', { class: 'v' }, f1(x.total))), h('div', { class: 'mid' }, h('div', { class: 'k' }, x.note || 'Opponent set by the bracket')));
   const notes = [];
   if (x.byes.length) notes.push(h('p', { class: 'sub' }, '😴 On bye: ' + x.byes.join(', ')));
-  if (x.hurt.length) notes.push(h('p', { class: 'sub' }, '🩹 Might not play: ' + x.hurt.join(', ')));
+  const outs = x.bench.filter(b => b.chance === 0 && b.opp !== 'BYE').map(b => b.player), iffy = x.hurt.filter(n => !outs.includes(n));
+  if (outs.length) notes.push(h('p', { class: 'sub' }, '🚑 Out: ' + outs.join(', ')));
+  if (iffy.length) notes.push(h('p', { class: 'sub' }, '🩹 Might not play: ' + iffy.join(', ')));
   (x.maybe || []).forEach(m => notes.push(h('p', { class: 'alert', style: 'background:#13163f;border-color:#ffc83d' }, `⭐ If ${m.player} is active, start him: ${f1(m.pts)} projected. Right now he's only ${Math.round(m.chance * 100)}% to play, so he's not in the lineup below.`)));
   notes.push(h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Each player shows what he scores if he plays. The total is your expected score after injury odds (same number as the League page).'));
   if (x.w === D.summary.week && [4, 5, 6, 0, 1].includes(new Date().getDay())) notes.push(h('p', { class: 'sub' }, '⏱️ This week is in progress, so the projection is for the full week and the win % comes from the live sim.'));
@@ -618,7 +624,7 @@ function spark2(xs, ps, ws) {
 function renderBoom() {
   const B = (D.breakouts || []).filter(b => (BP === 'all' || b.pos === BP) && (BO === 'all' || (BO === 'fa' ? b.owner === 'Free agent' : BO === 'mine' ? b.mine : b.owner !== 'Free agent' && !b.mine)));
   const AC = { ADD: ['real', '➕ ADD'], BUY: ['stretch', '💰 BUY'], STASH: ['real', '⭐ YOURS'], WATCH: ['no', '👀 WATCH'] };
-  $('#bcards').replaceChildren(...(B.length ? B.map((b, i) => { const ring = h('div', { class: 'bring' }, h('div', { class: 'bpct' }, b.score + '%'), h('div', { class: 'k' }, 'starter odds')); ring.style.setProperty('--p', b.score);
+  $('#bcards').replaceChildren(...(B.length ? B.slice(0, LIM.boom).map((b, i) => { const ring = h('div', { class: 'bring' }, h('div', { class: 'bpct' }, b.score + '%'), h('div', { class: 'k' }, 'starter odds')); ring.style.setProperty('--p', b.score);
     const c = h('div', { class: 'bcard' + (b.score >= 60 ? ' hot' : '') },
       h('div', { class: 'bhead' }, avatar(b.player, b.nfl, b.pos, VAL(b.player), 44), h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'bn' }, pl(b.player)), h('div', { class: 'sub', style: 'margin:0' }, `${b.pos} · ${b.nfl} · ${b.mine ? 'your team' : b.owner}`)),
         h('span', { class: 'tag ' + AC[b.action][0] }, AC[b.action][1])),
@@ -629,7 +635,7 @@ function renderBoom() {
       h('ul', { class: 'bwhy' }, b.why.map(t => h('li', {}, t))),
       h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => openCard(b.player) }, 'PLAYER CARD'),
         h('button', { class: 'btn small', onclick: () => window.askCoach && askCoach(`Is ${b.player} about to break out? The breakout sim gives him ${b.score}% to be a weekly starter. Should I ${b.action === 'ADD' ? 'pick him up and who would I drop' : b.action === 'BUY' ? 'try to trade for him and what would it cost' : 'start or hold him'}?`) }, '🤖 ASK COACH')));
-    c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; }) : [h('div', { class: 'box mut' }, 'Nobody in this group right now.')]));
+    c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; }) : [h('div', { class: 'box mut' }, 'Nobody in this group right now.')]), moreBtn('boom', B.length, renderBoom));
 }
 seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBoom(); });
 // tab bar: fade + arrows on whichever side has more tabs
@@ -651,7 +657,14 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
   sel.value = LID || ''; sel.parentElement.hidden = leagues.length < 2;
   sel.addEventListener('change', () => { try { localStorage.setItem('league', sel.value); } catch (e) {} const u = new URL(location); u.searchParams.set('league', sel.value); location.href = u.toString(); });
   if (idx && idx.status && idx.status.espn_ok === false) $('#banner').replaceChildren(h('div', { class: 'banner' }, '⚠️ ' + idx.status.message));
-  [D, H] = await Promise.all([fetch(BASE + 'latest.json?v=' + v).then(r => r.json()), fetch(BASE + 'history.json?v=' + v).then(r => r.json()).catch(() => ({ runs: [], moves: [] }))]);
+  try {
+    [D, H] = await Promise.all([fetch(BASE + 'latest.json?v=' + v).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }), fetch(BASE + 'history.json?v=' + v).then(r => r.json()).catch(() => ({ runs: [], moves: [] }))]);
+  } catch (e) {
+    $('#banner').replaceChildren(h('div', { class: 'banner' }, '⚠️ Couldn\'t load your league. Check your connection, then pull down to retry.', h('button', { class: 'btn small', style: 'margin-left:8px', onclick: () => location.reload() }, 'RETRY')));
+    document.body.classList.remove('loading'); return;
+  }
+  document.body.classList.remove('loading');
+  { const hrs = (Date.now() - new Date(D.summary.at)) / 36e5; if (hrs > 12) $('#banner').append(h('div', { class: 'banner' }, `⚠️ This data is ${Math.round(hrs)} hours old. The auto-update may be stuck.`)); }
   TIERS = D.summary.tiers || {};
   const at = new Date(D.summary.at);
   $('#upd').textContent = `${D.summary.my_team} · Week ${D.summary.week} · updated ${at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`;
