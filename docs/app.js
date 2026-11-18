@@ -117,7 +117,7 @@ function renderTrades() {
       h('div', { class: 'swap' }, side('give', 'YOU GIVE', r.give), h('div', { class: 'arrow' }, '➜'), side('get', 'YOU GET', r.get)),
       h('div', { class: 'foot' }, h('div', { class: 'boost', style: r.change_pts < 0 ? 'color:var(--red)' : '' }, sgn(r.change_pts) + '%', h('small', {}, `title odds → ${pct(r.title_pct)}`)),
         h('div', { class: 'meta' }, `Their lineup ${sgn(r.partner_weekly_gain)}/wk`, h('br'), `Your Wk${D.tester.po[1]}/${D.tester.po[2]}: ${f1(r.wk16)} / ${f1(r.wk17)}`),
-        h('div', { style: 'display:flex;gap:8px' }, h('button', { class: 'btn small blue', onclick: () => { why.hidden = !why.hidden; if (!why.hidden && !why.childNodes.length) why.append(...whyTrade(r)); } }, 'WHY?'),
+        h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => { why.hidden = !why.hidden; if (!why.hidden && !why.childNodes.length) why.append(...whyTrade(r)); } }, 'WHY?'),
           h('button', { class: 'btn small', onclick: () => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); } }, 'TEST IT'))), why); c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; })
     : [h('div', { class: 'box mut' }, 'No trades in this group right now.')]));
   table($('#ttable'), [

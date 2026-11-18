@@ -1,9 +1,11 @@
 // Ask Coach: a chatbot that reads this league's data. Uses YOUR Anthropic API key, stored only in this browser.
 (() => {
   const MODEL = 'claude-sonnet-5-5';
-  const KEY = 'oxtail_anthropic_key';
-  const getKey = () => { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } };
-  const setKey = k => { try { k ? localStorage.setItem(KEY, k) : localStorage.removeItem(KEY); } catch (e) {} };
+  const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash'];   // free tier; tries the newest Flash first
+  const store = { get: k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} } };
+  const provider = () => store.get('oxtail_gemini_key') ? 'gemini' : store.get('oxtail_anthropic_key') ? 'anthropic' : '';
+  const getKey = () => store.get(provider() === 'gemini' ? 'oxtail_gemini_key' : 'oxtail_anthropic_key');
+  const setKey = k => { store.set('oxtail_gemini_key', ''); store.set('oxtail_anthropic_key', ''); if (k) store.set(k.startsWith('sk-ant') ? 'oxtail_anthropic_key' : 'oxtail_gemini_key', k); };
   let history = [], busy = false;
 
   // ---------- build the data the bot reads ----------
@@ -72,8 +74,8 @@ ${METHOD}`;
   function render() {
     const k = getKey();
     panel.replaceChildren(
-      el('div', { class: 'chath' }, el('div', { class: 'chatt' }, '🤖 Coach', el('small', {}, D ? D.summary.league : '')), el('div', {},
-        k ? el('button', { class: 'chatx', title: 'Remove saved key', onclick: () => { if (confirm('Remove your saved API key from this browser?')) { setKey(''); render(); } } }, '🔑') : '',
+      el('div', { class: 'chath' }, el('div', { class: 'chatt' }, '🤖 Coach', el('small', {}, (D ? D.summary.league : '') + (provider() ? ' · ' + (provider() === 'gemini' ? 'Gemini (free)' : 'Claude') : ''))), el('div', {},
+        provider() ? el('button', { class: 'chatx', title: 'Remove saved key', onclick: () => { if (confirm('Remove your saved key from this browser?')) { setKey(''); render(); } } }, '🔑') : '',
         el('button', { class: 'chatx', onclick: () => toggle(false) }, '×'))),
       el('div', { class: 'chatlog', id: 'chatlog' }, ...(history.length ? history.map(m => el('div', { class: 'msg ' + m.role }, m.role === 'assistant' ? md(m.content) : m.content))
         : [el('div', { class: 'msg assistant' }, md(`Yo. I've got everything for **${D ? D.summary.league : 'your league'}**: your roster, every trade the sim found, waivers, rankings and the odds. Ask me anything.`)),
@@ -83,11 +85,12 @@ ${METHOD}`;
     const lg = $c('#chatlog'); lg.scrollTop = lg.scrollHeight;
   }
   function keyScreen() {
-    const inp = el('input', { type: 'password', placeholder: 'Paste your Anthropic API key (sk-ant-…)', autocomplete: 'off' });
+    const inp = el('input', { type: 'password', placeholder: 'Paste your free Gemini key (AIza…)', autocomplete: 'off' });
     return el('div', { class: 'chatkey' },
-      el('p', {}, el('b', {}, 'Option 1: chat right here. '), 'Paste an Anthropic API key. It\'s saved only in this browser (not on GitHub, not on the site), and each question costs a few cents. Get one at ', el('a', { href: 'https://console.anthropic.com/settings/keys', target: '_blank', rel: 'noopener' }, 'console.anthropic.com'), '.'),
+      el('p', {}, el('b', {}, '⭐ Free: chat right here with Google Gemini. '), '1) Go to ', el('a', { href: 'https://aistudio.google.com/apikey', target: '_blank', rel: 'noopener' }, 'aistudio.google.com/apikey'), ' and sign in with Google. 2) Click Create API key. 3) Paste it below. No card needed. It\'s saved only in this browser, not on GitHub.'),
       el('form', { onsubmit: e => { e.preventDefault(); const v = inp.value.trim(); if (v) { setKey(v); render(); } } }, inp, el('button', { class: 'btn small', type: 'submit' }, 'SAVE')),
-      el('p', { style: 'margin-top:14px' }, el('b', {}, 'Option 2: free, no key. '), 'Type your question and I\'ll copy it with all the league data, then open Claude so you can paste it in.'),
+      el('p', { class: 'mut', style: 'font-size:12px;margin-top:6px' }, 'Have a Claude API key (sk-ant-…) instead? Paste that in the same box and it\'ll use Claude.'),
+      el('p', { style: 'margin-top:14px' }, el('b', {}, 'No key at all: '), 'Type your question and I\'ll copy it with all the league data, then open Claude so you can paste it in.'),
       el('form', { onsubmit: e => { e.preventDefault(); const q = e.target.querySelector('input').value.trim() || 'Give me your take on my team and the best moves.'; copyToClaude(q); } }, el('input', { placeholder: 'Your question…' }), el('button', { class: 'btn small', type: 'submit' }, 'COPY + OPEN')));
   }
   async function copyToClaude(q) {
@@ -106,7 +109,9 @@ ${METHOD}`;
     history.push({ role: 'user', content: q }); history.push({ role: 'assistant', content: '' });
     render();
     const out = panel.querySelectorAll('.msg.assistant'); const bubble = out[out.length - 1]; bubble.classList.add('typing');
+    const onText = txt => { bubble.replaceChildren(md(txt)); const lg = $c('#chatlog'); lg.scrollTop = lg.scrollHeight; };
     try {
+      if (provider() === 'gemini') { history[history.length - 1].content = (await askGemini(onText)) || '(no answer)'; return; }
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': getKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -122,13 +127,41 @@ ${METHOD}`;
         let i; while ((i = buf.indexOf('\n')) >= 0) {
           const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
           if (!line.startsWith('data:')) continue;
-          try { const ev = JSON.parse(line.slice(5)); if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) { txt += ev.delta.text; bubble.replaceChildren(md(txt)); const lg = $c('#chatlog'); lg.scrollTop = lg.scrollHeight; } } catch (e) {}
+          try { const ev = JSON.parse(line.slice(5)); if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) { txt += ev.delta.text; onText(txt); } } catch (e) {}
         }
       }
       history[history.length - 1].content = txt || '(no answer)';
     } catch (e) {
       history[history.length - 1].content = '⚠️ ' + e.message;
     } finally { busy = false; render(); }
+  }
+  async function askGemini(onText) {
+    const body = { systemInstruction: { parts: [{ text: SYS + '\n\n===== LEAGUE DATA =====\n' + context() }] },
+      contents: history.slice(0, -1).slice(-12).map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+      generationConfig: { maxOutputTokens: 2000, temperature: 0.6 } };
+    let last;
+    for (const model of GEMINI_MODELS) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': getKey() }, body: JSON.stringify(body) });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({})); const msg = (e.error && e.error.message) || ('Request failed (' + r.status + ')');
+        if (r.status === 404) { last = msg; continue; }   // model name not available, try the next one
+        if (r.status === 400 && /API key/i.test(msg)) throw new Error('That Gemini key didn\'t work. Tap 🔑 to remove it and paste a new one.');
+        if (r.status === 429) throw new Error('Gemini\'s free limit hit for now. Wait a minute and try again.');
+        throw new Error(msg);
+      }
+      const rd = r.body.getReader(), dec = new TextDecoder(); let buf = '', txt = '';
+      for (;;) {
+        const { done, value } = await rd.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i; while ((i = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+          if (!line.startsWith('data:')) continue;
+          try { const ev = JSON.parse(line.slice(5)); const t = (((ev.candidates || [])[0] || {}).content || {}).parts; if (t) { txt += t.map(p => p.text || '').join(''); onText(txt); } } catch (e) {}
+        }
+      }
+      return txt;
+    }
+    throw new Error(last || 'No Gemini model available');
   }
   function toggle(open) { panel.hidden = !open; fab.hidden = open; if (open) { render(); setTimeout(() => { const i = $c('#chatq'); if (i) i.focus(); }, 50); } }
   window.askCoach = q => { toggle(true); ask(q); };

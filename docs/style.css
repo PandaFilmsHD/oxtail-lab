@@ -239,3 +239,9 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 .chatkey{padding:12px 14px;border-top:2px solid #2c3080;font-size:13px;overflow-y:auto}
 .chatkey p{margin:0 0 8px;color:var(--mut)}.chatkey p b{color:var(--fg)}
 .chatkey form{display:flex;gap:8px}
+
+/* trade card footer: odds + lineup on top, buttons on their own row */
+.tcard .foot{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 14px;align-items:center}
+.tcard .foot .tbtns{grid-column:1/-1;display:flex;gap:10px}
+.tcard .foot .tbtns .btn{flex:1;margin:0;padding:9px 10px;text-align:center}
+.tcard .meta{grid-column:auto;order:0}
