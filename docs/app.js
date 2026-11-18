@@ -443,7 +443,7 @@ function alertsBox() {
 function renderHow() {
   if (!$('#alertsbox')) $('#how').prepend(alertsBox());
   if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
-    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · alert fix 3'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · alert fix 4'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]
@@ -670,7 +670,8 @@ async function renderProps() {
   if (PLV === 'parlay') {
     const card = pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, Math.round(pl.p) + '%'), h('div', { class: 'k' }, 'hits in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
-      ...pl.legs.map(legRow), h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units || 0.5)}`), h('span', { class: 'k' }, `only if it pays better than ${odds(pl.fair)}`)));
+      ...pl.legs.map(legRow), pl.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units)}`), h('span', { class: 'k' }, `only if DraftKings pays better than ${odds(pl.fair)}`))
+        : h('div', { class: 'pstake', style: 'color:var(--mut);border-color:#3a3f9e' }, h('span', {}, 'No model edge'), h('span', { class: 'k' }, `fair is ${odds(pl.fair)}: only worth it if DraftKings pays more`)));
     const P = PLD.parlays || {};
     const srt = L => PPS === 'likely' ? [...(L || [])].sort((a, b) => b.p - a.p) : L;
     const sect = (t, L) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t), h('div', { class: 'bgrid' }, ...srt(L).map(card))] : [];
@@ -682,10 +683,14 @@ async function renderProps() {
     // build your own
     const legs = PLD.legs || [];
     const chosen = legs.filter(l => PLPICK.has(l.label));
-    const pj = chosen.reduce((a, l) => a * l.p / 100, 1);
+    const byG = {}; chosen.forEach(l => (byG[l.game || l.label] = byG[l.game || l.label] || []).push(l));
+    const bitsOf = l => l._b || (l._b = Uint8Array.from(atob(l.bits || ''), c => c.charCodeAt(0)));
+    const pop = b => { let n = 0; for (let i = 0; i < b.length; i++) { let v = b[i]; while (v) { n += v & 1; v >>= 1; } } return n; };
+    const pj = Object.values(byG).reduce((a, g) => { if (g.length === 1 || !g.every(l => l.bits)) return a * g.reduce((x, l) => x * l.p / 100, 1);
+      const m = bitsOf(g[0]).slice(); g.slice(1).forEach(l => { const b = bitsOf(l); for (let i = 0; i < m.length; i++) m[i] &= b[i]; }); return a * pop(m) / (m.length * 8); }, 1);
     const sum = h('div', { class: 'pbuild' }, chosen.length ? h('span', {}, `${chosen.length} legs: `, h('b', {}, Math.round(pj * 100) + '%'), ` to hit, fair odds `, h('b', { class: 'pos' }, odds(fairOf(pj)))) : h('span', { class: 'mut' }, 'Tap legs below to build your own.'),
       chosen.length ? h('button', { class: 'btn small', onclick: () => { PLPICK.clear(); renderProps(); } }, 'CLEAR') : '');
-    out.push(h('h3', { style: 'margin-top:18px' }, '🧱 Build your own'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Every leg here hits 70 to 90% of the time in the sims: moneylines, alt spreads, alt totals and alt player lines. Legs from different games are treated as independent.'), sum,
+    out.push(h('h3', { style: 'margin-top:18px' }, '🧱 Build your own'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Every leg here hits 70 to 90% of the time in the sims: moneylines, alt spreads, alt totals and alt player lines. Legs from the same game are priced together from the same sims; different games are independent.'), sum,
       h('div', { class: 'leglist' }, ...legs.map(l => h('label', { class: 'legpick' + (PLPICK.has(l.label) ? ' on' : '') }, h('input', { type: 'checkbox', ...(PLPICK.has(l.label) ? { checked: '' } : {}), onchange: e => { e.target.checked ? PLPICK.add(l.label) : PLPICK.delete(l.label); renderProps(); } }),
         h('span', { class: 'lp' }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), h('span', { class: 'mut', style: 'margin-left:auto' }, odds(l.fair))))));
   } else if (PLV === 'props') {
@@ -729,7 +734,7 @@ async function renderProps() {
     out = [h('div', { class: 'box' }, h('h3', {}, '📊 How the picks have done'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Every graded play at 1 unit (${usd(1)}), bought at the market price. Small samples swing a lot: give it a few weeks before trusting it.`),
       row('Player props', R.props || [0, 0, 0]), row('Game lines', R.games || [0, 0, 0]),
       h('div', { class: 'k', style: 'margin-top:10px' }, `Backtest: ${PLD.backtest.ats_model}. The closing line missed by ${PLD.backtest.line_mae} pts on average vs ${PLD.backtest.model_mae} for a ratings model, so game sims start from the line.`)),
-      h('div', { class: 'leglist', style: 'margin-top:12px' }, ...(PLD.recent || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'tag ' + (x.void ? 'no' : x.result ? 'real' : 'stretch') }, x.void ? 'VOID' : x.result ? 'WIN' : 'LOSS'),
+      h('div', { class: 'leglist', style: 'margin-top:12px' }, ...(PLD.recent || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'tag ' + (x.void || x.result == null ? 'no' : x.result ? 'real' : 'stretch') }, x.void ? 'VOID' : x.result == null ? 'PUSH' : x.result ? 'WIN' : 'LOSS'),
         h('span', { class: 'll' }, x.pick ? `Wk ${x.week} ${x.game}: ${x.pick}` : `Wk ${x.week} ${x.player} ${x.side} ${x.line ?? ''} ${x.market.toLowerCase()}${x.actual != null ? ` (had ${x.actual})` : ''}`)))),
       !(PLD.recent || []).length ? h('div', { class: 'box mut' }, 'No graded picks yet. This week\'s picks get graded after the games.') : ''];
   }
@@ -792,13 +797,13 @@ setTimeout(checkPendingAlert, 900);
 // (keeps checking for 2 minutes, since the site can take a minute to publish a brand-new alert)
 let FRESH_T = 0;
 async function showFreshAlert() {
-  if (document.hidden || $$('.asheetwrap').length) return;
+  if (document.hidden || $$('.modal').length) return;
   const t0 = Date.now(); FRESH_T = t0;
   for (let i = 0; i < 9 && FRESH_T === t0 && !document.hidden; i++) {
     ALERTS = null;
     const seen = seenAlerts();
     const a = (await loadAlerts()).find(x => !seen.has(x.id) && Date.now() - new Date(x.at) < 20 * 60 * 1000);
-    if (a) { if (!$$('.asheetwrap').length) { $$('.modal').forEach(m => m.remove()); openAlert(a); renderAlertList(); } return; }
+    if (a) { if (!$$('.modal').length) { openAlert(a); renderAlertList(); } else markSeen(a.id); return; }   // never close something you have open
     if ($$('.asheetwrap').length) return;
     await new Promise(r => setTimeout(r, 15000));
   }
@@ -871,3 +876,6 @@ async function renderAlertList() {
   // if the app was asleep when you tapped, the message can get lost: check again when it comes back to the screen
   document.addEventListener('visibilitychange', () => { const id = new URLSearchParams(location.search).get('alert'); if (!document.hidden && id && !$$('.asheetwrap').length) showAlertById(id); });
 })();
+
+document.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('modal')) e.target.remove(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = $$('.modal'); if (m.length) m[m.length - 1].remove(); } });

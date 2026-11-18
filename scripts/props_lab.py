@@ -149,6 +149,7 @@ def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0
         mar_a = mar_a + m_shift
     mar = np.r_[mar_a, mar_b]
     totl = tot + t_shift + np.r_[tr_a, tr_b] + rng.normal(0, noise, n)
+    totl = totl - (np.median(totl) - (tot + t_shift))   # centered after the jitter: no angle = exactly 50/50 on the total
     p = rng.permutation(n)
     return mar[p], totl[p]
 
@@ -231,10 +232,11 @@ def main():
     # players: name -> usage entry
     PL = {key(v["name"]): v for v in (U.get("players") or {}).values()}
     SLK = {}
-    for k_, v in SL.items():
+    SLP_ = SL.get("players", {}) if str(SL.get("week")) == str(M.get("cur") or RAW.get("week") or "") else {}
+    for k_, v in SLP_.items():
         n_, t_ = (k_.split("|") + [""])[:2]
-        if v:
-            SLK[key(n_)] = v
+        if v and t_:   # skip retired/teamless duplicates that share a name
+            SLK[(key(n_), t_)] = v
 
     def our_mean(p, st):
         """Season average + last 3, regressed the way 10 seasons of games say (prop_dists.json)."""
@@ -250,16 +252,16 @@ def main():
             wk = [w for w in wk if (w.get("att") or 0) >= 15]
         if st == "td":
             vals = [(w.get("rutd", 0) or 0) + (w.get("td", 0) - (w.get("rutd", 0) or 0) if p["pos"] != "QB" else 0) for w in wk]
-            vals = [(w.get("td", 0) or 0) for w in wk] if p["pos"] != "QB" else [(w.get("rutd", 0) or 0) for w in wk]
+            vals = [(w.get("rutd", 0) or 0) + (w.get("retd", 0) or 0) for w in wk]
         else:
             vals = [w.get(USE[st], 0) or 0 for w in wk]
         if len(vals) < 3:
             return None
         m = (1 - fit["w_recent"]) * np.mean(vals) + fit["w_recent"] * np.mean(vals[-3:])
-        return max(0.0, fit["slope"] * m + fit["icpt"])
+        return max(0.0, float(fit["slope"] * m + fit["icpt"]))
 
-    def sl_mean(n, st):
-        v = SLK.get(key(n))
+    def sl_mean(n, st, team=None):
+        v = SLK.get((key(n), {"LA": "LAR"}.get(team, team)))
         if not v:
             return None
         if st == "td":
@@ -374,11 +376,27 @@ def main():
     ev_team = {}
     for e in RAW.get("events", []):
         ev_team[e["id"]] = (FULL.get(e["home"]), FULL.get(e["away"]), e["at"])
+    BYLAST = {}
+    for v in (U.get("players") or {}).values():
+        nm_ = re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", v["name"].lower()).split()
+        if nm_:
+            BYLAST.setdefault((re.sub(r"[^a-z]", "", nm_[-1]), v.get("team")), []).append(v)
+    def match(nm, mks):
+        if re.search(r"(D/ST|Defense)$", nm):
+            return None
+        evid = next((x.get("event") for x in mks.values() if x.get("event")), None)
+        teams = ev_team.get(evid, (None, None))[:2]
+        p = PL.get(key(nm))
+        if p:
+            return p if (p.get("team") in teams or not evid) else None   # same name, different team: not him
+        parts = re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", nm.lower()).split()
+        c = [v for t in teams for v in BYLAST.get((re.sub(r"[^a-z]", "", parts[-1]) if parts else "", t), [])]
+        return c[0] if len(c) == 1 else None   # Drew/Andrew Ogletree, Zonovan/Bam Knight, Greg/Gregory Desrosiers
     def price_props(CORR, RAT):
         props, legs = [], []
         for nm, mks in (RAW.get("props") or {}).items() if RAW.get("week") == int(cur or 0) or str(RAW.get("week")) == cur else []:
-            p = PL.get(key(nm))
-            if not p or p.get("team") not in sims or INJ.get(key(nm)) in OUTS:
+            p = match(nm, mks)
+            if not p or p.get("team") not in sims or INJ.get(key(nm)) in OUTS or INJ.get(key(p["name"])) in OUTS:
                 continue
             news = [q for q in NEWS.get(p["team"], []) if q["name"] != p["name"]]
             tm = p["team"]; own, opp, mar = sims[tm]
@@ -394,12 +412,12 @@ def main():
                 k_ = kick.get(tm)
                 if k_ and datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) <= now:
                     continue
-                ours = [v for v in (our_mean(p, st), sl_mean(nm, st)) if v is not None]
+                ours = [v for v in (our_mean(p, st), sl_mean(nm, st, tm)) if v is not None]
                 if not ours:
                     continue
                 ours_m = float(np.mean(ours)) / CORR.get(st, 1.0)
                 ours_raw = float(np.mean(ours))
-                why_news, w_ = [], W
+                why_news, w_, base_m = [], W, ours_m
                 for q in news:   # a teammate got ruled out after the line went up
                     if q["pos"] == "QB" and p["pos"] in ("WR", "TE", "RB") and st in ("rec", "rec_yds", "td"):
                         ours_m *= 0.86; why_news.append(f"{q['name']} (QB) is out")   # backup QB: pass catchers -14% (fantasy backtest)
@@ -411,6 +429,8 @@ def main():
                             why_news.append(f"{q['name']} is out")
                 if why_news:
                     w_ = 0.6   # the line was set before the news, so trust our number a lot more
+                if st != "td" and (x.get("line") is None or x.get("p_over") is None):
+                    continue
                 if st == "td":
                     line = 0.5; p_mkt = min(0.97, x["p"])
                 else:
@@ -422,26 +442,37 @@ def main():
                 f = f / f.mean()
                 if st in ("pass_tds", "td", "rec"):   # counts: Poisson around his mean, mixed over the game sims
                     fs = f[:4000]; k = math.floor(line)
-                    def P(m, fs=fs, k=k):
-                        lam = np.maximum(1e-9, m * fs); cdf = np.zeros_like(lam); term = np.exp(-lam)
+                    def P(m, fs=fs, k=k, whole=(line % 1 == 0)):
+                        lam = np.maximum(1e-9, m * fs); cdf = np.zeros_like(lam); term = np.exp(-lam); last = term
                         for i in range(k + 1):
-                            cdf += term; term = term * lam / (i + 1)
-                        return float(np.mean(1 - cdf))
+                            cdf += term; last = term; term = term * lam / (i + 1)
+                        ov = float(np.mean(1 - cdf))
+                        return ov / max(1e-9, 1 - float(np.mean(last))) if whole else ov   # whole line: chance given no push
                 else:                                  # yards: real past outcomes vs projection, times game script, same draws every time
-                    rr = ratios(st, p["pos"], max(ours_m, 1))
-                    base = rr[rng.integers(0, len(rr), N)] * f
-                    P = lambda m, base=base, line=line: float(np.mean(m * base > line))
-                lo, hi = 0.005, max(4 * line, 6)
-                for _ in range(45):
-                    mid = (lo + hi) / 2
-                    lo, hi = (mid, hi) if P(mid) < p_mkt else (lo, mid)
-                mm = (lo + hi) / 2                     # the average the market's price implies
+                    ru = rng.random(N)                 # same draws for every shape, so the two passes are comparable
+                    def mkP(bm):
+                        r_ = ratios(st, p["pos"], max(bm, 1)); b_ = r_[(ru * len(r_)).astype(int)] * f
+                        return b_, (lambda m, b_=b_, line=line: float(np.mean(m * b_ > line)))
+                    base, P = mkP(line)
+                def invert(P):
+                    lo, hi = 0.005, max(8 * line, 10)
+                    if P(hi) < p_mkt:
+                        return None                    # the shape can't reach the market's chance: don't price it
+                    for _ in range(45):
+                        mid = (lo + hi) / 2
+                        lo, hi = (mid, hi) if P(mid) < p_mkt else (lo, mid)
+                    return (lo + hi) / 2
+                mm = invert(P)
+                if mm is not None and st not in ("pass_tds", "td", "rec"):
+                    base, P = mkP(mm); mm = invert(P)   # second pass: shape for the market's own average
+                if mm is None:
+                    continue
                 if RAT is not None:
                     if mm > 0.05:
                         RAT.setdefault(st, []).append(ours_raw / mm)
                     continue
-                fin = mm + w_ * (ours_m - mm)
-                big_gap = abs(ours_m - mm) > MAX_GAP * max(mm, 0.5) and not why_news
+                fin = mm + W * (base_m - mm) + 0.8 * (ours_m - base_m)   # news part trusted, the rest at W
+                big_gap = bool(abs(ours_m - mm) > MAX_GAP * max(mm, 0.5)) and not why_news
                 po = P(fin)
                 X = rng.poisson(np.maximum(0, fin * f)) if st in ("pass_tds", "td", "rec") else fin * base
                 if not big_gap and st != "td":
@@ -579,23 +610,32 @@ def main():
                                 "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "type": c["type"], "lean": round(100 * c["lean"], 1)} for c in combo]})
         if len(parlays["conf"]) >= 4:
             break
-    legs_out = [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": L_["type"], "kick": L_["kick"], "lean": round(100 * L_["lean"], 1)} for L_ in pool]
+    import base64
+    bits = lambda L_: base64.b64encode(np.packbits(L_["ind"][:4096]).tobytes()).decode()
+    legs_out = [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": L_["type"], "kick": L_["kick"], "lean": round(100 * L_["lean"], 1),
+                 "game": "-".join(L_["game"]), "bits": bits(L_)} for L_ in pool]
 
     # ---------------- record: save picks until kickoff, grade after ----------------
     PK = load(D / "props_picks.json", {}) or {}
     wk = PK.setdefault(cur, {})
+    live = {f"{x['player']}|{x['market']}" for x in props if x["grade"]}
+    for k_old in [k for k, v in wk.items() if not k.startswith("G|") and k not in live and not v.get("graded") and v.get("kick") and v["kick"] > now.isoformat()]:
+        del wk[k_old]
     for x in props:
         if x["grade"]:
             wk[f"{x['player']}|{x['market']}"] = {k: x[k] for k in ("player", "team", "market", "side", "line", "price", "p", "p_mkt", "edge", "grade", "kick")}
     for g in games:
         for pl in g["plays"]:
             if not g["started"]:
-                wk[f"G|{g['home']}|{pl['pick']}"] = {"game": f"{g['away']} @ {g['home']}", "home": g["home"], "pick": pl["pick"], "kind": pl["kind"],
+                for k_old in [k for k, v in wk.items() if k.startswith(f"G|{g['home']}|") and v.get("kind") == pl["kind"] and v.get("result") is None and not v.get("graded")]:
+                    del wk[k_old]
+                wk[f"G|{g['home']}|{pl['kind']}|{pl['pick'].split()[0]}"] = {"game": f"{g['away']} @ {g['home']}", "home": g["home"], "pick": pl["pick"], "kind": pl["kind"],
                                                     "p": pl["p"], "p_mkt": pl["p_mkt"], "edge": pl["edge"], "spread": g["spread"], "total": g["total"], "kick": g["kick"]}
     stat_by = {}
     for v in (U.get("players") or {}).values():
         for w in v.get("weeks", []):
             stat_by[(key(v["name"]), str(w["w"]))] = w
+    box_in = {(v.get("team"), str(w["w"])) for v in (U.get("players") or {}).values() for w in v.get("weeks", []) if "pts" in w}
     rec = {"props": [0, 0, 0.0], "games": [0, 0, 0.0], "weeks": {}}
     for w_, picks in PK.items():
         for k, x in picks.items():
@@ -610,20 +650,24 @@ def main():
                     if pk.startswith("Over") or pk.startswith("Under"):
                         x["result"] = None if t_ == x["total"] else ((t_ > x["total"]) == pk.startswith("Over"))
                     elif "moneyline" in pk:
-                        x["result"] = (m_ > 0) == pk.startswith(x["home"])
+                        x["result"] = None if m_ == 0 else ((m_ > 0) == (pk.split()[0] == x["home"]))
                     else:
                         cover = m_ - x["spread"]
-                        x["result"] = None if cover == 0 else ((cover > 0) == pk.startswith(x["home"]))
+                        x["result"] = None if cover == 0 else ((cover > 0) == (pk.split()[0] == x["home"]))
                     x["graded"] = True
                 else:
+                    if (x["team"], w_) not in box_in or (U.get("lines") or {}).get(w_, {}).get(x["team"], {}).get("pts") is None:
+                        continue   # box score for his game isn't in yet
                     s_ = stat_by.get((key(x["player"]), w_))
+                    if s_ and "pts" not in s_ and not (s_.get("snap") or 0):
+                        s_ = None   # only a 0-snap row: treat like he didn't play
                     if not s_:
                         k2 = x.get("kick")
                         if k2 and (now - datetime.datetime.fromisoformat(k2.replace("Z", "+00:00"))).days >= 2 and (U.get("lines") or {}).get(w_, {}).get(x["team"], {}).get("pts") is not None:
                             x["result"] = None; x["graded"] = True; x["void"] = True   # didn't play: bet is refunded
                         continue
                     stv = {"Pass yds": s_.get("passyd", 0), "Pass TDs": s_.get("ptd", 0), "Rush yds": s_.get("rushyd", 0), "Rec yds": s_.get("recyd", 0),
-                           "Catches": s_.get("rec", 0), "Anytime TD": (s_.get("td", 0) or 0) if True else 0}[x["market"]]
+                           "Catches": s_.get("rec", 0), "Anytime TD": (s_.get("rutd", 0) or 0) + (s_.get("retd", 0) or 0)}[x["market"]]
                     x["actual"] = stv
                     x["result"] = (stv >= 1) if x["market"] == "Anytime TD" else (None if stv == x["line"] else ((stv > x["line"]) == (x["side"] == "Over")))
                     x["graded"] = True
@@ -649,8 +693,12 @@ def main():
             pl["units"] = 0.5
     for n_ in parlays:
         for pl in parlays[n_]:
-            pl["units"] = 0.25 if n_ == "conf" else 0.5
-    legs_out = legs_out + [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": "game", "kick": L_["kick"], "lean": round(100 * L_["lean"], 1)}
+            le_ = sum(l.get("lean", 0) for l in pl["legs"])
+            pl["edge_legs"] = le_
+            # only size a bet when the legs carry real model lean; otherwise it's a fair-price check (books charge extra on alt lines)
+            pl["units"] = (0.25 if n_ == "conf" else 0.5) if le_ >= 3 else 0
+    legs_out = legs_out + [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": "game", "kick": L_["kick"], "lean": round(100 * L_["lean"], 1),
+                            "game": "-".join(L_["game"]), "bits": bits(L_)}
                            for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
     rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games")}
     out = {"unit": UNIT, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,

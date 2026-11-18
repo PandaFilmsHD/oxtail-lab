@@ -73,9 +73,14 @@ def box():
     data = [r for r in rows(f"{REL}/stats_player/stats_player_week_{SEASON}.csv") if r["season_type"] == "REG"]
     for r in data:
         tc[(r["team"], r["week"])] += f(r["carries"]) or 0
+    touch = collections.Counter()
+    for r in data:
+        touch[r["player_id"]] += (f(r["targets"]) or 0) + (f(r["carries"]) or 0)
     for r in data:
         if r["position_group"] not in SKILL:
-            continue
+            if touch[r["player_id"]] < 10:
+                continue
+            r = dict(r, position_group="WR" if (f(r["targets"]) or 0) >= (f(r["carries"]) or 0) else "RB")   # two-way player
         k = norm(r["player_display_name"]); GSIS[r["player_id"]] = k
         e = player(k, r["player_display_name"], r["team"], r["position_group"])
         car = f(r["carries"]) or 0
