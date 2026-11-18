@@ -10,6 +10,13 @@
    "todo": [
     {
      "urgent": false,
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Thu 5:15 PM PT",
+     "detail": "C.J. Stroud, Ka'imi Fairbairn, Seth McGowan, Xavier Hutchinson play first. Players lock when their game starts.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Brock Bowers might not play (75%)",
      "detail": "Check his status before kickoff.",
@@ -25,8 +32,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer KC Concepcion for Ollie Gordon II (Sussy Nutcrackers)",
-     "detail": "Title odds +3.8%. Would you do KC Concepcion for Ollie Gordon II? I think Concepcion slides right into your FLEX spot over Allen, and you're deep at RB so you can cover Gordon's spot.",
+     "title": "Offer KC Concepcion for Josh Jacobs (KoopKuppKlan)",
+     "detail": "Title odds +3.9%. Would you do KC Concepcion for Josh Jacobs? I think you're getting the best player in the deal.",
      "tab": "trades"
     }
    ]
@@ -56,8 +63,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Jaxon Smith-Njigba for Josh Allen + CeeDee Lamb (braylon's Best Team)",
-     "detail": "Title odds +16.1%. Would you do Jaxon Smith-Njigba for Josh Allen and CeeDee Lamb? I think it bumps your lineup about 2.7 pts a week for the playoff push, and Smith-Njigba slides right into your WR spot.",
+     "title": "Offer Travis Etienne Jr. for Tyler Shough (Lo Siento Wilson)",
+     "detail": "Title odds +7.6%. Would you do Travis Etienne Jr. for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -72,23 +79,30 @@
    "todo": [
     {
      "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Carnell Tate might not play (75%)",
+     "detail": "If he's ruled out, start Darren Waller (10.4).",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +2.1%.",
+     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +2.2%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Darren Waller or Carnell Tate",
-     "detail": "Darren Waller 10.4 vs Carnell Tate 9.8. Carnell Tate has the higher ceiling (19.0 vs 12.0). Go with him if you need a big week.",
+     "title": "Toss-up at FLEX: Carnell Tate or Darren Waller",
+     "detail": "Carnell Tate 9.8 vs Darren Waller 10.4. Carnell Tate is 75% to play, so if he's ruled out, Darren Waller is your guy.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Bijan Robinson + Trevor Lawrence for Josh Allen + Justin Jefferson (Jaxsens team )",
-     "detail": "Title odds +2.4%. Would you do Bijan Robinson and Trevor Lawrence for Josh Allen and Justin Jefferson? I think Robinson slides right into your RB spot, and you're deep at WR so you can cover Jefferson's spot.",
+     "title": "Offer Bijan Robinson + Trevor Lawrence for Joe Burrow (Warrent Acquired )",
+     "detail": "Title odds +3.4%. Would you do Bijan Robinson and Trevor Lawrence for Joe Burrow? I think Robinson slides right into your FLEX spot over Corum, and you get depth for injuries and byes down the stretch.",
      "tab": "trades"
     }
    ]
@@ -118,8 +132,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Christian McCaffrey for CeeDee Lamb + George Pickens (Andrew's Awesome Team)",
-     "detail": "Title odds +6.2%. Would you do Christian McCaffrey for CeeDee Lamb and George Pickens? I think it bumps your lineup about 1.2 pts a week for the playoff push, and McCaffrey slides right into your RB spot.",
+     "title": "Offer Dalton Kincaid for Puka Nacua (Ethan)",
+     "detail": "Title odds +6.8%. Would you do Dalton Kincaid for Puka Nacua? I think it bumps your lineup about 2.6 pts a week for the playoff push, and Nacua is just sitting on your bench.",
      "tab": "trades"
     }
    ]

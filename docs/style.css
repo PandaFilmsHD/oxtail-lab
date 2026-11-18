@@ -332,3 +332,5 @@ tbody tr:nth-child(even) td{background:#ffffff06}
 .todoi.done{opacity:.45}.todoi.done b{text-decoration:line-through}
 .tw td span.opp{display:block;font-size:11px;white-space:nowrap}
 @media (max-width:600px){.mbox .tw td{padding:7px 5px}}
+
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}

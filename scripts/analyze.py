@@ -582,8 +582,17 @@ def avail(n):  # share of his remaining games he's expected to play (bye weeks d
     gw = [w for w in ROSW if opp(P[n], w)]
     return sum(V[n]["q"][w] for w in gw) / max(1, len(gw))
 def pub(n):
-    base_ = OVR.get(n, 0.6 * P[n]["avg"] + 0.4 * (V[n]["recent"] if V[n]["recent"] is not None else P[n]["avg"]))
-    return base_ * avail(n)
+    """What other managers think he's worth: mostly ESPN's rest-of-season number (what they see in the app),
+    plus season average and recent form, scaled by how often managers actually start him."""
+    p = P[n]; rec = V[n]["recent"] if V[n]["recent"] is not None else p["avg"]
+    gl_ = games_left(p, 17)
+    er = p["espn_ros"] / gl_ if p.get("espn_ros") and gl_ else None
+    if er is not None and p["avg"] > 0 and not (0.35 * p["avg"] <= er <= 2.5 * p["avg"]):
+        er = None
+    base_ = OVR.get(n, (0.5 * er + 0.35 * p["avg"] + 0.15 * rec) if er is not None else (0.7 * p["avg"] + 0.3 * rec))
+    st = p.get("start_pct")
+    perceive = 0.75 + 0.5 * (st / 100) if st is not None else 1.0
+    return base_ * perceive * avail(n)
 REPL_PUB = {}
 for pos, k in REPL_N.items():
     L = sorted((pub(n) for n, p in P.items() if p["pos"] == pos), reverse=True)
@@ -652,8 +661,10 @@ for t in IDS:
             both_start = len(T_) == 2 and all(x in THEIR_START[t] for x in T_)
             if both_start and need < -8:
                 continue   # nobody hands over two starters and gets way worse
-            real = two_for_one_ok and not (both_start and need < -3) and (ratio >= 1.1 if status[t] == "out" else (ratio >= 1.0 and need >= -1))
-            stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.8 and need >= -6
+            st_g = max((P[x].get("start_pct") or 0) for x in G); st_t = max((P[x].get("start_pct") or 0) for x in T_)
+            start_ok = st_g >= st_t - 25   # nobody gives up a guy they start every week for a guy the whole league benches
+            real = two_for_one_ok and start_ok and not (both_start and need < -3) and (ratio >= 1.1 if status[t] == "out" else (ratio >= 1.0 and need >= -1))
+            stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.8 and need >= -6 and st_g >= st_t - 45
             if not real and not stretch:
                 continue
             cands.append({"t": t, "G": G, "T": T_, "gain": gain, "ratio": ratio, "need": need, "real": real, "r": r})
@@ -977,10 +988,17 @@ for t in IDS:
 league.sort(key=lambda x: (-x["champ_pct"], -x["playoffs_pct"]))
 # ---------------- every team's card ----------------
 from math import erf as _erf
-def team_week(t, w):
-    tot_, lu_ = lineup(ROSTER[t], w, detail=True)
+def best_lu(rost, w):
+    """The lineup you'd actually set: anyone likely to play (50%+) at his full projection. The total is what you'd expect after injury odds."""
+    _, lu_ = lineup(rost, w, on=lambda n: V[n]["q"][w] >= 0.5, detail=True)
     for x in lu_:
-        n = x["player"]; x["opp"] = opp(P[n], w) or "BYE"; x["rank"] = opp_rank(P[n], w); x["chance"] = round(V[n]["q"][w], 2) if n in V else 1
+        n = x["player"]; x["pos"] = P[n]["pos"]; x["nfl"] = P[n]["nfl"]; x["opp"] = opp(P[n], w) or "BYE"; x["rank"] = opp_rank(P[n], w)
+        x["chance"] = round(V[n]["q"][w], 2); x["exp"] = r1(ev(n, w))
+    used = {x["player"] for x in lu_}
+    maybe = [{"player": n, "pts": r1(V[n]["v"][w]), "chance": round(V[n]["q"][w], 2)} for n in rost if n not in used and 0 < V[n]["q"][w] < 0.5 and V[n]["v"][w] >= 10]
+    return sum(x["exp"] for x in lu_), lu_, maybe
+def team_week(t, w):
+    tot_, lu_, _ = best_lu(ROSTER[t], w)
     lab = "Final" if w == PO3 else "Semis" if w == PO2 else ("Round 1" if SET.get("playoff_teams") != 4 else "Semis") if w == PO1 else f"Week {w}"
     if SET.get("playoff_teams") == 4 and w == PO2: lab = "Final"
     row = {"w": w, "label": lab, "total": r1(tot_), "expected": r1(base[t]["means"][w]), "lineup": lu_}
@@ -1040,7 +1058,7 @@ for w in PLW:
     bench_ = sorted([n for n in ROSTER[ME] if n not in {x["player"] for x in lu_} and V[n]["q"][w] > 0], key=lambda n: -V[n]["v"][w])[:4]
     ideal[w] = {"total": r1(tot_), "lineup": lu_, "next_up": [{"player": n, "pts": r1(V[n]["v"][w]), "pos": P[n]["pos"]} for n in bench_]}
 healthy = {w: r1(lineup(ROSTER[ME], w, on=lambda n: V[n]["v"][w] > 0 and P[n].get("inj") not in ("OUT", "INJURY_RESERVE") or n in AVAIL)) for w in PLW}
-tot, lu = lineup(ROSTER[ME], CUR, detail=True)
+tot, lu, _ = best_lu(ROSTER[ME], CUR)
 starters = {x["player"] for x in lu}
 this_week = {"week": CUR, "total": r1(tot), "lineup": lu,
              "bench": [{"player": n, "pos": P[n]["pos"], "pts": r1(ev(n, CUR))} for n in sorted(ROSTER[ME], key=lambda n: -ev(n, CUR)) if n not in starters]}
@@ -1053,18 +1071,17 @@ if my_game:
 # ---------------- week by week: my best lineup every week, and who I'm playing ----------------
 from math import erf, sqrt
 def lu_rows(rost, w):
-    tot_, lu_ = lineup(rost, w, detail=True)
-    for x in lu_:
-        n = x["player"]; x["pos"] = P[n]["pos"]; x["nfl"] = P[n]["nfl"]; x["opp"] = opp(P[n], w) or "BYE"; x["rank"] = opp_rank(P[n], w); x["chance"] = round(V[n]["q"][w], 2) if n in V else 1
+    tot_, lu_, _ = best_lu(rost, w)
     return tot_, lu_
 schedule = []
 for w in WKS:
     tot_, lu_ = lu_rows(ROSTER[ME], w)
     used = {x["player"] for x in lu_}
-    bench_ = [{"player": n, "pos": P[n]["pos"], "pts": r1(ev(n, w)), "opp": opp(P[n], w) or "BYE", "nfl": P[n]["nfl"]} for n in sorted(ROSTER[ME], key=lambda n: -ev(n, w)) if n not in used][:7]
+    bench_ = [{"player": n, "pos": P[n]["pos"], "pts": r1(V[n]["v"][w]), "chance": round(V[n]["q"][w], 2), "opp": opp(P[n], w) or "BYE", "nfl": P[n]["nfl"]} for n in sorted(ROSTER[ME], key=lambda n: -ev(n, w)) if n not in used][:7]
     byes = [n for n in ROSTER[ME] if not opp(P[n], w)]
     hurt = [n for n in ROSTER[ME] if n in V and V[n]["q"][w] < 0.6 and opp(P[n], w)]
-    row = {"w": w, "kind": "reg" if w <= REG else "po", "label": f"Week {w}" + ("" if w <= REG else " · " + ("Round 1" if w == PO1 else "Semis" if w == PO2 else "Final") if SET.get("playoff_teams") != 4 else ""),
+    _, _, maybe_ = best_lu(ROSTER[ME], w)
+    row = {"maybe": maybe_, "w": w, "kind": "reg" if w <= REG else "po", "label": f"Week {w}" + ("" if w <= REG else " · " + ("Round 1" if w == PO1 else "Semis" if w == PO2 else "Final") if SET.get("playoff_teams") != 4 else ""),
            "total": r1(tot_), "lineup": lu_, "bench": bench_, "byes": byes, "hurt": hurt}
     g = next(((h, a) for wk, h, a in REM if wk == w and ME in (h, a)), None)
     if g:
@@ -1193,6 +1210,31 @@ if PREV_P.exists():
         if q and p["t"] and q.get("inj") != p.get("inj") and p["pos"] in SKILL:
             changes.append({"type": "injury", "text": f"{n} ({TNAME.get(p['t'], 'FA')}): {q.get('inj')} → {p.get('inj')}"})
 
+
+# ---------------- lineup lock + starters whose status just changed ----------------
+from zoneinfo import ZoneInfo as _ZI
+import datetime as _dt
+_KR = _U.get("kick") or {}
+KICK = {int(w): {TEAMFIX.get(t, t): v for t, v in d.items()} for w, d in _KR.items()}
+lock = None
+if sw0:
+    ks = sorted(((KICK.get(CUR) or {}).get(P[x["player"]]["nfl"]), x["player"]) for x in sw0["lineup"] if (KICK.get(CUR) or {}).get(P[x["player"]]["nfl"]))
+    if ks:
+        k0 = _dt.datetime.strptime(ks[0][0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=_dt.timezone.utc)
+        firsts = [n for k, n in ks if k == ks[0][0]]
+        local = k0.astimezone(_ZI("America/Los_Angeles"))
+        when = local.strftime("%a %-I:%M %p")
+        lock = {"first": ks[0][0], "when_pt": when, "players": firsts, "games": {n: k for k, n in ks}}
+        hrs = (k0 - _dt.datetime.now(_dt.timezone.utc)).total_seconds() / 3600
+        if 0 < hrs <= 96:
+            todo.insert(0, {"urgent": hrs <= 24, "icon": "🔒", "title": f"Set your lineup by {when} PT", "detail": f"{', '.join(firsts)} {'plays' if len(firsts) == 1 else 'play'} first. Players lock when their game starts.", "tab": "home"})
+starters_now = {x["player"] for x in (sw0["lineup"] if sw0 else [])}
+for c_ in changes:
+    if c_["type"] == "injury":
+        nm = c_["text"].split(" (")[0]
+        if nm in starters_now:
+            todo.insert(0, {"urgent": True, "icon": "📣", "title": f"Status change: {nm}", "detail": c_["text"].split(": ", 1)[-1].replace("None", "healthy") + ". Recheck your lineup.", "tab": "home"})
+
 # ---------------- weekly report card: save this week's projections, grade past weeks against what happened ----------------
 ARCH_P = ROOT / "data" / LID / "proj_archive.json"
 ARCH = json.loads(ARCH_P.read_text()) if ARCH_P.exists() else {}
@@ -1280,7 +1322,7 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
            "playoff_weeks": [PO1, PO2, PO3], "po_view": [R1, SEMI, FINAL], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
            "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy, "ideal_lineups": ideal, "tiers": TIERS,
            "expected_lineup": {w: r1(mine["means"][w]) for w in PLW}, "take": take, "this_week": this_week, "swing": swing,
-           "sims": A["sims"], "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
+           "sims": A["sims"], "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
 tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k, v in RHO.items()], "weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,

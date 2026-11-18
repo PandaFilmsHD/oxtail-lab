@@ -127,6 +127,7 @@ function renderHome() {
     alerts.push(h('div', { class: 'alert' }, h('b', {}, x.opp === 'BYE' ? `⚠️ ${x.player} is on bye. ` : `⚠️ ${x.player} might not play (${Math.round(x.chance * 100)}%). `),
       fa ? `Add ${fa.player} (+${f1(fa.this_week_gain)} this week), drop ${fa.drop}.` : benchAlt ? `Start ${benchAlt.player} (${f1(benchAlt.pts)}) instead.` : `Check his status before kickoff.`)); });
   $('#thisweek').replaceChildren(...alerts,
+    s.lock ? h('p', { class: 'sub', style: 'margin:0 0 8px' }, `🔒 First lock: ${s.lock.when_pt} PT (${s.lock.players.map(lastName).join(', ')})`) : '',
     tw.opponent ? h('p', { style: 'margin:0 0 10px' }, `vs ${tw.opponent}: you win `, h('b', { style: 'color:var(--gold)' }, pct(tw.win_pct)), ` of sims. You ${f1(tw.total)} vs them ${f1(tw.opp_proj)}.`) : '',
     h('div', { class: 'tw' }, lu), h('div', { class: 'chips2', style: 'margin-top:10px' }, h('span', { class: 'mut', style: 'font-size:12px;font-weight:800;align-self:center' }, 'BENCH'), tw.bench.filter(b => b.pts > 0).map(b => h('span', { class: 'chip2' }, pl(b.player), h('small', {}, ' ' + f1(b.pts))))),
     tw.bench.some(b => b.pts <= 0) ? h('p', { class: 'sub', style: 'margin:6px 0 0' }, 'Out or on bye: ' + tw.bench.filter(b => b.pts <= 0).map(b => b.player).join(', ')) : '');
@@ -346,6 +347,10 @@ function renderTeam() {
   const lt = (c, k, a, b) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(a)), h('div', { style: 'font-size:13px;font-weight:800' }, `${f1(b)} expected after injury odds (what League shows)`));
   $('#lusum').replaceChildren(lt('t1', `Wk ${po[1]} semis · full strength`, hl[po[1]], ex[po[1]]), lt('t3', `Wk ${po[2]} final · full strength`, hl[po[2]], ex[po[2]]));
   const IL = sm.ideal_lineups || {};
+  { const w = po[1], sch = (D.schedule || []).find(x => x.w === w), nums = [['💪 Full strength', hl[w], 'Everyone who can play plays. Best case.'], ['🎯 Expected', ex[w], 'Injury odds built in, and when a hurt guy sits, your bench steps in. This is the one the League page and the sims use.'], ['📋 Lineup total', sch && sch.total, 'Your best lineup with each starter\'s points cut by his chance to play, but no bench fill-in. Shows on Schedule and team cards.']];
+    const box = h('div', { class: 'box', style: 'margin-bottom:16px' }, h('h3', {}, `🤔 Why your Wk ${w} lineup has 3 numbers`), h('div', { class: 'three' }, nums.filter(x => x[1] != null).map(([k, v, t]) => h('div', { class: 'st' }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(v)), h('div', { class: 'gn' }, t)))),
+      h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'They only differ because of injured or questionable guys. If everyone is healthy, all three match.'));
+    const old_ = $('#threebox'); box.id = 'threebox'; if (old_) old_.replaceWith(box); else $('#lusum').after(box); }
   $('#ideal').replaceChildren(...po.filter(w => w && IL[w]).map(w => { const L = IL[w];
     return h('div', { class: 'box' }, h('h3', {}, (w === po[0] ? '😴 Wk ' + w + ' (bye if you get it)' : w === po[1] ? '⚔️ Wk ' + w + ' semis' : '🏆 Wk ' + w + ' final') + ` · ${f1(L.total)}`),
       h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot),
@@ -552,10 +557,12 @@ function renderSched() {
   const notes = [];
   if (x.byes.length) notes.push(h('p', { class: 'sub' }, '😴 On bye: ' + x.byes.join(', ')));
   if (x.hurt.length) notes.push(h('p', { class: 'sub' }, '🩹 Might not play: ' + x.hurt.join(', ')));
+  (x.maybe || []).forEach(m => notes.push(h('p', { class: 'alert', style: 'background:#13163f;border-color:#ffc83d' }, `⭐ If ${m.player} is active, start him: ${f1(m.pts)} projected. Right now he's only ${Math.round(m.chance * 100)}% to play, so he's not in the lineup below.`)));
+  notes.push(h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Each player shows what he scores if he plays. The total is what you\'d expect after injury odds.'));
   if (x.w === D.summary.week && [4, 5, 6, 0, 1].includes(new Date().getDay())) notes.push(h('p', { class: 'sub' }, '⏱️ This week is in progress, so the projection is for the full week and the win % comes from the live sim.'));
   $('#wkview').replaceChildren(nav, head, ...notes, h('div', { class: 'grid2', style: 'grid-template-columns:repeat(auto-fit,minmax(320px,1fr))' },
     h('div', { class: 'box' }, h('h3', {}, '🛡️ Your best lineup · ' + f1(x.total)), lu(x.lineup, true),
-      x.bench.length ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Bench: ' + x.bench.map(b => `${b.player} ${b.opp === 'BYE' ? '(bye)' : f1(b.pts)}`).join(', ')) : ''),
+      x.bench.length ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Bench: ' + x.bench.map(b => `${b.player} ${b.opp === 'BYE' ? '(bye)' : f1(b.pts) + (b.chance != null && b.chance < 1 ? ` (${Math.round(b.chance * 100)}% to play)` : '')}`).join(', ')) : ''),
     x.opp_lineup ? h('div', { class: 'box' }, h('h3', {}, `⚔️ ${x.opponent} · ${f1(x.opp_total)}`), lu(x.opp_lineup, false)) : ''));
 }
 // ---------- breakouts ----------

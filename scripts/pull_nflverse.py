@@ -213,16 +213,24 @@ def depth():
 
 
 LINES = {}  # week -> team -> Vegas implied points (from the spread + over/under)
+KICK = {}   # week -> team -> kickoff time (UTC ISO)
 def lines():
     src = os.environ.get("GAMES_CSV") or "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
     rd = csv.DictReader(open(src)) if os.path.exists(src) else rows(src)
     for g in rd:
         if g.get("season") != str(SEASON) or g.get("game_type") != "REG":
             continue
+        w = int(g["week"]); h, a = g["home_team"], g["away_team"]
+        try:   # nflverse times are US Eastern
+            from zoneinfo import ZoneInfo
+            import datetime as _dt
+            k = _dt.datetime.strptime(g["gameday"] + " " + g["gametime"], "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("America/New_York")).astimezone(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            KICK.setdefault(str(w), {})[h] = k; KICK[str(w)][a] = k
+        except Exception:
+            pass
         tot, spr = f(g.get("total_line")), f(g.get("spread_line"))
         if tot is None or spr is None:
             continue
-        w = int(g["week"]); h, a = g["home_team"], g["away_team"]
         hs, as_ = f(g.get("home_score")), f(g.get("away_score"))
         LINES.setdefault(str(w), {})[h] = {"it": round(tot / 2 + spr / 2, 2), "opp": a, "total": tot, "spread": spr, "pts": hs}
         LINES[str(w)][a] = {"it": round(tot / 2 - spr / 2, 2), "opp": h, "total": tot, "spread": -spr, "pts": as_}
@@ -240,7 +248,7 @@ def main():
         e["weeks"] = [e["weeks"][w] for w in sorted(e["weeks"])]
     out = ROOT / "data" / "usage.json"
     out.parent.mkdir(exist_ok=True)
-    txt = json.dumps({"players": P, "teams": TEAMS, "lines": LINES}, separators=(",", ":"), sort_keys=True)
+    txt = json.dumps({"players": P, "teams": TEAMS, "lines": LINES, "kick": KICK}, separators=(",", ":"), sort_keys=True)
     if not out.exists() or out.read_text() != txt:
         out.write_text(txt)
     print(f"usage.json: {len(P)} players, {len(TEAMS)} teams")
