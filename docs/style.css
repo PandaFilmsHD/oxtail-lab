@@ -249,3 +249,30 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 .msg .thinking{color:var(--gold);font-weight:900}
 .msg .dots{color:var(--mut);margin-left:4px}
 .msg .thinking:before{content:"🧠 ";display:inline-block;animation:bob 1.2s ease-in-out infinite}
+
+/* trade pitch */
+.tpitch,.tmsg{margin-top:10px;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.4}
+.tpitch{background:#13163f;border:2px solid #2c3080}
+.tmsg{background:#0f2a22;border:2px solid #1f7a55;display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}
+.tmsg .k,.tpitch .k{font-family:'Lilita One',sans-serif;font-size:12px;letter-spacing:.5px;color:#9aa0d8;grid-column:1/-1}
+.tmsg .k{color:#3ddc84}.tmsg .txt{font-style:italic}
+.why ul{margin:6px 0 10px;padding-left:20px}.why li{margin:4px 0;font-size:13.5px;line-height:1.4}
+/* schedule */
+.weekbar{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px;scrollbar-width:thin}
+.weekbar .wk{flex:0 0 auto;min-width:74px;background:#1a1d55;border:3px solid #2c3080;border-bottom-width:6px;border-radius:14px;color:#fff;padding:8px 10px;cursor:pointer;font-family:inherit;text-align:center}
+.weekbar .wk.po{border-color:#7a5b10;background:#2a2410}
+.weekbar .wk.on{border-color:#ffc83d;transform:translateY(-2px);box-shadow:0 0 0 3px #ffc83d55}
+.weekbar .wk .n{font-family:'Lilita One',sans-serif;font-size:16px}.weekbar .wk .s{font-size:12px;font-weight:800}
+.wknav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px}
+.wknav .wkt{font-family:'Lilita One',sans-serif;font-size:22px;text-align:center}
+.wknav button[disabled]{opacity:.35;pointer-events:none}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;background:#13163f;border:3px solid #2c3080;border-radius:18px;padding:14px;margin-bottom:12px;text-align:center}
+.vs .k{font-family:'Lilita One',sans-serif;font-size:13px;color:#9aa0d8;letter-spacing:.5px}
+.vs .v{font-family:'Lilita One',sans-serif;font-size:34px}.vs .big{font-family:'Lilita One',sans-serif;font-size:40px}
+@media (max-width:520px){.vs .v{font-size:26px}.vs .big{font-size:30px}.wknav .wkt{font-size:17px}}
+
+/* nerd stat grades */
+.st .gn{font-size:11.5px;line-height:1.3;margin-top:4px;color:#c8cbf0;font-weight:600}
+.st.g-good{border-color:#2fa86a!important;background:#0f2a22}
+.st.g-bad{border-color:#c2384f!important;background:#2a0f18}
+.nerdsum{margin:12px 0 4px;background:#13163f;border:2px solid #2c3080;border-radius:12px;padding:10px 12px;line-height:1.5;font-size:14px}

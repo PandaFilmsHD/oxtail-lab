@@ -3,9 +3,9 @@
   const MODEL = 'claude-sonnet-5-5';
   const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'];   // if one is busy, try the next   // free tier; tries the newest Flash first
   const store = { get: k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} } };
-  const provider = () => store.get('oxtail_gemini_key') ? 'gemini' : store.get('oxtail_anthropic_key') ? 'anthropic' : '';
-  const getKey = () => store.get(provider() === 'gemini' ? 'oxtail_gemini_key' : 'oxtail_anthropic_key');
-  const setKey = k => { store.set('oxtail_gemini_key', ''); store.set('oxtail_anthropic_key', ''); if (k) store.set(k.startsWith('sk-ant') ? 'oxtail_anthropic_key' : 'oxtail_gemini_key', k); };
+  const provider = () => store.get('oxtail_gemini_key') ? 'gemini' : store.get('oxtail_anthropic_key') ? 'anthropic' : store.get('oxtail_local') ? 'local' : '';
+  const getKey = () => provider() === 'local' ? 'local' : store.get(provider() === 'gemini' ? 'oxtail_gemini_key' : 'oxtail_anthropic_key');
+  const setKey = k => { store.set('oxtail_gemini_key', ''); store.set('oxtail_anthropic_key', ''); store.set('oxtail_local', ''); if (k === 'local') { store.set('oxtail_local', '1'); return; } if (k) store.set(k.startsWith('sk-ant') ? 'oxtail_anthropic_key' : 'oxtail_gemini_key', k); };
   let history = [], busy = false;
 
   // ---------- build the data the bot reads ----------
@@ -32,12 +32,13 @@
     lines.push(`AUTO TAKE: ${s.take.join(' ')}`);
     lines.push('\nSTANDINGS + SIM ODDS (team | record | PF | playoffs% | bye% | title% | expected semis lineup):');
     D.league.forEach(r => lines.push(`${r.team}${r.me ? ' (ME)' : ''} | ${r.record} | ${r.pf} | ${r.playoffs_pct} | ${r.bye_pct} | ${r.champ_pct} | ${r.wk16_lineup}`));
-    lines.push('\nTRADES FOUND BY THE SIM (give -> get | partner | kind | my title odds change in pts | title% after | their lineup change per week | value ratio, >1 means I send more market value | blocked = team I said I won\'t trade with):');
-    D.trades.forEach(t => lines.push(`${t.give} -> ${t.get} | ${t.partner} | ${t.kind} | ${t.change_pts > 0 ? '+' : ''}${t.change_pts} | ${t.title_pct}% | ${t.partner_weekly_gain} | ${t.value_ratio}${t.blocked ? ' | BLOCKED' : ''}`));
+    lines.push('\nTRADES FOUND BY THE SIM (give -> get | partner | kind | my title odds change in pts | title% after | their lineup change per week | value ratio, >1 means I send more market value), then why it works for me, why they might say yes, and a message I can send them:');
+    D.trades.forEach(t => { lines.push(`${t.give} -> ${t.get} | ${t.partner} | ${t.kind} | ${t.change_pts > 0 ? '+' : ''}${t.change_pts} | ${t.title_pct}% | ${t.partner_weekly_gain} | ${t.value_ratio}`); if (t.why_me) lines.push('   why me: ' + t.why_me.join(' ') + '\n   why them: ' + t.why_them.join(' ') + '\n   message: ' + t.pitch); });
     lines.push('\nWAIVER IDEAS (add | drop | weighted lineup pts gained | title odds change | ROS/g | playoff pts | rostered%):');
     D.waivers.forEach(w => lines.push(`${w.player} ${w.pos} | drop ${w.drop} | ${w.ros_gain} | ${w.change_pts ?? '-'} | ${w.ros_ppg} | ${w.playoff_pts} | ${w.own_pct}%`));
     lines.push('\nTEAMS TO WORK (team | record | playoff% | weakest starting spot | spare pieces):');
-    D.bubble.forEach(b => lines.push(`${b.team} | ${b.record} | ${b.playoffs_pct}% | ${b.needs} (${b.weakest_starter_pts} pts) | ${b.has_extra}${b.blocked ? ' | BLOCKED' : ''}`));
+    D.bubble.forEach(b => lines.push(`${b.team} | ${b.record} | ${b.playoffs_pct}% | ${b.needs} (${b.weakest_starter_pts} pts) | ${b.has_extra}`));
+    if (D.schedule) { lines.push('\nWEEK BY WEEK (my best lineup, opponent, win chance):'); D.schedule.forEach(x => lines.push(`${x.label}: ${x.total}${x.opponent ? ` vs ${x.opponent} ${x.opp_total}, win ${x.win_pct}%` : ''} | ` + x.lineup.map(p => `${p.slot} ${p.player} ${p.pts} vs ${p.opp}`).join(', ') + (x.byes.length ? ' | on bye: ' + x.byes.join(', ') : ''))); }
     const want = new Set();
     D.my_players.forEach(p => want.add(p.player));
     D.trades.forEach(t => (t.give + ' + ' + t.get).split(' + ').forEach(n => want.add(n)));
@@ -74,8 +75,8 @@ ${METHOD}`;
   function render() {
     const k = getKey();
     panel.replaceChildren(
-      el('div', { class: 'chath' }, el('div', { class: 'chatt' }, '🤖 Coach', el('small', {}, (D ? D.summary.league : '') + (provider() ? ' · ' + (provider() === 'gemini' ? 'Gemini (free)' : 'Claude') : ''))), el('div', {},
-        provider() ? el('button', { class: 'chatx', title: 'Remove saved key', onclick: () => { if (confirm('Remove your saved key from this browser?')) { setKey(''); render(); } } }, '🔑') : '',
+      el('div', { class: 'chath' }, el('div', { class: 'chatt' }, '🤖 Coach', el('small', {}, (D ? D.summary.league : '') + (provider() ? ' · ' + ({ gemini: 'Gemini (free)', anthropic: 'Claude', local: 'Free AI on your device' })[provider()] : ''))), el('div', {},
+        provider() ? el('button', { class: 'chatx', title: 'Switch AI', onclick: () => { if (confirm('Switch to a different AI (removes any saved key from this browser)?')) { setKey(''); render(); } } }, '🔑') : '',
         el('button', { class: 'chatx', onclick: () => toggle(false) }, '×'))),
       el('div', { class: 'chatlog', id: 'chatlog' }, ...(history.length ? history.map(m => el('div', { class: 'msg ' + m.role }, m.role === 'assistant' ? md(m.content) : m.content))
         : [el('div', { class: 'msg assistant' }, md(`Yo. I've got everything for **${D ? D.summary.league : 'your league'}**: your roster, every trade the sim found, waivers, rankings and the odds. Ask me anything.`)),
@@ -86,8 +87,11 @@ ${METHOD}`;
   }
   function keyScreen() {
     const inp = el('input', { type: 'password', placeholder: 'Paste your free Gemini key (AIza…)', autocomplete: 'off' });
+    const gpu = !!navigator.gpu;
     return el('div', { class: 'chatkey' },
-      el('p', {}, el('b', {}, '⭐ Free: chat right here with Google Gemini. '), '1) Go to ', el('a', { href: 'https://aistudio.google.com/apikey', target: '_blank', rel: 'noopener' }, 'aistudio.google.com/apikey'), ' and sign in with Google. 2) Click Create API key. 3) Paste it below. No card needed. It\'s saved only in this browser, not on GitHub.'),
+      el('p', {}, el('b', {}, '🆓 Free, no key, no account: '), gpu ? 'run a small AI right on this device. The first time it downloads about 2 GB (then it\'s saved), and it works best on a laptop or desktop. It\'s not as smart as Claude, but it reads your league data.' : 'this browser can\'t run the on-device AI (it needs WebGPU). Try Chrome or Edge on a laptop or desktop, or use an option below.'),
+      gpu ? el('button', { class: 'btn small', style: 'margin-bottom:10px', onclick: () => { setKey('local'); render(); } }, 'START FREE COACH') : '',
+      el('p', {}, el('b', {}, 'Or use Google Gemini (smarter, free key). '), '1) Go to ', el('a', { href: 'https://aistudio.google.com/apikey', target: '_blank', rel: 'noopener' }, 'aistudio.google.com/apikey'), ' and sign in with Google. 2) Click Create API key. 3) Paste it below. No card needed. It\'s saved only in this browser, not on GitHub.'),
       el('form', { onsubmit: e => { e.preventDefault(); const v = inp.value.trim(); if (v) { setKey(v); render(); } } }, inp, el('button', { class: 'btn small', type: 'submit' }, 'SAVE')),
       el('p', { class: 'mut', style: 'font-size:12px;margin-top:6px' }, 'Have a Claude API key (sk-ant-…) instead? Paste that in the same box and it\'ll use Claude.'),
       el('p', { style: 'margin-top:14px' }, el('b', {}, 'No key at all: '), 'Type your question and I\'ll copy it with all the league data, then open Claude so you can paste it in.'),
@@ -99,6 +103,48 @@ ${METHOD}`;
     try { await navigator.clipboard.writeText(txt); } catch (e) { const ta = el('textarea'); ta.value = txt; document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
     window.open('https://claude.ai/new', '_blank', 'noopener');
     alert('Copied! Paste it into the new Claude chat (Ctrl+V / long-press → Paste).');
+  }
+  // a short version of the league data for the small on-device model (it can only read a few thousand words)
+  function compact(q) {
+    const s = D.summary, L = [];
+    const tw = s.this_week || {};
+    L.push(`League: ${s.league}. Me: ${s.my_team}. Week ${s.week}. Scoring: ${s.settings.ppr ? 'full PPR' : 'standard'}, ${s.settings.pass_td || 4}-pt passing TDs. Playoffs weeks ${s.playoff_weeks.join(', ')}.`);
+    L.push(`My odds: playoffs ${s.kpis.po}%, bye ${s.kpis.bye}%, title ${s.kpis.ch}%, make final ${s.kpis.fi}%.`);
+    (s.take || []).slice(0, 3).forEach(t => L.push('Take: ' + t));
+    if (tw.lineup) L.push(`This week (W${tw.week}) vs ${tw.opponent || '?'}: me ${tw.total} vs ${tw.opp_proj ?? '?'}, win ${tw.win_pct ?? '?'}%. Lineup: ` + tw.lineup.map(x => `${x.slot} ${x.player} ${x.pts}`).join(', '));
+    (D.schedule || []).filter(x => x.w > s.week).forEach(x => L.push(`${x.label}: best lineup ${x.total}${x.opponent ? ` vs ${x.opponent} ${x.opp_total}, win ${x.win_pct}%` : ''}. ` + x.lineup.map(p => `${p.slot} ${p.player} ${p.pts}${p.chance < 1 ? ` (${Math.round(p.chance * 100)}% to play)` : ''}`).join(', ')));
+    L.push('Top trades (title odds change):');
+    D.trades.slice(0, 6).forEach(t => L.push(`- give ${t.give}, get ${t.get} from ${t.partner} [${t.kind}] ${t.change_pts > 0 ? '+' : ''}${t.change_pts} pts. Why me: ${(t.why_me || []).join(' ')} Why them: ${(t.why_them || []).join(' ')}`));
+    L.push('Top waiver adds: ' + (D.waivers || []).slice(0, 4).map(w => `add ${w.player} drop ${w.drop} (${w.change_pts > 0 ? '+' : ''}${w.change_pts})`).join('; '));
+    const ql = (q || '').toLowerCase(), hits = Object.values(CARDS || {}).filter(c => { const parts = c.name.toLowerCase().split(' '); return parts.some(p => p.length > 3 && ql.includes(p)); }).slice(0, 4);
+    hits.forEach(c => L.push('PLAYER ' + cardLine(c).split('\n').slice(0, 3).join(' ')));
+    return L.join('\n');
+  }
+  const SYS_SMALL = 'You are a fantasy football coach for the user (Alex). Answer using ONLY the league data below; never make up stats or players. Be short and casual: 3 to 6 sentences or a short list, plain words, no dashes. Rules: never suggest a backup TE, backup D/ST or backup K; never suggest dropping injured players expected back. Title odds changes are percentage points.';
+  let ENGINE = null, ENGINE_P = null;
+  async function localEngine(onStatus) {
+    if (ENGINE) return ENGINE;
+    if (!ENGINE_P) ENGINE_P = (async () => {
+      const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+      const tries = ['Qwen2.5-3B-Instruct-q4f16_1-MLC', 'Llama-3.2-3B-Instruct-q4f16_1-MLC', 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC'];
+      let err;
+      for (const m of tries) {
+        try { return await webllm.CreateMLCEngine(m, { initProgressCallback: r => onStatus && onStatus(r) }, { context_window_size: 8192 }); }
+        catch (e) { err = e; }
+      }
+      throw err;
+    })();
+    try { ENGINE = await ENGINE_P; return ENGINE; } catch (e) { ENGINE_P = null; throw e; }
+  }
+  async function askLocal(onText, setStatus) {
+    const eng = await localEngine(r => setStatus(`Loading the free AI${r.progress ? ' ' + Math.round(r.progress * 100) + '%' : ''} (first time only)…`));
+    setStatus('');
+    const q = history[history.length - 2].content;
+    const msgs = [{ role: 'system', content: SYS_SMALL + '\n\n=== LEAGUE DATA ===\n' + compact(q) }, ...history.slice(0, -1).slice(-5).map(m => ({ role: m.role, content: m.content }))];
+    const it = await eng.chat.completions.create({ messages: msgs, stream: true, max_tokens: 600, temperature: 0.4 });
+    let txt = '';
+    for await (const ch of it) { const d = ch.choices[0] && ch.choices[0].delta && ch.choices[0].delta.content; if (d) { txt += d; onText(txt); } }
+    return txt;
   }
   async function ensureCards() { if (!CARDS) CARDS = await fetch(BASE + 'players.json?v=' + D.summary.built).then(r => r.json()); }
 
@@ -114,6 +160,7 @@ ${METHOD}`;
     const onText = txt => { bubble.replaceChildren(md(txt)); const lg = $c('#chatlog'); lg.scrollTop = lg.scrollHeight; };
     try {
       if (provider() === 'gemini') { history[history.length - 1].content = (await askGemini(onText)) || '(no answer)'; return; }
+      if (provider() === 'local') { history[history.length - 1].content = (await askLocal(onText, t => { if (t) think.textContent = t; })) || '(no answer)'; return; }
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': getKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },

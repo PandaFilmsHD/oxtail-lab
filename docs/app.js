@@ -108,13 +108,15 @@ function renderHome() {
 // ---------- trades ----------
 let TK = 'realistic';
 function renderTrades() {
-  const hide = $('#hideblocked').checked;
-  const rows = D.trades.filter(t => (TK === 'all' || t.kind === TK) && !(hide && t.blocked));
+  const rows = D.trades.filter(t => TK === 'all' || t.kind === TK);
   const names = s => s.split(' + ');
   const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 34), h('div', { class: 'pn' }, pl(n), h('div', {}, h('span', { class: 'pp2' }, POS(n) + ' · ' + (NFL(n) || '')), ' ', tierEl((n)))))));
   $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, 24).map((r, i) => { const why = h('div', { class: 'why', hidden: '' }); const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
       h('div', { class: 'who' }, h('span', {}, '🤝 ' + r.partner), h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'BLOCKED' : r.kind === 'realistic' ? 'REALISTIC' : 'STRETCH')),
       h('div', { class: 'swap' }, side('give', 'YOU GIVE', r.give), h('div', { class: 'arrow' }, '➜'), side('get', 'YOU GET', r.get)),
+      r.why_them && r.why_them.length ? h('div', { class: 'tpitch' }, h('div', { class: 'k' }, '🎯 WHY ' + r.partner.toUpperCase()), h('div', {}, r.why_them.slice(0, 2).join(' '))) : '',
+      r.pitch ? h('div', { class: 'tmsg' }, h('div', { class: 'k' }, '💬 SEND THEM THIS'), h('div', { class: 'txt' }, r.pitch),
+        h('button', { class: 'btn small', onclick: e => { navigator.clipboard.writeText(r.pitch).then(() => { e.target.textContent = 'COPIED ✓'; setTimeout(() => e.target.textContent = 'COPY', 1500); }); } }, 'COPY')) : '',
       h('div', { class: 'foot' }, h('div', { class: 'boost', style: r.change_pts < 0 ? 'color:var(--red)' : '' }, sgn(r.change_pts) + '%', h('small', {}, `title odds → ${pct(r.title_pct)}`)),
         h('div', { class: 'meta' }, `Their lineup ${sgn(r.partner_weekly_gain)}/wk`, h('br'), `Your Wk${D.tester.po[1]}/${D.tester.po[2]}: ${f1(r.wk16)} / ${f1(r.wk17)}`),
         h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => { why.hidden = !why.hidden; if (!why.hidden && !why.childNodes.length) why.append(...whyTrade(r)); } }, 'WHY?'),
@@ -132,7 +134,7 @@ function renderTrades() {
     { k: 'kind', h: 'Type', l: 1, f: r => h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'Blocked' : r.kind === 'realistic' ? 'Realistic' : 'Stretch') }
   ], rows, { rowClass: r => r.blocked ? 'dim' : '', onRow: r => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); } });
 }
-seg('tkind', v => { TK = v; renderTrades(); }); $('#hideblocked').addEventListener('change', renderTrades);
+seg('tkind', v => { TK = v; renderTrades(); });
 
 function whyTrade(r) {
   const wk = r.weeks || [], reg = wk.filter(x => !x.po), po = wk.filter(x => x.po);
@@ -141,11 +143,14 @@ function whyTrade(r) {
   const mx = Math.max(1, ...wk.map(x => Math.abs(x.after - x.before)));
   const bars = h('div', { class: 'wbars' }, wk.map(x => { const d = x.after - x.before; const b = h('div', { class: 'wb' + (x.po ? ' po' : '') }, h('div', { class: 'wbv ' + (d >= 0 ? 'up' : 'dn') }), h('div', { class: 'k' }, (x.po ? '🏆' : '') + 'W' + x.w), h('div', { class: 'k ' + cls(d) }, sgn(d))); b.firstChild.style.height = Math.max(4, Math.abs(d) / mx * 46) + 'px'; return b; }));
   const L = [];
+  const lists = [];
+  if (r.why_me && r.why_me.length) lists.push(h('div', {}, h('b', {}, '✅ Why you do it'), h('ul', {}, r.why_me.map(t => h('li', {}, t)))));
+  if (r.why_them && r.why_them.length) lists.push(h('div', {}, h('b', {}, `🤝 Why ${r.partner} might say yes`), h('ul', {}, r.why_them.map(t => h('li', {}, t)))));
   L.push(`📊 Your lineup gets ${sgn(dReg)} a week the rest of the regular season and ${sgn(dPo)} a week in your playoff games. Those playoff weeks count double, which is why this ${dPo > dReg ? 'trade is built for the playoffs' : 'helps now and later'}.`);
   L.push(`🤝 ${r.partner}'s lineup ${dThem >= 0 ? 'gets better' : 'gets worse'} by ${f1(Math.abs(dThem))} a week (${f1(r.their_before)} → ${f1(r.their_after)}). They're ${r.their_po_pct >= 90 ? 'a playoff lock' : r.their_po_pct >= 8 ? `a bubble team at ${f1(r.their_po_pct)}% to make it, so wins now matter to them` : 'basically eliminated, so they should care about value, not this week'}.`);
   L.push(`💎 Market value: you send ${f1(r.mv_send)} and get ${f1(r.mv_get)} (points per game over a replacement starter). ${r.value_ratio >= 1 ? 'You\'re giving fair or better value, so it\'s an easy sell.' : 'You\'re asking for more than you give, so expect pushback.'}`);
   L.push(`🏆 Title odds ${pct(D.summary.kpis.ch)} → ${pct(r.title_pct)} (${sgn(r.change_pts)}).`);
-  return [bars, ...L.map(t => h('p', {}, t)), h('button', { class: 'btn small', onclick: () => window.askCoach && askCoach(`Explain this trade for me: I give ${r.give} and get ${r.get} from ${r.partner}. Why does it help me, would they actually accept, and what are the risks?`) }, '🤖 ASK COACH ABOUT IT')];
+  return [...lists, bars, ...L.map(t => h('p', {}, t)), h('button', { class: 'btn small', onclick: () => window.askCoach && askCoach(`Explain this trade for me: I give ${r.give} and get ${r.get} from ${r.partner}. Why does it help me, would they actually accept, and what are the risks?`) }, '🤖 ASK COACH ABOUT IT')];
 }
 function openTeam(id) {
   const t = (D.teams || {})[String(id)]; if (!t) return;
@@ -315,12 +320,55 @@ function renderHow() {
 
 // ---------- player card ----------
 const VCOL = { 'SELL HIGH': ['#ff9f43', '#c46a12'], KEEP: ['#3ddc84', '#1f9a54'], HOLD: ['#4cc9ff', '#1a7fc2'], ADD: ['#3ddc84', '#1f9a54'], BUY: ['#3ddc84', '#1f9a54'], PRICEY: ['#ffc83d', '#c98a00'], PASS: ['#8a90c9', '#4a4f8f'] };
+// ---------- nerd stat grader: good / average / bad + what it means in plain English ----------
+function gradeStat(key, v, c, games, tc) {
+  const n = parseFloat(v); if (v == null || isNaN(n)) return null;
+  const P = c.pos, G = Math.max(1, games || 1), pg = n / G;
+  const band = (x, hi, lo, good, avg, bad) => x >= hi ? ['good', good] : x >= lo ? ['ok', avg] : ['bad', bad];
+  const rec = P === 'WR' || P === 'TE';
+  switch (key) {
+    case 'tsh': return [...(P === 'RB' ? band(n, 12, 7, 'Lots of passes come his way for a RB. Huge in PPR.', 'Normal amount of targets for a RB.', 'Barely used in the passing game, so his floor is low in PPR.')
+      : band(n, 22, 15, 'He gets a big chunk of his team\'s targets. This is the best sign for a WR/TE.', 'Decent share of targets, but not a go-to guy.', 'He doesn\'t get many targets, so he needs TDs to score.')), true];
+    case 'csh': return [...band(n, 60, 40, 'Workhorse: he gets most of the carries.', 'Splits carries with someone, so weeks will swing.', 'Not the main ball carrier. Hard to trust.'), true];
+    case 'snap': return [...(P === 'RB' ? band(n, 65, 45, 'On the field a ton for a RB.', 'Part of a rotation.', 'Barely on the field.') : band(n, P === 'TE' ? 75 : 82, P === 'TE' ? 55 : 68, 'Almost never comes off the field.', 'Plays a lot, but not every down.', 'Part time player, which caps his ceiling.')), true];
+    case 'opp': if (P === 'QB') return null; return [...(P === 'RB' ? band(n, 18, 13, 'Lots of touches every game. Volume is king for RBs.', 'Average workload.', 'Low workload, so he needs big plays.') : band(n, P === 'TE' ? 6.5 : 8, P === 'TE' ? 4.5 : 6, 'Gets the ball thrown his way a lot.', 'Average volume.', 'Low volume.')), true];
+    case 'wopr': return [...band(n, 0.55, 0.35, 'Elite mix of targets and deep looks. WOPR is one of the best stats for predicting WR points.', 'Solid but not elite usage.', 'Weak usage, so his good games are probably luck.'), true];
+    case 'rz_tgt': return [...band(pg, 1, 0.5, 'Gets targets near the end zone, which is where TDs come from.', 'Some red zone looks.', 'Rarely targeted near the end zone.'), true];
+    case 'rz_car': return [...band(pg, 2.5, 1.2, 'Gets the ball near the end zone a lot. TD upside.', 'Some red zone work.', 'Doesn\'t get the ball near the end zone much.'), true];
+    case 'gl_car': return [...band(pg, 0.6, 0.25, 'He\'s the goal line back. Easy TDs.', 'Gets some goal line work.', 'Someone else gets the goal line carries.'), false];
+    case 'epa': return [...band(n, 5, -5, 'His plays help his team score more than average.', 'About average efficiency.', 'His plays hurt the offense on average.'), false];
+    case 'boom': return [...band(n, 30, 15, 'Lots of 20+ point type weeks. Can win you a week by himself.', 'Some big weeks.', 'Rarely has a monster week.'), false];
+    case 'bust': return [...(n <= 20 ? ['good', 'Rarely lays an egg. Safe to start.'] : n <= 40 ? ['ok', 'Has some bad weeks, normal for most players.'] : ['bad', 'Busts a lot. Risky to start in the playoffs.']), false];
+    case 'fpoe': return [...(n >= 3 ? ['bad', 'Scoring way more than his usage says. Probably lucky (long TDs), so expect him to cool off.'] : n <= -3 ? ['good', 'Scoring less than his usage says. He\'s been unlucky and should bounce back.'] : ['ok', 'Scoring about what his usage says. What you see is real.']), true];
+    case 'espn': return ['ok', 'What ESPN projects him for each game from here. Just one opinion we blend in.', false];
+    case 'cpoe': return [...band(n, 2, -2, 'Completes more passes than expected. Accurate.', 'About average accuracy.', 'Misses throws he should make.'), false];
+    case 'aggr': return ['ok', n >= 18 ? 'Throws into tight windows a lot. More big plays and more picks.' : 'Plays it pretty safe with where he throws.', false];
+    case 'ttt': return ['ok', n >= 3 ? 'Holds the ball a while. More sacks, but more deep shots.' : 'Gets the ball out fast.', false];
+    case 'qadot': return ['ok', n >= 8.5 ? 'Throws deep a lot. Boom or bust.' : 'Throws short, safe passes.', false];
+    case 'rating': return [...band(n, 100, 85, 'Playing really well overall.', 'Average QB play.', 'Struggling overall.'), false];
+    case 'ryoe': return [...band(n, 0.3, -0.3, 'Gets more yards than his blocking gives him. Talent shows.', 'Gets about what the blocking gives him.', 'Gets fewer yards than expected.'), false];
+    case 'box': return [...(n >= 30 ? ['bad', 'Defenses stack the box on him a lot, which makes running hard.'] : ['good', 'Usually faces normal fronts, so running lanes are there.']), false];
+    case 'yac_att': return [...band(n, 3.2, 2.6, 'Breaks through contact well.', 'Average after contact.', 'Goes down easy.'), false];
+    case 'btk': if (P === 'TE' || P === 'QB') return null; return [...band(pg, 0.8, 0.35, 'Breaks a lot of tackles. Hard to bring down.', 'Breaks a few tackles.', 'Rarely breaks tackles.'), false];
+    case 'sep': return [...band(n, P === 'TE' ? 3.0 : 3.3, P === 'TE' ? 2.3 : 2.7, 'Gets open easily.', 'Average at getting open.', 'Usually covered tight, so he needs contested catches.'), false];
+    case 'yacoe': return [...band(n, 1, -0.5, 'Makes extra yards after the catch.', 'Normal after the catch.', 'Doesn\'t do much after the catch.'), false];
+    case 'adot': return ['ok', n >= 13 ? 'Deep threat: big plays but up and down weeks.' : n <= 7 ? 'Short, safe targets. Steady in PPR.' : 'Mix of short and deep targets.', false];
+    case 'air': return [...band(n, 30, 20, 'Gets a big share of where the ball goes downfield.', 'Some of the downfield looks.', 'Not much of the downfield work.'), false];
+    case 'drops': return [...(n >= 5 ? ['bad', 'Drops too many. Could cost him targets.'] : ['good', 'Sure hands.']), false];
+    case 'plays': return [...band(n, 65, 60, 'Fast, busy offense. More plays means more chances to score.', 'Average pace.', 'Slow offense with fewer plays.'), false];
+    case 'proe': return [...(P === 'RB' ? (n <= -3 ? ['good', 'Team leans on the run more than normal. Good for RBs.'] : n >= 3 ? ['bad', 'Team throws more than normal, so fewer carries.'] : ['ok', 'Normal run/pass mix.']) : (n >= 3 ? ['good', 'Team throws more than normal. Good for QBs and pass catchers.'] : n <= -3 ? ['bad', 'Team runs more than normal, so fewer targets.'] : ['ok', 'Normal run/pass mix.'])), false];
+    case 'depth': return [...(n <= 1 ? ['good', 'Starter on the depth chart.'] : n === 2 ? ['ok', 'Second on the depth chart.'] : ['bad', 'Backup on the depth chart.']), false];
+  }
+  return null;
+}
 async function openCard(name) {
   if (!CARDS) CARDS = await fetch(BASE + 'players.json?v=' + D.summary.built).then(r => r.json());
   const c = CARDS[name]; if (!c) return;
   const ng = c.ngs || {}, pf = c.pfr || {}, rep = c.report, dep = c.depth, tc = c.team_ctx || {};
   const big = (k, v, sub) => h('div', { class: 'st hot' }, h('div', { class: 'k' }, k), h('div', { class: 'v', style: 'font-size:28px' }, v), sub ? h('div', { class: 'k', style: 'text-transform:none' }, sub) : '');
-  const stat = (k, v, t) => v == null || v === '—' ? null : h('div', { class: 'st', title: t || '' }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, v));
+  const NERD = [];
+  const stat = (k, v, t, key, raw) => { if (v == null || v === '—') return null; const g = key ? gradeStat(key, raw ?? v, c, (c.log || []).length || null, tc) : null; if (g) NERD.push({ k, g });
+    return h('div', { class: 'st' + (g ? ' g-' + g[0] : ''), title: t || '' }, h('div', { class: 'k' }, (g && g[2] ? '⭐ ' : '') + k), h('div', { class: 'v' }, v), g ? h('div', { class: 'gn' }, g[1]) : ''); };
   const [vc, vd] = VCOL[c.verdict] || VCOL.HOLD;
   // floor / ceiling bar
   const fc = c.floor != null ? (() => { const mx = Math.max(35, c.ceiling + 5), L = c.floor / mx * 100, R = c.ceiling / mx * 100, A = Math.min(100, (c.ros_ppg || 0) / mx * 100);
@@ -340,6 +388,18 @@ async function openCard(name) {
   const ngsRows = c.pos === 'QB' ? [['Completion % over expected', ng.cpoe], ['Aggressiveness', ng.aggr], ['Time to throw', ng.ttt], ['Air yards / throw', ng.adot], ['Passer rating', ng.rating]]
     : c.pos === 'RB' ? [['Rush yds over expected / carry', ng.ryoe_att], ['Stacked boxes faced', ng.stacked_box != null ? ng.stacked_box + '%' : null], ['Yds after contact / carry', pf.yac_att], ['Broken tackles', pf.broken_tackles]]
     : [['Separation (yds)', ng.sep], ['YAC over expected', ng.yacoe], ['Avg depth of target', ng.adot], ['Share of team air yards', ng.air_share != null ? ng.air_share + '%' : null], ['Drops', pf.drops], ['Broken tackles', pf.broken_tackles]];
+  const pick = (a, b) => b ?? a;
+  const usageTiles = [stat('Target share', c.tsh != null ? `${c.tsh}% → ${c.tsh3}%` : null, 'season → last 3', c.pos !== 'QB' && 'tsh', pick(c.tsh, c.tsh3)), stat('Carry share', c.csh ? `${c.csh}% → ${c.csh3}%` : null, '', c.pos === 'RB' && 'csh', pick(c.csh, c.csh3)), stat('Snaps', c.snap != null ? `${c.snap}% → ${c.snap3}%` : null, '', c.pos !== 'QB' && 'snap', pick(c.snap, c.snap3)),
+    stat('Touches+targets/g', c.opp_g != null ? `${c.opp_g} → ${c.opp_g3}` : null, '', 'opp', pick(c.opp_g, c.opp_g3)), stat('WOPR', c.wopr != null ? `${c.wopr} → ${c.wopr3}` : null, '', c.pos !== 'QB' && c.pos !== 'RB' && 'wopr', pick(c.wopr, c.wopr3)), stat('Red zone targets', c.rz_tgt || null, '', c.pos !== 'QB' && 'rz_tgt'), stat('Red zone carries', c.rz_car || null, '', c.pos === 'RB' && 'rz_car'), stat('Goal line carries', c.gl_car || null, '', c.pos === 'RB' && 'gl_car'), stat('EPA', c.epa, '', 'epa'), stat('Boom %', c.boom != null ? c.boom + '%' : null, '', 'boom', c.boom), stat('Bust %', c.bust != null ? c.bust + '%' : null, '', 'bust', c.bust), stat('Luck / game', c.fpoe != null ? sgn(c.fpoe) : null, 'actual minus expected', 'fpoe', c.fpoe), stat('ESPN ROS / game', c.espn_ros_pg != null ? f1(c.espn_ros_pg) : null, '', 'espn', c.espn_ros_pg)].filter(Boolean);
+  const NGK = { 'Completion % over expected': 'cpoe', 'Aggressiveness': 'aggr', 'Time to throw': 'ttt', 'Air yards / throw': 'qadot', 'Passer rating': 'rating', 'Rush yds over expected / carry': 'ryoe', 'Stacked boxes faced': 'box', 'Yds after contact / carry': 'yac_att', 'Broken tackles': 'btk', 'Separation (yds)': 'sep', 'YAC over expected': 'yacoe', 'Avg depth of target': 'adot', 'Share of team air yards': 'air', 'Drops': 'drops' };
+  const ngsTiles = ngsRows.map(([k, v]) => stat(k, v, '', NGK[k], typeof v === 'string' ? parseFloat(v) : v)).filter(Boolean);
+  const teamTiles = [stat('Plays / game', tc.plays_pg, '', 'plays'), stat('Pass rate vs expected', tc.proe != null ? sgn(tc.proe) + '%' : null, '', 'proe', tc.proe), dep ? stat('Depth chart', dep.pos + dep.rank, '', 'depth', dep.rank) : null].filter(Boolean);
+  const goods = NERD.filter(x => x.g[0] === 'good'), bads = NERD.filter(x => x.g[0] === 'bad'), key_ = NERD.filter(x => x.g[2]);
+  const keyGood = key_.filter(x => x.g[0] === 'good').length, keyBad = key_.filter(x => x.g[0] === 'bad').length;
+  const overall = keyGood > keyBad + 1 ? 'The stats that matter most (⭐) look strong. His production is backed by real usage.' : keyBad > keyGood + 1 ? 'The stats that matter most (⭐) look weak. Be careful trusting his points.' : 'The most important stats (⭐) are mixed, so he\'s about what his points say.';
+  const nerdSum = NERD.length ? h('div', { class: 'nerdsum' }, h('b', {}, '📝 Quick read: '), overall,
+    goods.length ? h('div', { class: 'pos' }, '👍 Good: ' + goods.map(x => x.k).join(', ')) : '', bads.length ? h('div', { class: 'neg' }, '👎 Bad: ' + bads.map(x => x.k).join(', ')) : '',
+    h('div', { class: 'mut', style: 'font-size:12px;margin-top:4px' }, 'Green = good, gray = average or just info, red = bad. ⭐ = matters most for fantasy points.')) : '';
   const log = h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, ['Wk', 'Opp', 'Pts', 'Usage said', c.pos === 'QB' ? 'Pass yds' : 'Targets', c.pos === 'QB' ? 'Attempts' : 'Catches', 'Yds', 'Carries', 'TD', 'Tgt share', 'Snaps', 'RZ'].map((x, i) => h('th', { class: i < 2 ? 'l' : '' }, x)))),
     h('tbody', {}, lg.slice().reverse().map(x => h('tr', {}, h('td', { class: 'l' }, x.w), h('td', { class: 'l' }, x.opp), h('td', {}, h('b', {}, f1(x.pts))), h('td', { class: 'mut' }, f1(x.xfp)), h('td', {}, c.pos === 'QB' ? x.passyd : x.tgt), h('td', {}, c.pos === 'QB' ? x.att : x.rec), h('td', {}, c.pos === 'QB' ? x.rushyd : (x.recyd || 0) + (x.rushyd || 0)), h('td', {}, x.car), h('td', {}, x.td), h('td', {}, x.tsh != null ? x.tsh + '%' : '—'), h('td', {}, x.snap != null ? x.snap + '%' : '—'), h('td', {}, (x.rz_tgt || 0) + (x.rz_car || 0)))))));
   const statusBits = [c.status && c.status !== 'ACTIVE' ? '🚑 ' + c.status.replace('_', ' ') : '', rep && rep.practice ? `Wk${rep.week} practice: ${rep.practice.replace(' in Practice', '').replace('Participation', '')}${rep.injury ? ' (' + rep.injury + ')' : ''}` : '', `${c.own}% rostered` + (c.own_chg ? ` (${sgn(c.own_chg)})` : '')].filter(Boolean);
@@ -364,16 +424,44 @@ async function openCard(name) {
     h('div', { class: 'bar', style: 'margin-top:16px' }, h('button', { class: 'btn small blue', onclick: () => { m.remove(); window.askCoach && askCoach(`Tell me about ${c.name}. Should I ${c.mine ? 'keep or trade him' : c.owner === 'Free agent' ? 'pick him up' : 'trade for him'}? Why?`); } }, '🤖 ASK COACH ABOUT HIM')),
     c.outlook ? [h('h3', {}, '📰 ESPN outlook'), h('p', { style: 'margin:0;line-height:1.55' }, c.outlook)] : '',
     h('details', { style: 'margin-top:18px' }, h('summary', { style: 'cursor:pointer;font-family:var(--game);color:var(--gold);font-size:16px' }, '🤓 Nerd stats'),
-      h('h3', {}, 'Usage'), h('div', { class: 'stats' }, [stat('Target share', c.tsh != null ? `${c.tsh}% → ${c.tsh3}%` : null, 'season → last 3'), stat('Carry share', c.csh ? `${c.csh}% → ${c.csh3}%` : null), stat('Snaps', c.snap != null ? `${c.snap}% → ${c.snap3}%` : null),
-        stat('Touches+targets/g', c.opp_g != null ? `${c.opp_g} → ${c.opp_g3}` : null), stat('WOPR', c.wopr != null ? `${c.wopr} → ${c.wopr3}` : null), stat('Red zone targets', c.rz_tgt || null), stat('Red zone carries', c.rz_car || null), stat('Goal line carries', c.gl_car || null), stat('EPA', c.epa), stat('Boom %', c.boom != null ? c.boom + '%' : null), stat('Bust %', c.bust != null ? c.bust + '%' : null), stat('Luck / game', c.fpoe != null ? sgn(c.fpoe) : null, 'actual minus expected'), stat('ESPN ROS / game', c.espn_ros_pg != null ? f1(c.espn_ros_pg) : null)].filter(Boolean)),
-      h('h3', {}, 'Next Gen Stats + PFR'), h('div', { class: 'stats' }, ngsRows.map(([k, v]) => stat(k, v)).filter(Boolean)),
-      h('h3', {}, `${c.nfl} offense`), h('div', { class: 'stats' }, [stat('Plays / game', tc.plays_pg), stat('Pass rate vs expected', tc.proe != null ? sgn(tc.proe) + '%' : null), dep ? stat('Depth chart', dep.pos + dep.rank) : null].filter(Boolean)),
+      nerdSum,
+      h('h3', {}, 'Usage'), h('div', { class: 'stats' }, usageTiles),
+      h('h3', {}, 'Next Gen Stats + PFR'), h('div', { class: 'stats' }, ngsTiles),
+      h('h3', {}, `${c.nfl} offense`), h('div', { class: 'stats' }, teamTiles),
       h('h3', {}, 'Game log'), log)));
   document.body.append(m);
 }
 addEventListener('keydown', e => { if (e.key === 'Escape') $$('.modal').forEach(m => m.remove()); });
 
-const RENDER = { home: renderHome, trades: renderTrades, lab: renderLab, waivers: renderWaivers, ranks: renderRanks, team: renderTeam, league: renderLeague, how: renderHow };
+// ---------- schedule ----------
+let SW = null;
+function renderSched() {
+  const S = D.schedule || []; if (!S.length) { $('#wkview').replaceChildren(h('div', { class: 'box mut' }, 'No schedule data yet.')); return; }
+  if (SW === null || !S.find(x => x.w === SW)) SW = (S.find(x => x.w > D.summary.week) || S[0]).w;
+  $('#wkbar').replaceChildren(...S.map(x => h('button', { class: 'wk' + (x.w === SW ? ' on' : '') + (x.kind === 'po' ? ' po' : ''), onclick: () => { SW = x.w; renderSched(); } },
+    h('div', { class: 'n' }, (x.kind === 'po' ? '🏆 ' : '') + 'W' + x.w), h('div', { class: 's' }, f1(x.total)),
+    x.win_pct != null ? h('div', { class: 's ' + (x.win_pct >= 50 ? 'pos' : 'neg') }, Math.round(x.win_pct) + '%') : h('div', { class: 's mut' }, x.kind === 'po' ? 'playoffs' : ''))));
+  const x = S.find(r => r.w === SW), i = S.indexOf(x);
+  const lu = (L, mine) => h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.map(p => h('tr', {}, h('td', { class: 'mut' }, p.slot),
+    h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(p.player, p.nfl, p.pos, VAL(p.player), 26), h('span', {}, mine ? pl(p.player) : p.player,
+      h('div', { class: 'mut', style: 'font-size:12px', title: p.rank ? `defense rank vs his position: ${p.rank} (32 = easiest)` : '' }, p.opp, p.rank ? h('span', { class: p.rank >= 22 ? 'pos' : p.rank <= 11 ? 'neg' : '' }, ` #${p.rank}`) : '')))),
+    h('td', {}, f1(p.pts), p.chance < 1 ? h('span', { class: 'opp ' + (p.chance < 0.7 ? 'neg' : '') }, Math.round(p.chance * 100) + '% to play') : '')))))); 
+  const nav = h('div', { class: 'wknav' }, h('button', { class: 'btn small blue', disabled: i === 0 ? '' : null, onclick: () => { SW = S[i - 1].w; renderSched(); } }, '◀ PREV'),
+    h('div', { class: 'wkt' }, x.label), h('button', { class: 'btn small blue', disabled: i === S.length - 1 ? '' : null, onclick: () => { SW = S[i + 1].w; renderSched(); } }, 'NEXT ▶'));
+  const head = x.opponent ? h('div', { class: 'vs' }, h('div', { class: 'side' }, h('div', { class: 'k' }, 'YOU'), h('div', { class: 'v' }, f1(x.total))),
+      h('div', { class: 'mid' }, h('div', { class: 'big ' + (x.win_pct >= 50 ? 'pos' : 'neg') }, Math.round(x.win_pct) + '%'), h('div', { class: 'k' }, 'to win')),
+      h('div', { class: 'side', style: 'cursor:pointer', onclick: () => openTeam(x.opp_id) }, h('div', { class: 'k' }, x.opponent.toUpperCase()), h('div', { class: 'v' }, f1(x.opp_total))))
+    : h('div', { class: 'vs' }, h('div', { class: 'side' }, h('div', { class: 'k' }, 'YOUR BEST LINEUP'), h('div', { class: 'v' }, f1(x.total))), h('div', { class: 'mid' }, h('div', { class: 'k' }, x.note || 'Opponent set by the bracket')));
+  const notes = [];
+  if (x.byes.length) notes.push(h('p', { class: 'sub' }, '😴 On bye: ' + x.byes.join(', ')));
+  if (x.hurt.length) notes.push(h('p', { class: 'sub' }, '🩹 Might not play: ' + x.hurt.join(', ')));
+  if (x.w === D.summary.week) notes.push(h('p', { class: 'sub' }, '⏱️ This week is in progress, so the projection is for the full week and the win % comes from the live sim.'));
+  $('#wkview').replaceChildren(nav, head, ...notes, h('div', { class: 'grid2', style: 'grid-template-columns:repeat(auto-fit,minmax(320px,1fr))' },
+    h('div', { class: 'box' }, h('h3', {}, '🛡️ Your best lineup · ' + f1(x.total)), lu(x.lineup, true),
+      x.bench.length ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Bench: ' + x.bench.map(b => `${b.player} ${b.opp === 'BYE' ? '(bye)' : f1(b.pts)}`).join(', ')) : ''),
+    x.opp_lineup ? h('div', { class: 'box' }, h('h3', {}, `⚔️ ${x.opponent} · ${f1(x.opp_total)}`), lu(x.opp_lineup, false)) : ''));
+}
+const RENDER = { sched: renderSched, home: renderHome, trades: renderTrades, lab: renderLab, waivers: renderWaivers, ranks: renderRanks, team: renderTeam, league: renderLeague, how: renderHow };
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const t = $('nav.tabs button.on').dataset.tab; if (['home', 'trades', 'league'].includes(t)) RENDER[t](); }, 200); });
 
 (async () => {

@@ -486,6 +486,111 @@ for c in cands:
     seen.add(k); top.append(c)
     if c["real"]: nr += 1
     else: ns += 1
+
+# ---------------- the story behind each trade: why them, why me, and a message I can send ----------------
+SLOTNAME = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "FLEX": "FLEX", "RB/WR/TE": "FLEX", "OP": "SUPERFLEX", "D/ST": "D", "K": "K"}
+def nice_slot(s):
+    return SLOTNAME.get(s, s)
+def first(n):
+    """Short name for chat: last name, skipping Jr./III, team name for defenses."""
+    if n.endswith("D/ST"):
+        return n.split(" ")[0]
+    parts = [x for x in n.split(" ") if x.rstrip(".") not in ("Jr", "Sr", "II", "III", "IV", "V")]
+    return parts[-1] if len(parts) > 1 else n
+def poss(n):
+    return n + ("'" if n.endswith("s") else "'s")
+def slot_swap(before_lu, after_lu, new_players, leaving=()):
+    """For a lineup before/after a trade: which new guy starts, in what slot, and who he pushes out (or whose spot he takes over)."""
+    out = []
+    aset = {x["player"]: x for x in after_lu}
+    pushed = [x for x in before_lu if x["player"] not in aset and x["player"] not in leaving]
+    for n in new_players:
+        if n in aset:
+            rep = min(pushed, key=lambda x: x["pts"]) if pushed else None
+            if rep: pushed.remove(rep)
+            out.append((n, nice_slot(aset[n]["slot"]), aset[n]["pts"], rep))
+    return out
+def depth(t, pos, w):
+    """How many guys at a position on a team would score at least a starter-ish number."""
+    bar = {"QB": 14, "RB": 9, "WR": 9, "TE": 7}.get(pos, 99)
+    return sum(1 for n in ROSTER[t] if P[n]["pos"] == pos and ev(n, w) >= bar)
+def trade_story(c):
+    t, G, T_ = c["t"], c["G"], c["T"]
+    w = next((x for x in REGW), CUR) if status[t] != "out" else PO2
+    tb, tlu_b = lineup(ROSTER[t], w, detail=True)
+    ta, tlu_a = lineup(c["r"][t], w, detail=True)
+    rec = f'{TEAMS[t]["w"]}-{TEAMS[t]["l"]}'
+    po = base[t]["po"]
+    their_starting = {x["player"] for x in tlu_b}
+    # what they get out of it
+    fills = slot_swap(tlu_b, tlu_a, G, T_)
+    skill_b = [x for x in tlu_b if P[x["player"]]["pos"] in SKILL and x["player"] not in T_]
+    weak = min(skill_b, key=lambda x: x["pts"]) if skill_b else None
+    sit = ("they're " + rec + " and fighting for a playoff spot (" + f"{po:.0f}%" + " to make it), so they need points now") if status[t] == "bubble" else \
+          ("they're " + rec + " and basically locked into the playoffs, so they're building for a title run") if status[t] == "contender" else \
+          ("they're " + rec + " and almost out of it, so they should care about value more than wins")
+    why_them = [sit[0].upper() + sit[1:] + "."]
+    if fills:
+        n, sl, pts, rep = fills[0]
+        why_them.append(f"{n} would start at {sl} for them" + (f" over {rep['player']} ({rep['pts']:.1f} pts)" if rep else f" in {poss(first(T_[0]))} spot") + f", about {pts:.1f} pts a week.")
+    elif weak:
+        why_them.append(f"Their weakest starter is {weak['player']} at {nice_slot(weak['slot'])} ({weak['pts']:.1f} pts).")
+    spare = []
+    for n in T_:
+        pos = P[n]["pos"]
+        if n not in their_starting:
+            spare.append(f"{n} is on their bench right now")
+        elif depth(t, pos, w) - sum(1 for x in tlu_b if P[x["player"]]["pos"] == pos) >= 1:
+            spare.append(f"they're deep at {pos} ({depth(t, pos, w)} startable guys), so {first(n)} is easier to give up")
+    if spare:
+        why_them.append(spare[0][0].upper() + spare[0][1:] + ".")
+    d = (ta - tb)
+    if abs(d) >= 0.5:
+        why_them.append(f"Their lineup goes {'up' if d > 0 else 'down'} about {abs(d):.1f} pts a week.")
+    # what I get out of it
+    my_w = PW[-1]
+    _, mlu_b = lineup(ROSTER[ME], my_w, detail=True)
+    _, mlu_a = lineup(c["r"][ME], my_w, detail=True)
+    mine_fills = slot_swap(mlu_b, mlu_a, T_, G)
+    po_gain = sum(lineup(c["r"][ME], x) - lineup(ROSTER[ME], x) for x in PW)
+    why_me = []
+    for n, sl, pts, rep in mine_fills[:2]:
+        why_me.append(f"{n} starts at {sl} for you in the playoffs ({pts:.1f} pts)" + (f" over {rep['player']} ({rep['pts']:.1f})." if rep else f" in {poss(first(G[0]))} spot."))
+    lost = [n for n in G if n in {x["player"] for x in mlu_b}]
+    if lost:
+        why_me.append(f"You lose {', '.join(lost)} from your playoff lineup, but it nets out to {po_gain:+.1f} pts across the playoff weeks.")
+    else:
+        why_me.append(f"{' and '.join(G)} {'is' if len(G) == 1 else 'are'} not starting for you in the playoffs anyway, so it's +{po_gain:.1f} pts across the playoff weeks.")
+    # a message to send them
+    gnames = " and ".join(G); tnames = " and ".join(T_)
+    best_g = max(G, key=lambda n: mval(n)); best_t = max(T_, key=lambda n: mval(n))
+    reasons = []
+    if d >= 0.5:
+        reasons.append(f"it bumps your lineup about {d:.1f} pts a week" + (" for the playoff push" if status[t] == "bubble" else ""))
+    if fills:
+        n, sl, pts, rep = fills[0]
+        reasons.append(f"{first(n)} slides right into your {sl} spot" + (f" over {first(rep['player'])}" if rep else ""))
+    if len(T_) > len(G):
+        reasons.append(f"you turn two guys into the best player in the deal and open a roster spot for a waiver pickup" if mval(best_g) >= mval(best_t) else "you open a roster spot for a waiver pickup")
+    elif len(G) > len(T_):
+        reasons.append(f"you get depth for injuries and byes down the stretch")
+    for n in T_:
+        if n not in their_starting:
+            reasons.append(f"{first(n)} is just sitting on your bench"); break
+    if not reasons and mval(best_g) > mval(best_t):
+        reasons.append(f"you're getting the best player in the deal")
+    if len(reasons) < 2:
+        for n in T_:
+            pos = P[n]["pos"]
+            if n in their_starting and depth(t, pos, w) - sum(1 for x in tlu_b if P[x["player"]]["pos"] == pos) >= 1:
+                reasons.append(f"you're deep at {pos} so you can cover {poss(first(n))} spot"); break
+    if status[t] == "out" and not reasons:
+        reasons.append("you're probably not making the playoffs, so you might as well get the better long-term guy")
+    pitch = f"Would you do {gnames} for {tnames}? " + (("I think " + reasons[0] + (", and " + reasons[1] if len(reasons) > 1 else "") + ".") if reasons else "Let me know if you'd want to tweak it.")
+    if d < -0.5:
+        why_them.append("Heads up: on paper this makes their lineup worse, so expect them to counter or say no.")
+    return {"why_them": why_them, "why_me": why_me, "pitch": pitch}
+
 trades = []
 for c in top:
     res_full = run(c["r"], A["sims"]["per_trade"]); res = res_full[ME]
@@ -497,7 +602,7 @@ for c in top:
                    "weeks": [{"w": w, "before": r1(lineup(ROSTER[ME], w)), "after": r1(lineup(c["r"][ME], w)), "po": w in PW} for w in REGW + [w for w in (PO1, PO2, PO3) if w not in REGW]],
                    "their_before": r1(team_score(ROSTER, c["t"], REGW) / max(1, len(REGW))), "their_after": r1(team_score(c["r"], c["t"], REGW) / max(1, len(REGW))),
                    "their_po_pct": r1(base[c["t"]]["po"]), "their_title_after": r1(res_all[c["t"]]["ch"]) if (res_all := res_full) else None,
-                   "mv_send": r1(sum(MKT.get(n, 0) for n in c["G"])), "mv_get": r1(sum(MKT.get(n, 0) for n in c["T"]))})
+                   "mv_send": r1(sum(MKT.get(n, 0) for n in c["G"])), "mv_get": r1(sum(MKT.get(n, 0) for n in c["T"])), **trade_story(c)})
 trades = [x for x in trades if x["change_pts"] >= 1.0]   # anything smaller is noise, not worth a trade
 trades.sort(key=lambda x: (-x["change_pts"]))
 print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0:.1f}s")
@@ -629,6 +734,33 @@ if my_game:
     o = my_game[0] if my_game[1] == ME else my_game[1]
     this_week["opponent"] = TNAME[o]; this_week["win_pct"] = r1(mine["wk"]); this_week["opp_proj"] = r1(base[o]["means"][CUR])
 
+
+# ---------------- week by week: my best lineup every week, and who I'm playing ----------------
+from math import erf, sqrt
+def lu_rows(rost, w):
+    tot_, lu_ = lineup(rost, w, detail=True)
+    for x in lu_:
+        n = x["player"]; x["pos"] = P[n]["pos"]; x["nfl"] = P[n]["nfl"]; x["opp"] = opp(P[n], w) or "BYE"; x["rank"] = opp_rank(P[n], w); x["chance"] = round(V[n]["q"][w], 2) if n in V else 1
+    return tot_, lu_
+schedule = []
+for w in WKS:
+    tot_, lu_ = lu_rows(ROSTER[ME], w)
+    used = {x["player"] for x in lu_}
+    bench_ = [{"player": n, "pos": P[n]["pos"], "pts": r1(ev(n, w)), "opp": opp(P[n], w) or "BYE", "nfl": P[n]["nfl"]} for n in sorted(ROSTER[ME], key=lambda n: -ev(n, w)) if n not in used][:7]
+    byes = [n for n in ROSTER[ME] if not opp(P[n], w)]
+    hurt = [n for n in ROSTER[ME] if n in V and V[n]["q"][w] < 0.6 and opp(P[n], w)]
+    row = {"w": w, "kind": "reg" if w <= REG else "po", "label": f"Week {w}" + ("" if w <= REG else " · " + ("Round 1" if w == PO1 else "Semis" if w == PO2 else "Final") if SET.get("playoff_teams") != 4 else ""),
+           "total": r1(tot_), "lineup": lu_, "bench": bench_, "byes": byes, "hurt": hurt}
+    g = next(((h, a) for wk, h, a in REM if wk == w and ME in (h, a)), None)
+    if g:
+        o = g[0] if g[1] == ME else g[1]
+        ot, olu = lu_rows(ROSTER[o], w)
+        row.update({"opponent": TNAME[o], "opp_id": o, "opp_total": r1(ot), "opp_lineup": olu,
+                    "win_pct": r1(mine["wk"]) if w == CUR else r1(50 * (1 + erf((tot_ - ot) / (SD * sqrt(2) * sqrt(2)))))})
+    if w == PO1 and SET.get("playoff_teams") != 4:
+        row["note"] = f"You have a {mine['bye']:.0f}% chance at a bye this week."
+    schedule.append(row)
+
 # ---------------- change log vs last pull ----------------
 changes = []
 if PREV_P.exists():
@@ -698,7 +830,7 @@ tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 i
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
           "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
-latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble,
+latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (PO2, PO3) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 

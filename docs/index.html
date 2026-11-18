@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a0b1e">
 <title>Oxtail Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=1794975875">
+<link rel="stylesheet" href="style.css?v=1794976764">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
 </head>
 <body>
@@ -24,6 +24,7 @@
     <button data-tab="waivers"><span class="ic">📥</span>Waivers</button>
     <button data-tab="ranks"><span class="ic">🏆</span>Rankings</button>
     <button data-tab="team"><span class="ic">🛡️</span>My Team</button>
+    <button data-tab="sched"><span class="ic">📅</span>Schedule</button>
     <button data-tab="league"><span class="ic">🌎</span>League</button>
     <button data-tab="how"><span class="ic">⚙️</span>Settings</button>
   </nav>
@@ -49,7 +50,6 @@
     <p class="sub">Every 1-for-1, 2-for-1 and 1-for-2 with every team got scored, then the best ones got simmed. <span class="tag real">REALISTIC</span> = their lineup barely drops (or they're eliminated) and the value's close. <span class="tag stretch">STRETCH</span> = better for you, worse for them.</p>
     <div class="bar">
       <div class="seg" id="tkind"><button data-v="realistic" class="on">Realistic</button><button data-v="stretch">Stretch</button><button data-v="all">All</button></div>
-      <label class="chk"><input type="checkbox" id="hideblocked" checked> Hide teams I won't trade with</label>
     </div>
     <div class="tcards" id="tcards"></div>
     <h2 style="font-size:20px">Full list</h2>
@@ -99,6 +99,13 @@
     <div class="tw"><table id="ptable"></table></div>
   </section>
 
+  <section id="sched" hidden>
+    <h2>📅 Week by week</h2>
+    <p class="sub">Your best lineup every week the rest of the way, who you play, and your chance to win. Tap a week.</p>
+    <div class="weekbar" id="wkbar"></div>
+    <div id="wkview"></div>
+  </section>
+
   <section id="league" hidden>
     <h2>🌎 League odds</h2>
     <div class="box"><div class="chart" id="lchart"></div></div>
@@ -124,7 +131,7 @@
   </section>
 </div>
 <div class="tip" id="tip" hidden></div>
-<script src="app.js?v=1794975875"></script>
-<script src="chat.js?v=1794975875"></script>
+<script src="app.js?v=1794976764"></script>
+<script src="chat.js?v=1794976764"></script>
 </body>
 </html>
