@@ -198,7 +198,8 @@ async function shareMatchup(btn) {
   } catch (e) { if (e && e.name === 'AbortError') return; }
 }
 function seasonChart(el) {
-  const S = D.season_odds, pts = (S && S.weeks) || [];
+  const S = D.season_odds, pts = ((S && S.weeks) || []).map(q => ({ ...q }));
+  if (S && S.now && pts.length) Object.assign(pts[pts.length - 1], { title: S.now.title, playoffs: S.now.playoffs, est: false });   // this week = the same full model number as Home
   if (pts.length < 2) { line(el, H.runs.map(r => ({ y: r.champ_pct, at: r.at, w: r.week })), { label: q => `Wk ${q.w}: ` }); return; }
   el.replaceChildren();
   const ns = 'http://www.w3.org/2000/svg', W = Math.max(300, el.clientWidth - 20), H_ = 190, pl_ = 38, pb = 26, svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H_}`);
@@ -207,17 +208,19 @@ function seasonChart(el) {
   [0, 50, 100].forEach(v => { mk('line', { x1: pl_, x2: W - 12, y1: Y(v), y2: Y(v), stroke: '#283141' }); const t = mk('text', { x: 2, y: Y(v) + 4 }); t.textContent = v + '%'; });
   const st_ = Math.ceil(pts.length / 8);
   pts.forEach((q, i) => { if ((i % st_ === 0 && pts.length - 1 - i >= Math.max(2, st_ * .75)) || i === pts.length - 1) { const t = mk('text', { x: X(i), y: H_ - 6, 'text-anchor': i === pts.length - 1 ? 'end' : i === 0 ? 'start' : 'middle' }); t.textContent = 'W' + q.w; } });
-  const path = (key, color, dash) => { const p = mk('path', { d: pts.map((q, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(q[key])).join(''), fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', pathLength: 100, 'stroke-dasharray': '100 100', 'stroke-dashoffset': 100, class: 'drawin' + (dash ? ' dash' : '') }); return p; };
+  const nE = S.now ? pts.length - 1 : pts.length, ep = pts.slice(0, nE);   // estimated weeks get the solid line
+  const path = (key, color, dash) => { if (S.now && nE >= 1) mk('path', { d: `M${X(nE - 1)} ${Y(pts[nE - 1][key])}L${X(nE)} ${Y(pts[nE][key])}`, fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-dasharray': '5 6', 'stroke-linecap': 'round', opacity: .9 });
+    const p = mk('path', { d: ep.map((q, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(q[key])).join(''), fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', pathLength: 100, 'stroke-dasharray': '100 100', 'stroke-dashoffset': 100, class: 'drawin' + (dash ? ' dash' : '') }); return p; };
   path('playoffs', '#4cc9ff', true); path('title', '#ffc83d');
   if (S.now) { const i = pts.length - 1, nd = mk('circle', { cx: X(i), cy: Y(S.now.title), r: 7, fill: '#3ddc84', stroke: '#0b0c24', 'stroke-width': 2, class: 'pop' }); nd.style.animationDelay = '1.4s';
-    const t = mk('text', { x: X(i) - 12, y: Y(S.now.title) + 20, 'text-anchor': 'end', fill: '#3ddc84', 'font-weight': 800, stroke: '#17194a', 'stroke-width': 4, 'paint-order': 'stroke', class: 'nowl' }); t.textContent = 'now ' + Math.round(S.now.title) + '%'; }
+    const t = mk('text', { x: X(i) - 12, y: Y(pts[i].title) + 20, 'text-anchor': 'end', fill: '#3ddc84', 'font-weight': 800, stroke: '#17194a', 'stroke-width': 4, 'paint-order': 'stroke', class: 'nowl' }); t.textContent = 'now ' + Math.round(S.now.title) + '%'; }
   const info = h('div', { class: 'sinfo mut' }, 'Tap a week to see what happened.');
   pts.forEach((q, i) => {
     const mv = (S.moves || {})[String(q.w)] || [];
     if (mv.length) mk('circle', { cx: X(i), cy: Y(q.title), r: 8, fill: 'none', stroke: '#ff6bd6', 'stroke-width': 2, class: 'pop' });
-    const c = mk('circle', { cx: X(i), cy: Y(q.title), r: i === pts.length - 1 ? 6 : 4, fill: '#ffc83d', class: 'pop' }); c.style.animationDelay = (0.9 + i * 0.03) + 's';
+    const c = mk('circle', { cx: X(i), cy: Y(q.title), r: i === pts.length - 1 ? 6 : 4, fill: i === pts.length - 1 && S.now ? '#3ddc84' : '#ffc83d', class: 'pop' }); c.style.animationDelay = (0.9 + i * 0.03) + 's';
     const hit = mk('rect', { x: X(i) - 12, y: 0, width: 24, height: H_, fill: 'transparent', style: 'cursor:pointer' });
-    hit.addEventListener('click', () => info.replaceChildren(h('b', {}, `Week ${q.w}: `), `title ${pct(q.title)}, playoffs ${pct(q.playoffs)} (from scores up to then)` + (i === pts.length - 1 && S.now ? `. Full model right now: title ${pct(S.now.title)}, playoffs ${pct(S.now.playoffs)}.` : ''), mv.length ? h('div', { style: 'margin-top:4px;color:#ff6bd6' }, mv.join(' · ')) : ''));
+    hit.addEventListener('click', () => info.replaceChildren(h('b', {}, `Week ${q.w}: `), `title ${pct(q.title)}, playoffs ${pct(q.playoffs)}` + (q.est === false ? ' (full model, same as Home). The dashed piece is where the chart switches from the simple estimate to the full model, so part of that jump is just the model change.' : ' (simple estimate from scores up to then)'), mv.length ? h('div', { style: 'margin-top:4px;color:#ff6bd6' }, mv.join(' · ')) : ''));
   });
   el.append(svg, h('div', { class: 'slegend' }, h('span', { style: '--c:#ffc83d' }, h('i', { class: 'ln' }), 'Title'), h('span', { style: '--c:#4cc9ff' }, h('i', { class: 'ln' }), 'Playoffs'), h('span', { style: '--c:#ff6bd6' }, h('i', { class: 'rg' }), 'Your moves'), S.now ? h('span', { style: '--c:#3ddc84' }, h('i', { class: 'dt' }), 'Now') : ''), info);
 }
