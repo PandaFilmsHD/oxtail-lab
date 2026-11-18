@@ -570,7 +570,9 @@ if _ap.exists():
             if not act or n not in P or e_ is None:
                 continue
             wm = STACK.get(P[n]["pos"], 0.5); bl = wm * m_ + (1 - wm) * e_
-            if s_ is not None: bl = bl * 2 / 3 + s_ / 3
+            o_ = vals[3] if len(vals) > 3 else None
+            oth = [x for x in (s_, o_) if x is not None]
+            if oth: bl = (2 * bl + sum(oth)) / (2 + len(oth))
             _b.setdefault(P[n]["pos"], []).append(act - bl)
     for pos, L_ in _b.items():
         BIAS[pos] = round(sum(L_) / len(L_) * len(L_) / (len(L_) + 60), 2)   # 60 = needs a real sample before it moves much
@@ -660,6 +662,26 @@ if _sp.exists():
                 SLP[n] = hit[0]
 print(f"sleeper projections matched: {len(SLP)}")
 
+# ---------------- sportsbook player props -> fantasy points (4th opinion) ----------------
+_pp = ROOT / "data" / "props.json"
+PROPS = {}
+if _pp.exists():
+    _pj = json.loads(_pp.read_text())
+    if int(_pj.get("week") or 0) == CUR:
+        _pn = {norm(k): v for k, v in _pj.get("players", {}).items()}
+        for n, p in P.items():
+            x = _pn.get(norm(n))
+            if not x:
+                continue
+            need = {"QB": "pass_yds", "RB": "rush_yds", "WR": "rec_yds", "TE": "rec_yds"}.get(p["pos"])
+            if not need or need not in x:
+                continue
+            tds = -math.log(1 - x["td_p"]) if x.get("td_p") else 0.0   # anytime-TD odds -> expected rush/rec TDs
+            pts_ = (x.get("pass_yds", 0) * SC.get("3", 0) + x.get("pass_tds", 0) * SC.get("4", 0) + (0.75 * SC.get("20", 0) if p["pos"] == "QB" else 0) +
+                    x.get("rush_yds", 0) * SC.get("24", 0) + x.get("rec", 0) * SC.get("53", 0) + x.get("rec_yds", 0) * SC.get("42", 0) + tds * SC.get("25", 6))
+            PROPS[n] = round(pts_, 2)
+print(f"sportsbook props matched: {len(PROPS)}")
+
 V = {}
 for n, p in P.items():
     r = recent(p)
@@ -718,12 +740,14 @@ for n, p in P.items():
         if w == CUR and p.get("proj") is not None:
             wm = STACK.get(p["pos"], 0.5)   # our weight vs ESPN's for this week, learned from graded weeks
             v[w] = round(wm * mine_ + (1 - wm) * p["proj"], 2) if p["proj"] > 0 else 0.0
-            if n in SLP and p["proj"] > 0:
-                v[w] = round(v[w] * 2 / 3 + SLP[n] / 3, 2)   # plain average with Sleeper too: consensus beats any one source
+            others = [x_[n] for x_ in (SLP, PROPS) if n in x_]
+            if others and p["proj"] > 0:
+                v[w] = round((2 * v[w] + sum(others)) / (2 + len(others)), 2)   # plain average with Sleeper + sportsbook props: consensus beats any one source
             if v[w] > 0 and BIAS.get(p["pos"]):
                 v[w] = round(max(0.0, v[w] + BIAS[p["pos"]]), 2)
-        elif w == CUR and n in SLP:
-            v[w] = round(0.5 * mine_ + 0.5 * SLP[n], 2)
+        elif w == CUR and (n in SLP or n in PROPS):
+            others = [x_[n] for x_ in (SLP, PROPS) if n in x_]
+            v[w] = round((mine_ + sum(others)) / (1 + len(others)), 2)
         else:
             v[w] = mine_
         if w == nxt_game(p) and n in HURT_LAST:
@@ -1655,7 +1679,7 @@ ARCH = json.loads(ARCH_P.read_text()) if ARCH_P.exists() else {}
 snap_ = {"players": {}, "teams": {str(t): r1(base[t]["means"][CUR]) for t in IDS}, "games": []}
 for n, p in P.items():
     if p["pos"] in ("QB", "RB", "WR", "TE") and V[n].get("model_cur") is not None and (p["t"] or (p.get("proj") or 0) >= 5):
-        snap_["players"][n] = [V[n]["model_cur"], p.get("proj"), SLP.get(n)]
+        snap_["players"][n] = [V[n]["model_cur"], p.get("proj"), SLP.get(n), PROPS.get(n)]
 for wk, h, a in REM:
     if wk == CUR:
         snap_["games"].append([h, a, r1(base[h]["wk"])])
@@ -1669,14 +1693,16 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
     if W >= CUR:
         continue
     pe_m, pe_e, n_, ne_, pm_e = 0.0, 0.0, 0, 0, 0.0
-    pe_s, ns_ = 0.0, 0
+    pe_s, ns_, pe_o, no_ = 0.0, 0, 0.0, 0
     for n, vals in sn["players"].items():
-        m_, e_ = vals[0], vals[1]; s_ = vals[2] if len(vals) > 2 else None
+        m_, e_ = vals[0], vals[1]; s_ = vals[2] if len(vals) > 2 else None; o_ = vals[3] if len(vals) > 3 else None
         act = (P.get(n) or {}).get("wk", {}).get(str(W))
         if not act:
             continue
         if s_ is not None:
             pe_s += abs(s_ - act); ns_ += 1
+        if o_ is not None:
+            pe_o += abs(o_ - act); no_ += 1
         pe_m += abs(m_ - act); n_ += 1
         if e_ is not None:
             pe_e += abs(e_ - act); pm_e += abs(m_ - act); ne_ += 1
@@ -1704,7 +1730,7 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
                 if abs(L_[i][0] - L_[j][0]) <= 3 and L_[i][1] != L_[j][1]:
                     pairs_n += 1; pairs_ok += int((L_[i][0] > L_[j][0]) == (L_[i][1] > L_[j][1]))
     if n_:
-        report.append({"startsit_pct": r1(100 * pairs_ok / pairs_n) if pairs_n else None, "w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "sleeper_mae": r1(pe_s / ns_) if ns_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
+        report.append({"startsit_pct": r1(100 * pairs_ok / pairs_n) if pairs_n else None, "w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "sleeper_mae": r1(pe_s / ns_) if ns_ else None, "props_mae": r1(pe_o / no_) if no_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
                        "games": calls, "picked_right": right, "brier": round(brier / calls, 3) if calls else None})
 
 hist_p = OUT / "history.json"

@@ -37,6 +37,8 @@ jobs:
           ESPN_S2: ${{ secrets.ESPN_S2 }}
           SWID: ${{ secrets.SWID }}
           NFL_CACHED: ${{ steps.nfl.outputs.cache-hit }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python scripts/run_all.py
       - name: Save results
         run: |
