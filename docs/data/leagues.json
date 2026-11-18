@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T05:37:13Z",
-   "champ_pct": 24.6,
+   "at": "2026-11-18T06:11:35Z",
+   "champ_pct": 16.5,
    "todo": [
     {
      "urgent": false,
@@ -33,7 +33,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Michael Wilson, drop Chimere Dike",
-     "detail": "Real upgrade: about +1.7 pts a week in your lineup the rest of the way, title odds +5.5%.",
+     "detail": "Real upgrade: about +1.9 pts a week in your lineup the rest of the way, title odds +5.2%.",
      "tab": "waivers"
     }
    ]
@@ -43,8 +43,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T05:37:21Z",
-   "champ_pct": 11.6,
+   "at": "2026-11-18T06:11:45Z",
+   "champ_pct": 12.0,
    "todo": [
     {
      "urgent": true,
@@ -74,35 +74,28 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T05:37:25Z",
-   "champ_pct": 4.9,
+   "at": "2026-11-18T06:11:49Z",
+   "champ_pct": 5.5,
    "todo": [
-    {
-     "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Carnell Tate might not play (75%)",
-     "detail": "If he's ruled out, start Darren Waller (10.4).",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.7%.",
+     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Carnell Tate or Darren Waller",
-     "detail": "Carnell Tate 9.8 vs Darren Waller 10.4. Carnell Tate is 75% to play, so if he's ruled out, Darren Waller is your guy.",
+     "detail": "Carnell Tate 11.1 vs Darren Waller 10.4. Carnell Tate is 85% to play, so if he's ruled out, Darren Waller is your guy.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Kyren Williams + Ladd McConkey for Puka Nacua (Where is Brince???)",
-     "detail": "Title odds +1.8%. Would you do Kyren Williams and Ladd McConkey for Puka Nacua? I think you get depth for injuries and byes down the stretch, and Nacua is just sitting on your bench.",
+     "title": "Offer Kyren Williams for George Pickens (Ryan's Rad Team)",
+     "detail": "Title odds +1.7%. Would you do Kyren Williams for George Pickens? I think Williams slides right into your RB spot, and you're deep at WR so you can cover Pickens' spot.",
      "tab": "trades"
     }
    ]
@@ -112,8 +105,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T05:37:17Z",
-   "champ_pct": 32.4,
+   "at": "2026-11-18T06:11:40Z",
+   "champ_pct": 32.8,
    "todo": [
     {
      "urgent": false,
