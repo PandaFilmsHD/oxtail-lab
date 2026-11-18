@@ -11,6 +11,8 @@ Writes docs/data/props_lab.json and keeps every pick in data/props_picks.json fo
 """
 import json, math, pathlib, datetime, re, statistics
 import numpy as np
+from scipy.special import ndtr
+from scipy.stats import nbinom
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 D = ROOT / "data"
@@ -20,6 +22,10 @@ W = 0.20            # how much of the gap between our number and the market's nu
 MAX_GAP = 0.35      # bigger disagreements usually mean the market knows something we don't (injury, role change): no play
 MIN_EDGE = 0.025    # our chance has to beat the market's no-vig chance by 2.5+ points to be listed
 PICKEM = 56.0       # pick'em legs (PrizePicks/Underdog/Pick6) need about 54 to 58% to profit, depending on the payout
+SLW = 0.35          # Sleeper's share of "ours" (v2 gets 0.65). Three-cornered hat v2/Sleeper/market on week-11 props: 0.35 (80% CI 0.30-0.40)
+QB_LINK = 0.8       # same-game link: QB pass-yds latent loads 0.8 * sd_i / sd_QB on each receiver (fit 2016-22, checked 2023-25)
+REC_RHO = 0.9       # receptions latent = 0.9 * his rec-yds latent + noise (QB pass yds ~ WR1 catches r 0.365 in the data)
+WA_RESID = 0.25     # share of game sims from the residual method (rest = real margins: keeps the 3/7/10/14 masses). Was 0.5
 rng = np.random.default_rng(11)
 
 ROOF = {"ARI": "dome", "ATL": "dome", "DAL": "dome", "DET": "dome", "HOU": "dome", "IND": "dome", "LV": "dome", "LA": "dome", "LAC": "dome", "MIN": "dome", "NO": "dome"}
@@ -37,7 +43,7 @@ MK = {"player_pass_yds": ("pass_yds", "Pass yds"), "player_pass_tds": ("pass_tds
       "player_reception_yds": ("rec_yds", "Rec yds"), "player_receptions": ("rec", "Catches"), "td": ("td", "Anytime TD")}
 USE = {"pass_yds": "passyd", "pass_tds": "ptd", "rush_yds": "rushyd", "rec_yds": "recyd", "rec": "rec"}
 SLP = {"pass_yds": "pass_yd", "pass_tds": "pass_td", "rush_yds": "rush_yd", "rec_yds": "rec_yd", "rec": "rec"}
-BETA = {"pass_yds": 0.55, "pass_tds": 0.8, "rush_yds": 0.35, "rec_yds": 0.5, "rec": 0.35, "td": 0.9}   # how much a stat rides with his team's score
+BETA = {"pass_yds": 0.21, "pass_tds": 1.17, "rush_yds": 0.13, "rec_yds": 0.25, "rec": 0.11, "td": 1.18}   # fallback only (v2 has its own): fitted elasticity to team points, 2016-25
 
 
 def key(n):
@@ -65,10 +71,10 @@ def load(p, d=None):
 GL = {
     # forecast wind mph (outdoor only) -> total shift. Game-time-wind coefficients were -2.1 (10-14) and -2.8 (15+),
     # multiplied by 0.7 because forecasts miss.
-    "wind_tiers": [(15, -2.0), (10, -1.5)],
+    "wind_tiers": [(15, -1.7), (10, -1.0)],   # EB 2006-26: -2.44 (15+), -1.42 (10-14) game-time, x 0.7 forecast trust
     "wind_hit": {"10": {"old": 56.5, "new": 59.6, "n": 651}, "15": {"old": 51.4, "new": 61.4, "n": 210}},
     # rain at kickoff: -3.9 pts (SE 1.1), unders 60.3% (2016-20) / 74.6% (2021-25), n=131. Scale by forecast chance and trust 0.6.
-    "rain_full": -3.9, "rain_trust": 0.6, "rain_min_prob": 40,
+    "rain_full": -3.6, "rain_trust": 0.6, "rain_min_prob": 40,   # EB 2014-26 rain-at-kickoff: -3.6 (OLS -4.3, SE 1.1)
     # SNF+MNF unders 55.4% / 57.9% (n=372). Regression says -2.2 but 2006-15 went 48% and 2026 so far 8-12, so use -1.0.
     "prime": -1.0,
     "max_total_shift": 4.5,     # wind + rain + prime can stack; never move the total more than this
@@ -120,10 +126,12 @@ def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0
     """Joint (home margin, total) sims.
     resid: current DIST['_game_resid'] rows [margin - spread, total - total_line, spread] (2016-25).
     pool : new DIST['_game_pool'] rows [margin - spread, total - total_line, spread, total_line, season] (2006-25).
-    Half the draws = current residual method (smooth tails); half = real margins from games with ~the same spread
-    (keeps exact mass on 3, 7, 10, 14). Out of sample this cut the average calibration miss on alt spreads from 2.2 to ~1.5 pts
+    WA_RESID (0.25) of the draws = residual method (smooth tails); the rest = real margins from games with ~the same spread
+    (keeps exact mass on 3, 7, 10, 14). Opt pass (expanding window, tuned 2011-20, tested 2021-26): 0.25 + 400-game pool
+    + residual pool 2018-25 + margin pool 1999-2025 cut summed Brier (alt spreads + alt totals + key masses) 0.45753 -> 0.45697;
+    P(|margin|=3) 10.4% -> 12.7% (actual 15.5%). Out of sample this cut the average calibration miss on alt spreads from 2.2 to ~1.5 pts
     of probability and improved Brier in both 2016-20 and 2021-25."""
-    na = n // 2; nb = n - na
+    na = int(round(n * WA_RESID)); nb = n - na
     # A) current method
     near = resid[np.abs(resid[:, 2] - spr) <= max(3.0, abs(spr) * 0.35)]
     near = near if len(near) >= 150 else resid
@@ -138,7 +146,7 @@ def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0
     fs, sgn = abs(spr), (1.0 if spr >= 0 else -1.0)
     for w in (0.0, 0.5, 1.0, 1.5, 2.5, 4.0, 99):
         sel = np.where(np.abs(pfs - fs) <= w)[0]
-        if len(sel) >= 250:
+        if len(sel) >= 400:
             break
     j = sel[rng.integers(0, len(sel), nb)]
     fm = pfm[j] + np.round(fs - pfs[sel].mean())
@@ -418,6 +426,44 @@ def main():
         c = [v for t in teams for v in BYLAST.get((re.sub(r"[^a-z]", "", parts[-1]) if parts else "", t), [])]
         return c[0] if len(c) == 1 else None   # Drew/Andrew Ogletree, Zonovan/Bam Knight, Greg/Gregory Desrosiers
     LONGS = []
+    # same-game pass link: QB pass-yds latent = sum_i c_i*eta_i + sqrt(1 - sum c_i^2)*eps, c_i = QB_LINK * sd_i / sd_QB from the posted lines.
+    # Receivers' etas are independent (WR1~WR2 residual r = -0.004 in 2016-25). Uniforms = Phi(latent), so every marginal is unchanged.
+    # 2023-25 check: QB~WR1 rec yds r 0.08 -> 0.45 (data 0.48), QB~WR2 0.04 -> 0.40 (0.38), QB~TE1 0.03 -> 0.36 (0.35), WR1~WR2 ~0 (0).
+    LATQ, LATR = {}, {}
+    def _cv(st_, pos_, m_):
+        B_ = (DIST2.get(f"{st_}|{pos_}") or {}).get("buckets")
+        if not B_:
+            return None
+        r_ = np.array(next((b for b in B_ if m_ <= b["hi"]), B_[-1])["ratios"])
+        return float(r_.std() / max(r_.mean(), 1e-6))
+    if DIST2 and V2A:
+        qbs_, recs_ = {}, {}
+        for nm_, mks_ in (RAW.get("props") or {}).items():
+            q_ = match(nm_, mks_)
+            if not q_:
+                continue
+            py_, ry_ = mks_.get("player_pass_yds") or {}, mks_.get("player_reception_yds") or {}
+            if q_["pos"] == "QB" and py_.get("line"):
+                qbs_.setdefault(q_["team"], []).append((py_["line"], key(nm_)))
+            if q_["pos"] in ("WR", "TE", "RB") and ry_.get("line"):
+                cv_ = _cv("rec_yds", q_["pos"], max(ry_["line"], 1))
+                if cv_:
+                    recs_.setdefault(q_["team"], {})[key(nm_)] = cv_ * ry_["line"]
+        lrng = np.random.default_rng(29)
+        for tm_ in sorted(set(qbs_) | set(recs_)):
+            eta_ = {k_: lrng.standard_normal(N).astype(np.float32) for k_ in sorted(recs_.get(tm_, {}))}
+            LATR.update(eta_)
+            if tm_ in qbs_:
+                ql_, qk_ = max(qbs_[tm_]); cvq_ = _cv("pass_yds", "QB", ql_)
+                if cvq_:
+                    c_ = {k_: QB_LINK * sd_ / (cvq_ * ql_) for k_, sd_ in recs_.get(tm_, {}).items()}
+                    s2_ = sum(v * v for v in c_.values())
+                    if s2_ > 0.95:
+                        c_ = {k_: v * math.sqrt(0.95 / s2_) for k_, v in c_.items()}; s2_ = 0.95
+                    g_ = math.sqrt(1 - s2_) * lrng.standard_normal(N)
+                    for k_, v in c_.items():
+                        g_ = g_ + v * eta_[k_]
+                    LATQ[qk_] = g_.astype(np.float32)
     def price_props(CORR, RAT):
         props, legs = [], []
         longs = LONGS if RAT is None else []
@@ -448,8 +494,11 @@ def main():
                             om_ = None
                     if om_ is None:
                         om_ = our_mean(p, st)
-                    v_ = [v for v in (om_, sl_mean(nm, st, tm)) if v is not None]
-                    return float(np.mean(v_)) if v_ else None
+                    sl_ = sl_mean(nm, st, tm)
+                    if om_ is not None and sl_ is not None:
+                        return float((1 - SLW) * om_ + SLW * sl_)
+                    v_ = [v for v in (om_, sl_) if v is not None]
+                    return float(v_[0]) if v_ else None
                 ours_raw = proj(V2A)
                 if ours_raw is None:
                     continue
@@ -490,7 +539,8 @@ def main():
                             ov = float(np.mean(1 - cdf))
                             return ov / max(1e-9, 1 - float(np.mean(last))) if whole else ov   # whole line: chance given no push
                 else:                                  # yards: real past outcomes vs projection, times game script, same draws every time
-                    ru = rng.random(N)                 # same draws for every shape, so the two passes are comparable
+                    lat_ = (LATQ if (st == "pass_yds" and p["pos"] == "QB") else LATR if (st == "rec_yds" and p["pos"] != "QB") else {}).get(key(nm))
+                    ru = np.minimum(ndtr(lat_.astype(float)), 1 - 1e-9) if lat_ is not None else rng.random(N)   # same draws for every shape; latent = same-game link
                     def mkP(bm):
                         r_ = (V2A.ratios(st, p["pos"], max(bm, 1)) if V2A else None)
                         r_ = r_ if r_ is not None else ratios(st, p["pos"], max(bm, 1))
@@ -517,7 +567,12 @@ def main():
                 fin = mm + W * (base_m - mm) + 0.8 * (ours_m - base_m)   # news part trusted, the rest at W
                 big_gap = bool(abs(ours_m - mm) > MAX_GAP * max(mm, 0.5)) and not why_news
                 po = P(fin)
-                X = (V2A.sample_count(st, p["pos"], np.maximum(0, fin * f), rng) if V2A else rng.poisson(np.maximum(0, fin * f))) if st in ("pass_tds", "td", "rec") else fin * base
+                if st == "rec" and V2A and p["pos"] != "QB" and key(nm) in LATR:   # same latent as his rec yds (QB link), NB marginal unchanged
+                    r_nb = float((DIST2.get(f"rec|{p['pos']}") or {}).get("nb_r_gs", 10.0)); lam_ = np.maximum(fin * f, 1e-9)
+                    u_ = ndtr(REC_RHO * LATR[key(nm)].astype(float) + math.sqrt(1 - REC_RHO ** 2) * rng.standard_normal(N))
+                    X = nbinom.ppf(np.clip(u_, 1e-9, 1 - 1e-9), r_nb, r_nb / (r_nb + lam_))
+                else:
+                    X = (V2A.sample_count(st, p["pos"], np.maximum(0, fin * f), rng) if V2A else rng.poisson(np.maximum(0, fin * f))) if st in ("pass_tds", "td", "rec") else fin * base
                 if not big_gap and st != "td":
                     # alt lines he hits about 75-82% of the time, for parlays
                     for side_, q in (("Over", 0.22), ("Over", 0.17), ("Under", 0.78), ("Under", 0.83)):
