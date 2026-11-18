@@ -633,3 +633,8 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
   tab(RENDER[start] ? start : 'home');
   setTimeout(() => fetch(BASE + 'players.json?v=' + D.summary.built).then(r => r.json()).then(j => { CARDS = j; }).catch(() => {}), 600);
 })();
+
+// installable app: register the service worker, and refresh the data whenever the app comes back to the screen
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+let _hiddenAt = 0;
+document.addEventListener('visibilitychange', () => { if (document.hidden) _hiddenAt = Date.now(); else if (_hiddenAt && Date.now() - _hiddenAt > 10 * 60 * 1000) location.reload(); });

@@ -344,3 +344,7 @@ tbody tr:nth-child(even) td{background:#ffffff06}
 .mu-s{font-size:12px}.mu-s b{font-size:14px}
 .mu-slot{text-align:center;font-family:'Lilita One',sans-serif;font-size:12px;color:#9aa0d8;background:#13163f;align-self:stretch;display:grid;place-items:center}
 .mu-h .mu-p b{font-family:'Lilita One',sans-serif;font-size:15px}
+
+/* installed app: respect the iPhone notch / home bar */
+body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.chatfab{bottom:calc(18px + env(safe-area-inset-bottom))}
