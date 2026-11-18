@@ -29,7 +29,7 @@ for lid in leagues:
         continue
     # only rerun the sims when something actually changed (league data, nflverse stats, settings, injury guesses, or the code)
     hp = ROOT / "docs" / "data" / lid / ".inputs"
-    srcs = [ROOT / "data" / lid / "model.json", ROOT / "data" / "usage.json", ROOT / "config.json", ROOT / "assumptions.json"] + sorted((ROOT / "scripts").glob("*.py"))
+    srcs = [ROOT / "data" / lid / "model.json", ROOT / "data" / lid / "fantasycalc.json", ROOT / "data" / "usage.json", ROOT / "config.json", ROOT / "assumptions.json"] + sorted((ROOT / "scripts").glob("*.py"))
     hsh = hashlib.sha256()
     for f in srcs:
         if f.exists():

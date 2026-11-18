@@ -179,6 +179,25 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
                             "outlook": (outlook or "")[:600], "wk": wk})
         time.sleep(0.3)
 
+    # FantasyCalc market values (built from millions of real trades), for this league's size / PPR / superflex
+    try:
+        ppr_ = scoring.get("53", 0); ppr_ = 1 if ppr_ >= 0.75 else 0.5 if ppr_ >= 0.25 else 0
+        nq = 2 if slots.get("OP") else 1
+        fr = requests.get("https://api.fantasycalc.com/values/current", params={"isDynasty": "false", "numQbs": nq, "numTeams": settings["teams"], "ppr": ppr_}, timeout=60)
+        fr.raise_for_status()
+        fc = {}
+        for x in fr.json():
+            pl = x.get("player") or {}
+            if pl.get("espnId"):
+                fc[str(pl["espnId"])] = {"v": x.get("redraftValue") or x.get("value"), "trend": x.get("trend30Day"), "name": pl.get("name")}
+        fp = ROOT / "data" / str(LEAGUE) / "fantasycalc.json"
+        fp.parent.mkdir(parents=True, exist_ok=True)
+        txt = json.dumps(fc, sort_keys=True, separators=(",", ":"))
+        if not fp.exists() or fp.read_text() != txt:
+            fp.write_text(txt)
+        print(f"  fantasycalc: {len(fc)} players with market values")
+    except Exception as e:
+        print(f"  fantasycalc: skipped ({e})")
     model = {"my_team": me, "league_name": settings.get("name"), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "season": SEASON, "league_id": LEAGUE, "cur": cur,
              "reg_end": reg_end, "po_teams": po_teams, "settings": settings, "teams": teams, "sched": sched, "games": games, "rank": rank, "players": players}
     out = ROOT / "data" / str(LEAGUE) / "model.json"

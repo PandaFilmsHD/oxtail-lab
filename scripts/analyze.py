@@ -683,7 +683,28 @@ REPL_PUB = {}
 for pos, k in REPL_N.items():
     L = sorted((pub(n) for n, p in P.items() if p["pos"] == pos), reverse=True)
     REPL_PUB[pos] = L[min(k, len(L) - 1)] if L else 0
-MKT = {n: max(0.0, pub(n) - REPL_PUB[p["pos"]]) for n, p in P.items() if p["pos"] in SKILL}
+MKT_OWN = {n: max(0.0, pub(n) - REPL_PUB[p["pos"]]) for n, p in P.items() if p["pos"] in SKILL}
+# Market value = FantasyCalc (prices from millions of real trades) when we have it, our own estimate otherwise.
+_fcp = ROOT / "data" / LID / "fantasycalc.json"
+FC = json.loads(_fcp.read_text()) if _fcp.exists() else {}
+FCV = {}
+for n, p in P.items():
+    x = FC.get(str(p.get("id")))
+    if x and x.get("v") and p["pos"] in SKILL:
+        v_ = float(x["v"])
+        if p["pos"] == "QB" and SET.get("pass_td", 4) >= 6:
+            v_ *= 1.15   # FantasyCalc assumes 4-pt passing TDs; QBs are worth more here
+        FCV[n] = v_
+if len(FCV) >= 60:
+    # put our own estimate on the same scale for guys FantasyCalc doesn't list (deep bench / waiver types)
+    pairs = sorted((MKT_OWN[n], FCV[n]) for n in FCV if MKT_OWN.get(n, 0) > 0)
+    k_ = (sum(b for _, b in pairs) / max(1e-9, sum(a for a, _ in pairs))) if pairs else 1.0
+    floor_ = min(FCV.values())
+    MKT = {n: (FCV[n] if n in FCV else min(MKT_OWN[n] * k_, floor_ * 0.9)) for n in MKT_OWN}
+    MKT_SRC = "FantasyCalc"
+else:
+    MKT, MKT_SRC = MKT_OWN, "own estimate"
+print(f"market values: {MKT_SRC} ({len(FCV)} matched)")
 MV, MYV = {}, {}
 for n, p in P.items():
     if p["pos"] not in SKILL:
@@ -737,8 +758,13 @@ for t in IDS:
             if gain < (3 if len(G) + len(T_) == 4 else 1.5):
                 continue
             # value check uses market value (what other managers see), with a 25% tax on the side sending 2 players
-            vin = sum(mval(n) for n in G) * (0.75 if len(G) > len(T_) else 1)   # 2-for-2 counts both sides fully
-            vout = sum(mval(n) for n in T_) * (0.75 if len(T_) > len(G) else 1)
+            # what they get vs what they give, in market value. The side getting the best player in a
+            # 2-for-1 pays an ~8% "stud premium" (PFF's redraft rule), instead of a flat tax.
+            vin, vout = sum(mval(n) for n in G), sum(mval(n) for n in T_)
+            if len(G) != len(T_):
+                stud = max(G + T_, key=mval)
+                if stud in G and len(G) < len(T_): vin += 0.08 * mval(stud)
+                if stud in T_ and len(T_) < len(G): vout += 0.08 * mval(stud)
             ratio = vin / max(vout, 0.5)
             best_g, best_t = max(mval(n) for n in G), max(mval(n) for n in T_)
             need = (team_score(r, t, REGW) - base_t) / max(1, len(REGW)) if REGW else 0
@@ -749,8 +775,8 @@ for t in IDS:
                 continue   # nobody hands over two starters and gets way worse
             st_g = max((P[x].get("start_pct") or 0) for x in G); st_t = max((P[x].get("start_pct") or 0) for x in T_)
             start_ok = st_g >= st_t - 25   # nobody gives up a guy they start every week for a guy the whole league benches
-            real = two_for_one_ok and start_ok and not (both_start and need < -3) and (ratio >= 1.1 if status[t] == "out" else (ratio >= 1.0 and need >= -1))
-            stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.8 and need >= -6 and st_g >= st_t - 45
+            real = two_for_one_ok and start_ok and not (both_start and need < -3) and (ratio >= 1.0 if status[t] == "out" else (ratio >= 0.95 and need >= -1))   # within 5% = fair
+            stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.85 and need >= -6 and st_g >= st_t - 45
             if not real and not stretch:
                 continue
             cands.append({"t": t, "G": G, "T": T_, "gain": gain, "ratio": ratio, "need": need, "real": real, "r": r})
@@ -1409,7 +1435,7 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
            "playoff_weeks": [PO1, PO2, PO3], "po_view": [R1, SEMI, FINAL], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
            "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy, "ideal_lineups": ideal, "tiers": TIERS,
            "expected_lineup": {w: r1(mine["means"][w]) for w in PLW}, "take": take, "this_week": this_week, "swing": swing,
-           "sims": A["sims"], "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
+           "sims": A["sims"], "market_source": MKT_SRC, "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
 tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k, v in RHO.items()], "weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,
