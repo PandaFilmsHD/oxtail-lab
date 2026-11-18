@@ -170,6 +170,27 @@ def main():
         return (lo + hi) / 2
 
     games, sims, done, LEGS = [], {}, set(), []
+    HOMES = {FULL.get(e["home"]) for e in RAW.get("events", [])} | {FULL.get(g["home"]) for g in (GO.get("games") or {}).values()}
+    for tm_, L_ in lines.items():   # older stats files don't say who's home: fill it in from the odds feed
+        if "home" not in L_:
+            L_["home"] = tm_ in HOMES if HOMES else L_["spread"] >= lines.get(L_["opp"], {}).get("spread", 0)
+    # injury status for every player ESPN gives us (all four leagues' player pools)
+    INJ = {}
+    for mp in sorted(D.glob("*/model.json")):
+        for q in (load(mp, {}) or {}).get("players", []):
+            INJ[key(q["n"])] = q.get("inj") or "ACTIVE"
+    OUTS = ("OUT", "INJURY_RESERVE", "DOUBTFUL", "SUSPENSION")
+    # who was already out when the lines went up: anyone ruled out AFTER that makes his teammates' lines stale
+    IS = load(D / "props_inj_state.json", {}) or {}
+    if IS.get("lines_at") != RAW.get("at"):
+        IS = {"lines_at": RAW.get("at"), "out": [k for k, v in INJ.items() if v in OUTS]}
+    newly_out = {k for k, v in INJ.items() if v in OUTS} - set(IS["out"])
+    (D / "props_inj_state.json").write_text(json.dumps(IS, separators=(",", ":")))
+    NEWS = {}   # team -> list of (position, player entry) newly ruled out
+    for k in newly_out:
+        q = PL.get(k)
+        if q and q.get("pos") in ("QB", "RB", "WR", "TE"):
+            NEWS.setdefault(q["team"], []).append(q)
     for tm, L in lines.items():
         if not L.get("home") or tm in done:
             continue
@@ -245,8 +266,9 @@ def main():
         props, legs = [], []
         for nm, mks in (RAW.get("props") or {}).items() if RAW.get("week") == int(cur or 0) or str(RAW.get("week")) == cur else []:
             p = PL.get(key(nm))
-            if not p or p.get("team") not in sims:
+            if not p or p.get("team") not in sims or INJ.get(key(nm)) in OUTS:
                 continue
+            news = [q for q in NEWS.get(p["team"], []) if q["name"] != p["name"]]
             tm = p["team"]; own, opp, mar = sims[tm]
             pts_mean = float(np.mean(own))
             for mk, x in mks.items():
@@ -265,6 +287,18 @@ def main():
                     continue
                 ours_m = float(np.mean(ours)) / CORR.get(st, 1.0)
                 ours_raw = float(np.mean(ours))
+                why_news, w_ = [], W
+                for q in news:   # a teammate got ruled out after the line went up
+                    if q["pos"] == "QB" and p["pos"] in ("WR", "TE", "RB") and st in ("rec", "rec_yds", "td"):
+                        ours_m *= 0.86; why_news.append(f"{q['name']} (QB) is out")   # backup QB: pass catchers -14% (fantasy backtest)
+                    elif q["pos"] == p["pos"] or (q["pos"] in ("WR", "TE") and p["pos"] in ("WR", "TE") and st in ("rec", "rec_yds")):
+                        qm = our_mean(q, st)
+                        if qm:
+                            mates = max(1, sum(1 for z in PL.values() if z.get("team") == p["team"] and z.get("pos") == q["pos"] and z["name"] != q["name"] and z.get("depth", {}).get("rank", 9) <= 3))
+                            ours_m += (0.45 if q["pos"] == p["pos"] == "RB" else 0.3) * qm / mates
+                            why_news.append(f"{q['name']} is out")
+                if why_news:
+                    w_ = 0.6   # the line was set before the news, so trust our number a lot more
                 if st == "td":
                     line = 0.5; p_mkt = min(0.97, x["p"])
                 else:
@@ -294,8 +328,8 @@ def main():
                     if mm > 0.05:
                         RAT.setdefault(st, []).append(ours_raw / mm)
                     continue
-                fin = mm + W * (ours_m - mm)
-                big_gap = abs(ours_m - mm) > MAX_GAP * max(mm, 0.5)
+                fin = mm + w_ * (ours_m - mm)
+                big_gap = abs(ours_m - mm) > MAX_GAP * max(mm, 0.5) and not why_news
                 po = P(fin)
                 X = rng.poisson(np.maximum(0, fin * f)) if st in ("pass_tds", "td", "rec") else fin * base
                 if not big_gap and st != "td":
@@ -316,7 +350,7 @@ def main():
                 for side, pp, price in cand:
                     ev = pp * dec(price) - 1
                     pm_ = p_mkt if side in ("Over", "Yes") else 1 - p_mkt
-                    props.append({"edge": round(100 * (pp - pm_), 1), "max_c": int(100 * pp - 2), "pickem": st != "td" and 100 * pp >= PICKEM and not big_gap, "big_gap": big_gap, "player": nm, "team": tm, "opp": lines[tm]["opp"], "pos": p["pos"], "market": label, "side": side, "line": line if st != "td" else None,
+                    props.append({"news": why_news, "edge": round(100 * (pp - pm_), 1), "max_c": int(100 * pp - 2), "pickem": st != "td" and 100 * pp >= PICKEM and not big_gap, "big_gap": big_gap, "player": nm, "team": tm, "opp": lines[tm]["opp"], "pos": p["pos"], "market": label, "side": side, "line": line if st != "td" else None,
                                   "price": price, "books": x.get("books"), "p": round(100 * pp, 1), "p_mkt": round(100 * (p_mkt if side in ("Over", "Yes") else 1 - p_mkt), 1),
                                   "ev": round(100 * ev, 1), "ours": round(ours_m, 2), "mkt": round(mm, 2), "final": round(fin, 2), "kick": k_,
                                   "median": round(float(np.median(X)), 1), "p10": round(float(np.percentile(X, 10)), 1), "p90": round(float(np.percentile(X, 90)), 1)})
@@ -333,7 +367,7 @@ def main():
             best[k_] = x
     props = sorted(best.values(), key=lambda x: (-x["edge"], -x["p"]))
     for x in props:
-        x["grade"] = "" if x["big_gap"] else "A" if x["edge"] >= 6 else "B" if x["edge"] >= 4 else "C" if x["edge"] >= MIN_EDGE * 100 else ""
+        x["grade"] = "" if x["big_gap"] or (x["market"] == "Anytime TD" and x["p"] < 20) else "A" if x["edge"] >= 6 else "B" if x["edge"] >= 4 else "C" if x["edge"] >= MIN_EDGE * 100 else ""
 
     # ---------------- parlays: 2 and 3 legs of 70%+ legs, chance from the same sims (same-game legs keep their correlation) ----------------
     import itertools
@@ -452,6 +486,23 @@ def main():
            "record": rec, "recent": sorted(graded, key=lambda x: (x["week"], x.get("kick") or ""), reverse=True)[:40],
            "backtest": {"ats_model": "49 to 51% against the closing spread 2020-25 (need 52.4% to profit at -110)", "line_mae": 9.8, "model_mae": 10.3,
                         "angles": ANG}}
+    # phone alerts: news plays (lines older than the injury) + a weekly "lines are in" digest
+    al = []
+    for x in props:
+        if x.get("news") and x["grade"] in ("A", "B"):
+            ln = f"{x['side']} {x['line']} " if x["line"] is not None else ""
+            al.append({"key": f"prop|{cur}|{x['player']}|{x['market']}|{x['side']}|{x['line']}", "title": f"📈 {x['news'][0]}: {x['player']} {ln}{x['market'].lower()}",
+                       "body": f"{round(x['p'])}% in the sims vs {round(x['p_mkt'])}% market. Line is from before the news.",
+                       "report": {"what": f"{', '.join(x['news'])}. The {x['player']} line ({ln}{x['market'].lower()}) was set before that.",
+                                  "means": f"Re-running 50,000 sims with his extra work: {round(x['p'])}% vs the market's {round(x['p_mkt'])}%. Usually {x['p10']} to {x['p90']}.",
+                                  "todo": f"Worth it on Kalshi/Polymarket under {x['max_c']}¢, or as a pick'em leg. Lines move fast after news, so check the number first."}})
+    if out["parlays"].get(2) and RAW.get("at"):
+        b2 = out["parlays"][2][0]
+        al.append({"key": f"digest|{cur}|{RAW.get('at')}", "title": f"🎲 Week {cur} Prop Lab is ready",
+                   "body": f"Top 2-leg: {' + '.join(l['label'] for l in b2['legs'])} ({round(b2['p'])}%, fair {b2['fair']:+d}).",
+                   "report": {"what": f"New lines are in and every game ran {N:,} times.", "means": "Best 2-leg: " + "; ".join(f"{l['label']} ({round(l['p'])}%)" for l in b2["legs"]) + f". Hits {round(b2['p'])}% in the sims, fair odds {b2['fair']:+d}.",
+                              "todo": f"Only take it if the app pays better than {b2['fair']:+d}. More parlays, props and pick'em plays in the Prop Lab tab."}})
+    out["alerts"] = al
     old = load(OUT, {}) or {}
     if {k: v for k, v in old.items() if k != "at"} != json.loads(json.dumps({k: v for k, v in out.items() if k != "at"})):   # only write when something changed
         OUT.write_text(json.dumps(out, separators=(",", ":")))
