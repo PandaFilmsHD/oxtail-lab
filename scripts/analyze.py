@@ -633,6 +633,27 @@ def ev(n, w):
     return x["v"][w] * x["q"][w] if x and w in x["v"] else 0.0
 
 
+
+# ---------------- backup bump: when a regular starter at his position sits, the backup scores more ----------------
+# 4 past seasons: backups (projected under 7) averaged about +2.3 (WR), +3.3 (RB), +2.5 (TE) when a 12+ ppg teammate at the position sat.
+BUMP = {"WR": 2.3, "RB": 3.3, "TE": 2.5}
+BUMPED = {}
+for n, p in P.items():
+    if p["pos"] not in BUMP or n not in V:
+        continue
+    mates = [m for m, q_ in P.items() if m != n and q_["nfl"] == p["nfl"] and q_["pos"] == p["pos"] and m in V and AVG.get(m, q_["avg"]) >= 12]
+    if not mates:
+        continue
+    for w in WKS:
+        if not opp(p, w) or V[n]["v"][w] >= 7 or V[n]["v"][w] <= 0:
+            continue
+        sit = max((1 - V[m]["q"][w]) for m in mates)   # chance the main guy sits that week
+        if sit >= 0.25:
+            add = round(BUMP[p["pos"]] * sit, 2)
+            V[n]["v"][w] = round(V[n]["v"][w] + add, 2)
+            BUMPED.setdefault(n, []).append((w, add, max(mates, key=lambda m: 1 - V[m]["q"][w])))
+print(f"backup bumps: {len(BUMPED)} players (e.g. " + ", ".join(f"{k} +{v[0][1]} Wk{v[0][0]} with {v[0][2]} out" for k, v in list(BUMPED.items())[:4]) + ")")
+
 # ---------------- lineups ----------------
 def lineup(names, w, on=None, detail=False):
     pl = sorted(((ev(n, w) if on is None else (V[n]["v"][w] if on(n) else 0.0), n, P[n]["pos"]) for n in names), reverse=True)

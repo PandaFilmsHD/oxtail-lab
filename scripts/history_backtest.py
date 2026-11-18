@@ -45,12 +45,14 @@ def atd(r):
 
 
 lines = {}
+SPR = {}
 for g in csv.DictReader(open(GAMES)):
     if g["game_type"] != "REG" or not g["total_line"] or not g["spread_line"]:
         continue
     y, w = int(g["season"]), int(g["week"]); tot, spr = float(g["total_line"]), float(g["spread_line"])
     lines[(y, w, fx(g["home_team"]))] = tot / 2 + spr / 2
     lines[(y, w, fx(g["away_team"]))] = tot / 2 - spr / 2
+    SPR[(y, w, fx(g["home_team"]))] = spr; SPR[(y, w, fx(g["away_team"]))] = -spr
 
 rows = []
 for y in SEASONS:
@@ -100,7 +102,17 @@ for y in SEASONS:
             xf = m2(nx) * eff + m2(xt)
             it = lines.get((y, g["w"], g["team"])); itr = it / it_avg if it else 0.0
             mf = dvp_upto(g["w"]).get((g["opp"], g["pos"]), 0.0)
-            rows.append((avg, rec, xf, g["pts"], ("QB", "RB", "WR", "TE").index(g["pos"]), itr, mf, y))
+            # backup test: did a same-team same-position teammate who averaged 12+ play last week but not this week?
+            starter_out = 0.0
+            for oid, ol in games.items():
+                if ol is gl or not ol or ol[0]["pos"] != g["pos"]:
+                    continue
+                last = [o for o in ol if o["w"] == g["w"] - 1 and o["team"] == g["team"]]
+                now_ = [o for o in ol if o["w"] == g["w"]]
+                pr_ = [o["pts"] for o in ol if o["w"] < g["w"]]
+                if last and not now_ and pr_ and sum(pr_) / len(pr_) >= 12:
+                    starter_out = 1.0; break
+            rows.append((avg, rec, xf, g["pts"], ("QB", "RB", "WR", "TE").index(g["pos"]), itr, mf, y, it or 0.0, SPR.get((y, g["w"], g["team"]), 0.0), starter_out))
     print(y, "rows so far", len(rows))
 
 X = np.array(rows)
@@ -131,7 +143,33 @@ per_season = {}
 for y in SEASONS:
     m = X[:, 7] == y
     per_season[y] = {"n": int(m.sum()), "mae_season_avg": round(float(np.abs(X[m, 0] - act[m]).mean()), 3), "mae_model": round(float(np.abs(pred[m] - act[m]).mean()), 3)}
-out = {"seasons": SEASONS, "n": len(X), "w_avg": round(best[1], 2), "w_recent": round(best[2], 2), "w_xfp": round(best[3], 2),
+# ---- test the blind-review rules, leave-one-season-out (fit on 3 seasons, score the 4th) ----
+it_ = X[:, 8]; spr_ = X[:, 9]; posi = X[:, 4]; has = it_ > 0
+def rule_test(name, feat_fn):
+    gain = 0.0; tot_n = 0; coefs = []
+    for y in SEASONS:
+        tr = (X[:, 7] != y) & has; te = (X[:, 7] == y) & has
+        F = feat_fn(tr); r = act[tr] - pred[tr]
+        c = float((F * r).sum() / max(1e-9, (F * F).sum()))
+        coefs.append(c)
+        Ft = feat_fn(te)
+        gain += float(np.abs(pred[te] - act[te]).sum() - np.abs(pred[te] + c * Ft - act[te]).sum()); tot_n += int(te.sum())
+    return {"rule": name, "coef": round(float(np.mean(coefs)), 3), "pts_saved_per_100": round(100 * gain / max(1, tot_n), 2)}
+tests = [
+    rule_test("QB: x (implied total - 22.5)", lambda m: np.where(posi[m] == 0, it_[m] - 22.5, 0)),
+    rule_test("non-QB: x (implied total - 22.5)", lambda m: np.where(posi[m] != 0, it_[m] - 22.5, 0)),
+    rule_test("TE flat bias", lambda m: np.where(posi[m] == 3, 1.0, 0)),
+    rule_test("TE low implied (<19)", lambda m: np.where((posi[m] == 3) & (it_[m] < 19), 1.0, 0)),
+    rule_test("RB favored 2.5-6.5", lambda m: np.where((posi[m] == 1) & (spr_[m] >= 2.5) & (spr_[m] <= 6.5), 1.0, 0)),
+    rule_test("RB x spread (favored +)", lambda m: np.where(posi[m] == 1, spr_[m], 0)),
+    rule_test("backup WR (proj<7), starter WR out", lambda m: np.where((posi[m] == 2) & (X[m, 10] > 0) & (pred[m] < 7), 1.0, 0)),
+    rule_test("backup RB (proj<7), starter RB out", lambda m: np.where((posi[m] == 1) & (X[m, 10] > 0) & (pred[m] < 7), 1.0, 0)),
+    rule_test("backup TE (proj<7), starter TE out", lambda m: np.where((posi[m] == 3) & (X[m, 10] > 0) & (pred[m] < 7), 1.0, 0)),
+    rule_test("any WR, starter WR out", lambda m: np.where((posi[m] == 2) & (X[m, 10] > 0), 1.0, 0)),
+    rule_test("any RB, starter RB out", lambda m: np.where((posi[m] == 1) & (X[m, 10] > 0), 1.0, 0)),
+]
+for t_ in tests: print(t_)
+out = {"rules": tests, "seasons": SEASONS, "n": len(X), "w_avg": round(best[1], 2), "w_recent": round(best[2], 2), "w_xfp": round(best[3], 2),
        "mae_season_avg": round(mae(X[:, 0]), 3), "mae_blend": round(best[0], 3), "match_s": round(bm[1], 2), "mae_with_matchup": round(bm[0], 3),
        "vegas": veg, "per_season": per_season}
 print(json.dumps(out, indent=1))

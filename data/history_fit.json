@@ -1,4 +1,61 @@
 {
+ "rules": [
+  {
+   "rule": "QB: x (implied total - 22.5)",
+   "coef": -0.002,
+   "pts_saved_per_100": -0.01
+  },
+  {
+   "rule": "non-QB: x (implied total - 22.5)",
+   "coef": 0.011,
+   "pts_saved_per_100": 0.09
+  },
+  {
+   "rule": "TE flat bias",
+   "coef": 0.335,
+   "pts_saved_per_100": -1.25
+  },
+  {
+   "rule": "TE low implied (<19)",
+   "coef": 0.321,
+   "pts_saved_per_100": -0.26
+  },
+  {
+   "rule": "RB favored 2.5-6.5",
+   "coef": 0.174,
+   "pts_saved_per_100": -0.33
+  },
+  {
+   "rule": "RB x spread (favored +)",
+   "coef": 0.026,
+   "pts_saved_per_100": 0.03
+  },
+  {
+   "rule": "backup WR (proj<7), starter WR out",
+   "coef": 2.33,
+   "pts_saved_per_100": -0.17
+  },
+  {
+   "rule": "backup RB (proj<7), starter RB out",
+   "coef": 3.312,
+   "pts_saved_per_100": -0.1
+  },
+  {
+   "rule": "backup TE (proj<7), starter TE out",
+   "coef": 2.494,
+   "pts_saved_per_100": -0.04
+  },
+  {
+   "rule": "any WR, starter WR out",
+   "coef": 1.673,
+   "pts_saved_per_100": -0.26
+  },
+  {
+   "rule": "any RB, starter RB out",
+   "coef": 3.792,
+   "pts_saved_per_100": -0.12
+  }
+ ],
  "seasons": [
   2022,
   2023,
