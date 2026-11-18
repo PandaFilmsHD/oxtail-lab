@@ -649,7 +649,76 @@ seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBo
 (() => { const nav = $('#tabs'), wrap = nav.parentElement; const upd = () => { const l = nav.scrollLeft > 4, r = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4; [nav, wrap].forEach(e => { e.classList.toggle('fl', l); e.classList.toggle('fr', r); }); };
   nav.addEventListener('scroll', upd, { passive: true }); addEventListener('resize', upd); setTimeout(upd, 50); setTimeout(upd, 600);
   $$('.navarr').forEach(b => b.addEventListener('click', () => nav.scrollBy({ left: (b.classList.contains('l') ? -1 : 1) * nav.clientWidth * 0.7, behavior: 'smooth' }))); })();
-const RENDER = { boom: renderBoom, sched: renderSched, home: renderHome, trades: renderTrades, lab: renderLab, waivers: renderWaivers, ranks: renderRanks, team: renderTeam, league: renderLeague, how: renderHow };
+
+// ---------------- Prop Lab ----------------
+let PLD = null, PLV = 'parlay', PLM = 'all', PLPICK = new Set();
+const odds = a => (a > 0 ? '+' : '') + a;
+const fairOf = p => { p = Math.min(Math.max(p, 0.01), 0.99); return p >= 0.5 ? Math.round(-100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); };
+const kickT = k => k ? new Date(k).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+function legRow(l) { return h('div', { class: 'leg' }, h('span', { class: 'lp ' + (l.p >= 80 ? 'hi' : '') }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), l.lean >= 2 ? h('span', { class: 'tag real', title: 'Our sims lean this way vs the market' }, '✓ LEAN') : ''); }
+async function renderProps() {
+  if (!PLD) PLD = await fetch('data/props_lab.json?v=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
+  const body = $('#pbody');
+  if (!PLD) { body.replaceChildren(h('div', { class: 'box mut' }, 'Prop Lab data isn\'t built yet. It runs with the next update.')); return; }
+  const ago = PLD.lines_at ? Math.round((Date.now() - new Date(PLD.lines_at)) / 36e5) : null;
+  $('#psub').textContent = `Week ${PLD.week}: every game simulated ${PLD.sims.toLocaleString()} times${ago != null ? `, prop lines from ${ago < 1 ? 'under an hour' : ago + 'h'} ago` : ''}. Fair odds = what the sims say the bet is really worth.`;
+  const tip = h('div', { class: 'box ptip' }, h('b', {}, '💡 How to use it: '), 'Only take a bet when the app pays MORE than our fair odds (or on Kalshi/Polymarket, when it costs LESS than our max price). The sims start from the betting market and only move for things that held up over 10 seasons, so most edges are small.');
+  let out = [];
+  if (PLV === 'parlay') {
+    const card = pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, Math.round(pl.p) + '%'), h('div', { class: 'k' }, 'hits in the sims')),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
+      ...pl.legs.map(legRow), h('div', { class: 'k', style: 'margin-top:6px' }, `Worth it if the app pays better than ${odds(pl.fair)}.`));
+    const P = PLD.parlays || {};
+    out = [tip, h('h3', {}, '🎯 2-leg parlays'), h('div', { class: 'bgrid' }, ...((P['2'] || []).map(card))), h('h3', { style: 'margin-top:18px' }, '🎯🎯 3-leg parlays'), h('div', { class: 'bgrid' }, ...((P['3'] || []).map(card)))];
+    // build your own
+    const legs = PLD.legs || [];
+    const chosen = legs.filter(l => PLPICK.has(l.label));
+    const pj = chosen.reduce((a, l) => a * l.p / 100, 1);
+    const sum = h('div', { class: 'pbuild' }, chosen.length ? h('span', {}, `${chosen.length} legs: `, h('b', {}, Math.round(pj * 100) + '%'), ` to hit, fair odds `, h('b', { class: 'pos' }, odds(fairOf(pj)))) : h('span', { class: 'mut' }, 'Tap legs below to build your own.'),
+      chosen.length ? h('button', { class: 'btn small', onclick: () => { PLPICK.clear(); renderProps(); } }, 'CLEAR') : '');
+    out.push(h('h3', { style: 'margin-top:18px' }, '🧱 Build your own'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Every leg here hits 72 to 86% of the time in the sims. Legs from different games are treated as independent.'), sum,
+      h('div', { class: 'leglist' }, ...legs.map(l => h('label', { class: 'legpick' + (PLPICK.has(l.label) ? ' on' : '') }, h('input', { type: 'checkbox', ...(PLPICK.has(l.label) ? { checked: '' } : {}), onchange: e => { e.target.checked ? PLPICK.add(l.label) : PLPICK.delete(l.label); renderProps(); } }),
+        h('span', { class: 'lp' }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), h('span', { class: 'mut', style: 'margin-left:auto' }, odds(l.fair))))));
+  } else if (PLV === 'props') {
+    const mk = ['all', ...new Set((PLD.props || []).map(x => x.market))];
+    const L = (PLD.props || []).filter(x => PLM === 'all' || x.market === PLM);
+    out = [tip, h('div', { class: 'seg', style: 'margin:10px 0' }, ...mk.map(m => h('button', { class: m === PLM ? 'on' : '', onclick: () => { PLM = m; renderProps(); } }, m === 'all' ? 'All' : m))),
+      h('div', { class: 'bgrid' }, ...L.slice(0, 40).map(x => h('div', { class: 'pcard' },
+        h('div', { class: 'phead' }, h('div', { style: 'min-width:0' }, h('div', { class: 'bn' }, x.player), h('div', { class: 'k' }, `${x.pos} · ${x.team} vs ${x.opp} · ${kickT(x.kick)}`)), h('span', { class: 'grade g' + x.grade }, x.grade)),
+        h('div', { class: 'pline' }, `${x.side} ${x.line != null ? x.line + ' ' : ''}${x.market.toLowerCase()}`),
+        h('div', { class: 'pnums' }, h('div', {}, h('b', { class: 'pos' }, Math.round(x.p) + '%'), h('span', { class: 'k' }, 'our chance')), h('div', {}, h('b', {}, Math.round(x.p_mkt) + '%'), h('span', { class: 'k' }, 'market')),
+          h('div', {}, h('b', { class: 'gold' }, x.max_c + '¢'), h('span', { class: 'k' }, 'max to pay'))),
+        x.market !== 'Anytime TD' ? h('div', { class: 'k' }, `Sims: usually ${x.p10} to ${x.p90}, middle ${x.median}. Our avg ${x.ours} vs market ${x.mkt}.`) : h('div', { class: 'k' }, `Market ${Math.round(x.p_mkt)}%, ours ${Math.round(x.p)}%.`))))];
+    if (!L.length) out.push(h('div', { class: 'box mut' }, 'No props clear the bar right now.'));
+  } else if (PLV === 'games') {
+    out = [h('div', { class: 'bgrid' }, ...(PLD.games || []).map(g => { const s = g.sim;
+      return h('div', { class: 'pcard' + (g.started ? ' dim' : '') }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'bn' }, `${g.away} @ ${g.home}`), h('div', { class: 'k' }, `${kickT(g.kick)}${g.started ? ' · started' : ''}`)),
+          h('div', { style: 'text-align:right' }, h('div', { class: 'k' }, `${g.home} ${(-g.spread) > 0 ? '+' : ''}${-g.spread} · O/U ${g.total}`))),
+        h('div', { class: 'pnums' }, h('div', {}, h('b', {}, `${s.away_pts}-${s.home_pts}`), h('span', { class: 'k' }, 'avg score')), h('div', {}, h('b', {}, Math.round(s.home_win) + '%'), h('span', { class: 'k' }, `${g.home} wins`)),
+          h('div', {}, h('b', {}, odds(s.fair_home_ml)), h('span', { class: 'k' }, `fair ${g.home} ML`))),
+        h('div', { class: 'k' }, `One-score game ${Math.round(s.one_score)}% · blowout (17+) ${Math.round(s.blowout)}%${g.weather ? ` · ${g.weather.temp}°F, wind ${g.weather.wind} mph` : g.roof === 'dome' ? ' · indoors' : ''}`),
+        ...g.angles.map(a => h('div', { class: 'k', style: 'color:var(--gold)' }, '📐 ' + a)),
+        ...(g.plays.length ? g.plays.map(p => h('div', { class: 'leg' }, h('span', { class: 'tag real' }, 'PLAY'), h('span', { class: 'll' }, `${p.pick}: ${Math.round(p.p)}% vs market ${Math.round(p.p_mkt)}%, pay up to ${p.max_c}¢`))) : [h('div', { class: 'k mut' }, g.angles.length ? `Leans under (${Math.round(100 - s.over)}% in the sims), but not by enough to beat the price.` : 'No edge on the spread or total. The line is the best guess here.')]));
+    }))];
+  } else if (PLV === 'pickem') {
+    const L = PLD.pickem_plays || [];
+    out = [h('div', { class: 'box ptip' }, `Pick'em apps (PrizePicks, Underdog, Pick6) pay a fixed amount, so all that matters is the chance each leg hits. Rough break-even per leg: 2-pick at 3x needs 57.7%, 3-pick at 6x needs 55%, 5-pick flex needs about 54%. Lines on those apps can differ from these, so check the number.`),
+      h('div', { class: 'leglist' }, ...L.map(x => h('div', { class: 'legpick' }, h('span', { class: 'lp ' + (x.p >= 57.7 ? 'hi' : '') }, Math.round(x.p) + '%'), h('span', { class: 'll' }, `${x.player} ${x.side} ${x.line} ${x.market.toLowerCase()}`), h('span', { class: 'mut', style: 'margin-left:auto' }, `${x.team} vs ${x.opp}`))))];
+    if (!L.length) out.push(h('div', { class: 'box mut' }, `Nothing at ${PLD.pickem_cut}%+ right now.`));
+  } else {
+    const R = PLD.record || {}; const row = (n, b) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${b[0]}-${b[1]}`), h('b', { class: b[2] >= 0 ? 'pos' : 'neg' }, `${b[2] >= 0 ? '+' : ''}${b[2]}u`));
+    out = [h('div', { class: 'box' }, h('h3', {}, '📊 How the picks have done'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Every graded play, $1 each at the market price. Small samples swing a lot: give it a few weeks before trusting it.'),
+      row('Player props', R.props || [0, 0, 0]), row('Game lines', R.games || [0, 0, 0]),
+      h('div', { class: 'k', style: 'margin-top:10px' }, `Backtest: ${PLD.backtest.ats_model}. The closing line missed by ${PLD.backtest.line_mae} pts on average vs ${PLD.backtest.model_mae} for a ratings model, so game sims start from the line.`)),
+      h('div', { class: 'leglist', style: 'margin-top:12px' }, ...(PLD.recent || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'tag ' + (x.void ? 'no' : x.result ? 'real' : 'stretch') }, x.void ? 'VOID' : x.result ? 'WIN' : 'LOSS'),
+        h('span', { class: 'll' }, x.pick ? `Wk ${x.week} ${x.game}: ${x.pick}` : `Wk ${x.week} ${x.player} ${x.side} ${x.line ?? ''} ${x.market.toLowerCase()}${x.actual != null ? ` (had ${x.actual})` : ''}`)))),
+      !(PLD.recent || []).length ? h('div', { class: 'box mut' }, 'No graded picks yet. This week\'s picks get graded after the games.') : ''];
+  }
+  body.replaceChildren(...out.filter(Boolean));
+}
+seg('pview', v => { PLV = v; renderProps(); });
+
+const RENDER = { props: renderProps, boom: renderBoom, sched: renderSched, home: renderHome, trades: renderTrades, lab: renderLab, waivers: renderWaivers, ranks: renderRanks, team: renderTeam, league: renderLeague, how: renderHow };
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const t = $('nav.tabs button.on').dataset.tab; if (['home', 'trades', 'league'].includes(t)) RENDER[t](); }, 200); });
 
 (async () => {

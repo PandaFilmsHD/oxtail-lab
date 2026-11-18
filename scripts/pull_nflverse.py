@@ -232,8 +232,12 @@ def lines():
         if tot is None or spr is None:
             continue
         hs, as_ = f(g.get("home_score")), f(g.get("away_score"))
-        LINES.setdefault(str(w), {})[h] = {"it": round(tot / 2 + spr / 2, 2), "opp": a, "total": tot, "spread": spr, "pts": hs}
-        LINES[str(w)][a] = {"it": round(tot / 2 - spr / 2, 2), "opp": h, "total": tot, "spread": -spr, "pts": as_}
+        ex = {"roof": g.get("roof"), "wd": g.get("weekday"), "gt": g.get("gametime"), "div": g.get("div_game") == "1", "neutral": g.get("location") == "Neutral",
+              "wind": f(g.get("wind")), "temp": f(g.get("temp")), "over_odds": f(g.get("over_odds")), "under_odds": f(g.get("under_odds"))}
+        LINES.setdefault(str(w), {})[h] = {"it": round(tot / 2 + spr / 2, 2), "opp": a, "total": tot, "spread": spr, "pts": hs, "home": True,
+                                          "ml": f(g.get("home_moneyline")), "spread_odds": f(g.get("home_spread_odds")), **ex}
+        LINES[str(w)][a] = {"it": round(tot / 2 - spr / 2, 2), "opp": h, "total": tot, "spread": -spr, "pts": as_, "home": False,
+                            "ml": f(g.get("away_moneyline")), "spread_odds": f(g.get("away_spread_odds")), **ex}
     return LINES
 
 

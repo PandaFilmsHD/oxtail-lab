@@ -387,3 +387,24 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 
 .pathrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:#0f1138;border:2px solid #2c3080;border-radius:12px;padding:8px 10px;margin:6px 0;font-size:13px;cursor:pointer;min-height:44px}
 .pathrow .pn{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ptip{font-size:13px;line-height:1.45;margin-bottom:12px;border-color:#ffc83d66}
+.pcard{background:linear-gradient(180deg,#22256a,#17194a);border:2px solid #34389a;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;box-shadow:0 5px 0 #0c0d2c}
+.pcard.dim{opacity:.55}
+.phead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pbig{font-family:var(--game);font-size:30px;color:var(--green);line-height:1}
+.pfair{font-family:var(--game);font-size:22px;color:var(--gold);line-height:1}
+.leg{display:flex;align-items:center;gap:8px;background:#0f1138;border:2px solid #2c3080;border-radius:10px;padding:7px 9px;font-size:13px}
+.leg .ll,.legpick .ll{flex:1;min-width:0}
+.lp{font-family:var(--game);font-size:14px;min-width:40px;color:var(--blue)}.lp.hi{color:var(--green)}
+.leglist{display:flex;flex-direction:column;gap:6px}
+.legpick{display:flex;align-items:center;gap:8px;background:#0f1138;border:2px solid #2c3080;border-radius:12px;padding:8px 10px;font-size:13px;min-height:44px;cursor:pointer}
+.legpick.on{border-color:var(--gold);background:#2a2350}
+.legpick input{width:20px;height:20px;accent-color:var(--gold)}
+.pbuild{position:sticky;top:64px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:8px;background:#14163e;border:2px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:14px}
+.pline{font-family:var(--game);font-size:18px}
+.pnums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.pnums>div{background:#0f1138;border-radius:10px;padding:6px 4px;display:flex;flex-direction:column}
+.pnums b{font-size:18px}.gold{color:var(--gold)}
+.grade{font-family:var(--game);width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
+.grade.gA{background:var(--green);color:#062b14}.grade.gB{background:var(--blue);color:#05243a}.grade.gC{background:#3a3f9e;color:#fff}

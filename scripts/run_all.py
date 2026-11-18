@@ -50,6 +50,8 @@ for lid in leagues:
     if lp.exists():
         L = json.loads(lp.read_text()); s = L["summary"]
         index.append({"id": lid, "name": s["league"], "team": s["my_team"], "week": s["week"], "at": s["at"], "champ_pct": s["kpis"]["ch"], "todo": L.get("todo", [])[:4]})
+if run(["scripts/props_lab.py"]) != 0:
+    print("prop lab failed")
 default = str(CFG.get("default_league"))
 index.sort(key=lambda x: (x["id"] != default, x["name"] or ""))
 (ROOT / "docs" / "data" / "leagues.json").write_text(json.dumps({"leagues": index, "status": status}, indent=1))

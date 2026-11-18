@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
-<link rel="stylesheet" href="style.css?v=1795021802">
+<link rel="stylesheet" href="style.css?v=1795024079">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
 </head>
 <body class="loading">
@@ -36,6 +36,7 @@
     <button data-tab="sched"><span class="ic">📅</span>Schedule</button>
     <button data-tab="boom"><span class="ic">🚀</span>Breakouts</button>
     <button data-tab="league"><span class="ic">🌎</span>League</button>
+    <button data-tab="props"><span class="ic">🎲</span>Prop Lab</button>
     <button data-tab="how"><span class="ic">⚙️</span>Settings</button>
   </nav></div>
 
@@ -130,6 +131,13 @@
     <div id="bcards" class="bgrid"></div>
   </section>
 
+  <section id="props" hidden>
+    <h2>🎲 Prop Lab</h2>
+    <p class="sub" id="psub">Every NFL game this week simulated 50,000 times.</p>
+    <div class="seg" id="pview" style="margin-bottom:12px"><button data-v="parlay" class="on">🎯 Parlays</button><button data-v="props">📈 Props</button><button data-v="games">🏈 Games</button><button data-v="pickem">🎟️ Pick'em</button><button data-v="record">📊 Record</button></div>
+    <div id="pbody"></div>
+  </section>
+
   <section id="league" hidden>
     <h2>🌎 League odds</h2>
     <div class="box"><div class="chart" id="lchart"></div></div>
@@ -155,7 +163,7 @@
   </section>
 </div>
 <div class="tip" id="tip" hidden></div>
-<script src="app.js?v=1795021802"></script>
-<script src="chat.js?v=1795021802"></script>
+<script src="app.js?v=1795024079"></script>
+<script src="chat.js?v=1795024079"></script>
 </body>
 </html>
