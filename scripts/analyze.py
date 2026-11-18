@@ -296,6 +296,8 @@ def auto_avail(n):
         if ret: start = max(start, ret)
         if "Limited" in prac or "Full" in prac: start = max(CUR, start - 1)   # practicing = return window opened
         ramp = [0.4, 0.65, 0.8, 0.85]
+        if _re.search(r"minimum (?:number|amount)|only the minimum|expected to return|on track to return|designated (?:him |\w+ )?(?:for|to) return", txt, _re.I):
+            ramp = [0.65, 0.8, 0.85, 0.88]   # news says he should be back as soon as he's eligible
         for w in WKS:
             q[str(w)] = 0.0 if w < start else ramp[min(w - start, 3)]
         why = f"On IR (last played Wk {last}). Earliest realistic return Wk {start}" + (" per ESPN news" if ret else "") + (", and he's back at practice" if ("Limited" in prac or "Full" in prac) else "") + "."
