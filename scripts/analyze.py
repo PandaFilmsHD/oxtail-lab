@@ -771,8 +771,8 @@ for n, p in P.items():
             V[n]["v"][w] = round(V[n]["v"][w] * (1 - 0.14 * sit), 2)
 
 # ---------------- backup bump: when a regular starter at his position sits, the backup scores more ----------------
-# 4 past seasons: backups (projected under 7) averaged about +2.3 (WR), +3.3 (RB), +2.5 (TE) when a 12+ ppg teammate at the position sat.
-BUMP = {"WR": 2.3, "RB": 3.3, "TE": 2.5}
+# 10 past seasons: backups (projected under 7) averaged about +2.5 (WR), +4.7 (RB), +2.6 (TE) when a 12+ ppg teammate at the position sat.
+BUMP = {"WR": 2.5, "RB": 4.5, "TE": 2.6}   # 2016-2025 (37k player-weeks)
 BUMPED = {}
 for n, p in P.items():
     if p["pos"] not in BUMP or n not in V:

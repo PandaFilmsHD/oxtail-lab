@@ -2,101 +2,137 @@
  "rules": [
   {
    "rule": "QB: x (implied total - 22.5)",
-   "coef": -0.002,
-   "pts_saved_per_100": -0.01
+   "coef": -0.039,
+   "pts_saved_per_100": -0.03
   },
   {
    "rule": "non-QB: x (implied total - 22.5)",
-   "coef": 0.011,
-   "pts_saved_per_100": 0.09
-  },
-  {
-   "rule": "TE flat bias",
-   "coef": 0.335,
-   "pts_saved_per_100": -1.25
-  },
-  {
-   "rule": "TE low implied (<19)",
-   "coef": 0.321,
-   "pts_saved_per_100": -0.26
-  },
-  {
-   "rule": "RB favored 2.5-6.5",
-   "coef": 0.174,
-   "pts_saved_per_100": -0.33
-  },
-  {
-   "rule": "RB x spread (favored +)",
-   "coef": 0.026,
+   "coef": 0.02,
    "pts_saved_per_100": 0.03
   },
   {
-   "rule": "backup WR (proj<7), starter WR out",
-   "coef": 2.33,
-   "pts_saved_per_100": -0.17
+   "rule": "TE flat bias",
+   "coef": 0.145,
+   "pts_saved_per_100": -0.53
   },
   {
-   "rule": "backup RB (proj<7), starter RB out",
-   "coef": 3.312,
+   "rule": "TE low implied (<19)",
+   "coef": 0.003,
+   "pts_saved_per_100": -0.01
+  },
+  {
+   "rule": "RB favored 2.5-6.5",
+   "coef": 0.315,
+   "pts_saved_per_100": -0.42
+  },
+  {
+   "rule": "RB x spread (favored +)",
+   "coef": 0.027,
+   "pts_saved_per_100": 0.04
+  },
+  {
+   "rule": "backup WR (proj<7), starter WR out",
+   "coef": 2.523,
    "pts_saved_per_100": -0.1
   },
   {
+   "rule": "backup RB (proj<7), starter RB out",
+   "coef": 4.697,
+   "pts_saved_per_100": -0.0
+  },
+  {
    "rule": "backup TE (proj<7), starter TE out",
-   "coef": 2.494,
-   "pts_saved_per_100": -0.04
+   "coef": 2.612,
+   "pts_saved_per_100": 0.01
   },
   {
    "rule": "any WR, starter WR out",
-   "coef": 1.673,
-   "pts_saved_per_100": -0.26
+   "coef": 1.703,
+   "pts_saved_per_100": -0.16
   },
   {
    "rule": "any RB, starter RB out",
-   "coef": 3.792,
-   "pts_saved_per_100": -0.12
+   "coef": 4.15,
+   "pts_saved_per_100": -0.02
   }
  ],
  "seasons": [
+  2016,
+  2017,
+  2018,
+  2019,
+  2020,
+  2021,
   2022,
   2023,
   2024,
   2025
  ],
- "n": 15679,
+ "n": 37455,
  "w_avg": 0.45,
  "w_recent": 0.1,
  "w_xfp": 0.45,
- "mae_season_avg": 5.043,
- "mae_blend": 4.997,
+ "mae_season_avg": 5.208,
+ "mae_blend": 5.162,
  "match_s": 0.45,
- "mae_with_matchup": 4.986,
+ "mae_with_matchup": 5.151,
  "vegas": {
   "QB": {
    "b": 0.05,
-   "mae_without": 7.797,
-   "mae_with": 7.796,
-   "n": 1751
+   "mae_without": 7.84,
+   "mae_with": 7.838,
+   "n": 4210
   },
   "RB": {
    "b": 0.2,
-   "mae_without": 4.82,
-   "mae_with": 4.812,
-   "n": 4133
+   "mae_without": 5.075,
+   "mae_with": 5.067,
+   "n": 9913
   },
   "WR": {
-   "b": 0.05,
-   "mae_without": 4.863,
-   "mae_with": 4.862,
-   "n": 6565
+   "b": 0.1,
+   "mae_without": 5.054,
+   "mae_with": 5.052,
+   "n": 15673
   },
   "TE": {
    "b": 0.1,
-   "mae_without": 3.924,
-   "mae_with": 3.923,
-   "n": 3230
+   "mae_without": 3.969,
+   "mae_with": 3.967,
+   "n": 7659
   }
  },
  "per_season": {
+  "2016": {
+   "n": 3588,
+   "mae_season_avg": 5.258,
+   "mae_model": 5.208
+  },
+  "2017": {
+   "n": 3650,
+   "mae_season_avg": 5.008,
+   "mae_model": 4.939
+  },
+  "2018": {
+   "n": 3523,
+   "mae_season_avg": 5.508,
+   "mae_model": 5.42
+  },
+  "2019": {
+   "n": 3552,
+   "mae_season_avg": 5.477,
+   "mae_model": 5.404
+  },
+  "2020": {
+   "n": 3624,
+   "mae_season_avg": 5.425,
+   "mae_model": 5.381
+  },
+  "2021": {
+   "n": 3839,
+   "mae_season_avg": 5.295,
+   "mae_model": 5.273
+  },
   "2022": {
    "n": 3896,
    "mae_season_avg": 5.082,

@@ -8,7 +8,7 @@ import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC = pathlib.Path(sys.argv[1]); GAMES = sys.argv[2]
-SEASONS = [2022, 2023, 2024, 2025]
+SEASONS = list(range(2016, 2026))
 FIX = {"LA": "LAR", "WAS": "WSH", "JAC": "JAX", "LVR": "LV", "OAK": "LV", "SD": "LAC", "STL": "LAR"}
 fx = lambda t: FIX.get(t, t)
 
