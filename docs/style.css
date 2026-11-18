@@ -355,3 +355,13 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 .arep{background:#0f1138;border:2px solid #2c3080;border-radius:12px;padding:10px 12px;margin:8px 0}
 .arep .k{font-family:'Lilita One',sans-serif;font-size:12px;color:#ffc83d;letter-spacing:.5px}
 .arep p{margin:4px 0 0;line-height:1.45;font-size:14.5px}
+
+/* alert report: compact bottom sheet that scrolls */
+.asheetwrap{align-items:flex-end!important;padding:0!important}
+.asheet{width:100%;max-width:520px;margin:0 auto;max-height:68vh;display:flex;flex-direction:column;background:linear-gradient(180deg,#1c1f5e,#13163f);border:2px solid #4b4fb0;border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -10px 40px #000a;animation:slideup .25s ease-out;padding-bottom:env(safe-area-inset-bottom)}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.ashead{display:flex;gap:10px;align-items:flex-start;padding:12px 14px 8px;border-bottom:1px solid #2c3080}
+.astitle{font-family:'Lilita One',sans-serif;font-size:18px;line-height:1.2}
+.asx{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:2px solid #6b6fd0;background:#2c3080;color:#fff;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.asbody{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 14px}
+.asbody .arep{padding:8px 10px;margin:8px 0}.asbody .arep p{font-size:13.5px}

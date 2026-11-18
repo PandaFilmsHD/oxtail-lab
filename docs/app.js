@@ -674,16 +674,16 @@ async function loadAlerts() { if (!ALERTS) ALERTS = await fetch('data/alerts.jso
 function openAlert(a) {
   const ago = m => { const d = (Date.now() - new Date(m)) / 6e4; return d < 60 ? Math.round(d) + ' min ago' : d < 1440 ? Math.round(d / 60) + ' hr ago' : Math.round(d / 1440) + ' days ago'; };
   const sec = (k, t) => t ? h('div', { class: 'arep' }, h('div', { class: 'k' }, k), h('p', {}, t)) : '';
-  const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox', style: 'max-width:520px' },
-    h('button', { class: 'x', onclick: () => m.remove() }, '×'),
-    h('h2', { style: 'font-size:24px;line-height:1.2' }, a.title),
-    h('div', { class: 'sub', style: 'margin:4px 0 12px' }, ago(a.at) + (a.leagues && a.leagues.length ? ' · ' + a.leagues.join(', ') : '')),
-    sec('📰 WHAT HAPPENED', a.report.what), sec('📊 WHAT IT MEANS', a.report.means), sec('✅ WHAT TO DO', a.report.todo),
-    h('div', { class: 'bar', style: 'margin-top:12px' }, (a.actions || []).map(x => h('button', { class: 'btn small', onclick: () => {
-      m.remove();
-      if (x.league && x.league !== LID) { location.href = `?league=${x.league}#${x.tab || 'home'}`; return; }
-      if (x.player) openCard(x.player); else if (x.tab) tab(x.tab);
-    } }, x.label)))));
+  const m = h('div', { class: 'modal asheetwrap', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'asheet' },
+    h('div', { class: 'ashead' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'astitle' }, a.title),
+      h('div', { class: 'sub', style: 'margin:2px 0 0;font-size:12px' }, ago(a.at) + (a.leagues && a.leagues.length ? ' · ' + a.leagues.join(', ') : ''))),
+      h('button', { class: 'asx', 'aria-label': 'Close', onclick: () => m.remove() }, '×')),
+    h('div', { class: 'asbody' }, sec('📰 WHAT HAPPENED', a.report.what), sec('📊 WHAT IT MEANS', a.report.means), sec('✅ WHAT TO DO', a.report.todo),
+      h('div', { class: 'bar', style: 'margin-top:8px' }, (a.actions || []).map(x => h('button', { class: 'btn small', onclick: () => {
+        m.remove();
+        if (x.league && x.league !== LID) { location.href = `?league=${x.league}#${x.tab || 'home'}`; return; }
+        if (x.player) openCard(x.player); else if (x.tab) tab(x.tab);
+      } }, x.label))))));
   document.body.append(m);
 }
 async function showAlertById(id) {
