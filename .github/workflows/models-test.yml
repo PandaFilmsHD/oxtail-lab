@@ -7,14 +7,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Call GitHub Models
-        env:
+      - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for m in openai/gpt-4.1-mini openai/gpt-4o-mini meta/llama-3.3-70b-instruct openai/gpt-4.1; do
-            echo "== $m"
-            curl -sS -m 60 https://models.github.ai/inference/chat/completions \
-              -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json" \
-              -d "{\"model\":\"$m\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hi in 3 words\"}],\"max_tokens\":20}" -i | head -c 900
-          done
-          echo "== catalog"; curl -sS -m 30 https://models.github.ai/catalog/models -H "Authorization: Bearer $GH_TOKEN" | head -c 1500
+          echo "== real"; curl -sS -m 60 https://models.github.ai/inference/chat/completions -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json" -d '{"model":"openai/gpt-4.1-mini","messages":[{"role":"user","content":"What is 17 times 3? Answer with a sentence."}]}' | head -c 500; echo
+          echo "== bogus model, no auth"; curl -sS -m 60 https://models.github.ai/inference/chat/completions -H "Content-Type: application/json" -d '{"model":"zzz/notreal","messages":[]}' | head -c 300; echo
+          echo "== azure endpoint"; curl -sS -m 60 https://models.inference.ai.azure.com/chat/completions -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json" -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"What is 17 times 3?"}]}' -w "\nHTTP %{http_code}" | head -c 500; echo
