@@ -1,0 +1,19 @@
+name: Probe projection sources
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36"
+          for u in \
+            "https://www.fantasypros.com/nfl/projections/rb.php?week=11&scoring=PPR" \
+            "https://api.fantasy.nfl.com/v2/players/weekprojectedstats?season=2026&week=11" \
+            "https://api.fantasy.nfl.com/v1/players/stats?statType=weekProjectedStats&season=2026&week=11&format=json" \
+            "https://fantasy.nfl.com/research/projections?position=O&statCategory=projectedStats&statSeason=2026&statType=weekProjectedStats&statWeek=11" \
+            "https://football.fantasysports.yahoo.com/f1/research/projections" \
+            "https://www.cbssports.com/fantasy/football/stats/RB/2026/11/projections/ppr/" \
+            "https://www.numberfire.com/nfl/fantasy/fantasy-football-projections/rb" ; do
+            code=$(curl -sSL -A "$UA" -m 30 -o /tmp/o -w "%{http_code} %{size_download}" "$u"); echo "$code $u"
+            grep -o -i -E "(Bijan Robinson|Saquon Barkley|Jahmyr Gibbs)[^<]{0,80}" /tmp/o | head -2
+          done
