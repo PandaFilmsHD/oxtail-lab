@@ -424,3 +424,4 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 @media(max-width:600px){#pview button{padding:8px 10px;font-size:13px}}
 .leg .tag{font-size:10px;padding:2px 7px;flex:none}
 .leg{padding:6px 8px}
+.arep p{white-space:pre-line}

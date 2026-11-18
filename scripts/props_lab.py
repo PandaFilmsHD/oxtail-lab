@@ -1280,6 +1280,29 @@ def main():
                        "report": {"what": f"{', '.join(x['news'])}. Kalshi's {x['label']} share is still {x['cost']}¢.",
                                   "means": f"Re-running 50,000 sims with the extra work he gets: {round(x['p'])}% to hit. After the {x['fee']}¢ fee that's +{x['ev']}% expected value.",
                                   "todo": f"Buy YES at {x['cost']}¢ or less ({usd_(0.5)} is a normal bet). If the price already jumped, skip it."}})
+    # Sunday game-day digest: once, after the early inactives (about 9 AM PT), with the slate's best stuff
+    if now.weekday() == 6 and (16, 45) <= (now.hour, now.minute) <= (18, 30):
+        bits_ = []
+        b4 = (out["parlays"].get("best4") or [None])[0]
+        if b4:
+            bits_.append(f"Best 4-leg ({round(b4['p'])}%, worth up to {round(b4['p'])}¢): " + "; ".join(l["label"] for l in b4["legs"]))
+        kb_ = (out.get("kalshi") or {}).get("buys") or []
+        if kb_:
+            bits_.append("Top Kalshi buys: " + "; ".join(f"{x['label']} {round(x['p'])}% vs {x['cost']}¢" for x in kb_[:3]))
+        ang = [f"{g['away']} @ {g['home']} {pl['pick']} ({round(pl['p'])}%)" for g in games if not g["started"] for pl in g["plays"]]
+        if ang:
+            bits_.append("Angle plays: " + "; ".join(ang[:3]))
+        nw = [x for x in props if x.get("news") and x["grade"]]
+        if nw:
+            bits_.append("Late news: " + "; ".join(f"{x['player']} {x['side']} {x['line'] or ''} {x['market'].lower()}" for x in nw[:3]))
+        lad = (out["parlays"].get("ladder") or [None])[0]
+        if lad:
+            bits_.append(f"Alt ladder ({round(lad['p'])}%, fair {lad['fair']:+d}): {len(lad['legs'])} legs at about 86% each")
+        if bits_:
+            al.append({"key": f"sunday|{cur}", "title": f"🏈 Week {cur} game day: the board",
+                       "body": (bits_[0][:120] + "…") if len(bits_[0]) > 120 else bits_[0],
+                       "report": {"what": "Inactives for the early games are in and everything re-ran 50,000 times.", "means": "\n".join(bits_),
+                                  "todo": "Buy only at or under the cents shown. Full lists are in the Prop Lab tab."}})
     out["alerts"] = al
     old = load(OUT, {}) or {}
     if {k: v for k, v in old.items() if k != "at"} != json.loads(json.dumps({k: v for k, v in out.items() if k != "at"})):   # only write when something changed
