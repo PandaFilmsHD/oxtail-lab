@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap');
 :root{
   --bg:#0a0b1e;--fg:#f4f6ff;--mut:#a3a9e0;
   --gold:#ffc83d;--gold-d:#c98a00;--green:#3ddc84;--green-d:#1f9a54;--red:#ff4d6d;--red-d:#b81e3d;--blue:#4cc9ff;
@@ -289,3 +288,24 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 .bnums{display:grid;gap:3px;font-size:13.5px}.bspark{width:100%;height:58px;display:block}
 .blegend{display:flex;gap:12px;font-size:11px;font-weight:800;margin-top:4px}
 .bwhy{margin:6px 0 10px;padding-left:18px}.bwhy li{font-size:13.5px;line-height:1.4;margin:4px 0}
+
+/* review fixes: mobile tables, fab, nav, shine */
+.grid2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.alert{background:#3a1020;border:2px solid #ff4d6d;border-radius:12px;padding:9px 12px;margin:0 0 10px;font-size:14px;line-height:1.4}
+tbody tr:nth-child(even) td{background:#ffffff06}
+@media (max-width:600px){
+  .tw td .tier{font-size:0;padding:0;width:10px;height:10px;border-radius:50%;min-width:0}
+  .tw th,.tw td{padding:8px 6px}
+  .box{padding:12px}
+  .chatfab{width:58px;height:58px;padding:0;justify-content:center;border-radius:50%;font-size:0;animation:bob 3s ease-in-out 3}
+  .chatfab>*{display:none}
+  .chatfab:before{content:"🤖";font-size:28px}
+  body{padding-bottom:90px}
+  .mbox h2{font-size:25px}
+}
+nav.tabs{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 30px),transparent)}
+.tier.legendary,.tier.epic{position:relative;overflow:hidden}
+.tier.legendary:after,.tier.epic:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,#ffffffb3 50%,transparent 65%);transform:translateX(-120%);animation:shine 2.6s ease-in-out infinite}
+.tier.epic:after{animation-duration:3.6s}
+@keyframes shine{60%,100%{transform:translateX(120%)}}
+.boost{background:#0f2a22;border:2px solid #2fb36d;border-radius:12px;padding:6px 10px;box-shadow:0 0 14px #3ddc8444}

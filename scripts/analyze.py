@@ -580,7 +580,7 @@ def trade_story(c):
             spare.append(f"they're deep at {pos} ({depth(t, pos, w)} startable guys), so {first(n)} is easier to give up")
     if spare:
         why_them.append(spare[0][0].upper() + spare[0][1:] + ".")
-    d = (ta - tb)
+    d = c["need"]
     if abs(d) >= 0.5:
         why_them.append(f"Their lineup goes {'up' if d > 0 else 'down'} about {abs(d):.1f} pts a week.")
     # what I get out of it
@@ -623,8 +623,10 @@ def trade_story(c):
     if status[t] == "out" and not reasons:
         reasons.append("you're probably not making the playoffs, so you might as well get the better long-term guy")
     pitch = f"Would you do {gnames} for {tnames}? " + (("I think " + reasons[0] + (", and " + reasons[1] if len(reasons) > 1 else "") + ".") if reasons else "Let me know if you'd want to tweak it.")
-    if d < -0.5:
+    if d < -0.5 and not c["real"]:
         why_them.append("Heads up: on paper this makes their lineup worse, so expect them to counter or say no.")
+    elif d < -0.5:
+        why_them.append("Their lineup dips a little, but they get fair value back, so it's a reasonable ask.")
     return {"why_them": why_them, "why_me": why_me, "pitch": pitch}
 
 trades = []
@@ -633,7 +635,7 @@ for c in top:
     trades.append({"partner": TNAME[c["t"]], "partner_id": c["t"], "partner_status": status[c["t"]], "give": " + ".join(c["G"]),
                    "get": " + ".join(c["T"]), "title_pct": r1(res["ch"]), "change_pts": r1(res["ch"] - mine["ch"]), "final_pct": r1(res["fi"]),
                    "value_ratio": round(c["ratio"], 2), "partner_weekly_gain": r1(c["need"]), "kind": "realistic" if c["real"] else "stretch",
-                   "blocked": c["t"] in NO_TRADE, "wk16": r1(res["means"][PO2]), "wk17": r1(res["means"][PO3]),
+                   "blocked": c["t"] in NO_TRADE, "wk16": r1(res["means"][PO2]), "wk17": r1(res["means"][PO3]), "wk16_before": r1(mine["means"][PO2]), "wk17_before": r1(mine["means"][PO3]),
                    # the "why" breakdown
                    "weeks": [{"w": w, "before": r1(lineup(ROSTER[ME], w)), "after": r1(lineup(c["r"][ME], w)), "po": w in PW} for w in REGW + [w for w in (PO1, PO2, PO3) if w not in REGW]],
                    "their_before": r1(team_score(ROSTER, c["t"], REGW) / max(1, len(REGW))), "their_after": r1(team_score(c["r"], c["t"], REGW) / max(1, len(REGW))),
@@ -823,6 +825,13 @@ for t in IDS:
                    "win_this_week_pct": r1(b["wk"]), "wk16_lineup": r1(b["means"][PO2]), "wk17_lineup": r1(b["means"][PO3])})
 league.sort(key=lambda x: (-x["champ_pct"], -x["playoffs_pct"]))
 # ---------------- every team's card ----------------
+def team_week(t, w):
+    tot_, lu_ = lineup(ROSTER[t], w, detail=True)
+    for x in lu_:
+        n = x["player"]; x["opp"] = opp(P[n], w) or "BYE"; x["rank"] = opp_rank(P[n], w); x["chance"] = round(V[n]["q"][w], 2) if n in V else 1
+    lab = "Final" if w == PO3 else "Semis" if w == PO2 else ("Round 1" if SET.get("playoff_teams") != 4 else "Semis") if w == PO1 else f"Week {w}"
+    if SET.get("playoff_teams") == 4 and w == PO2: lab = "Final"
+    return {"w": w, "label": lab, "total": r1(tot_), "expected": r1(base[t]["means"][w]), "lineup": lu_}
 team_cards = {}
 for t in IDS:
     rost = ROSTER[t]
@@ -836,7 +845,8 @@ for t in IDS:
         "roster": sorted([{"player": n, "pos": P[n]["pos"], "nfl": P[n]["nfl"], "status": P[n].get("inj"), "value": (PROF.get(n) or {}).get("value"),
                            "ros_pg": r1(ros_pg(n)), "playoff_pts": r1(po_pts(n)), "this_week": r1(ev(n, CUR)), "starter": n in starters} for n in rost],
                          key=lambda x: (not x["starter"], ["QB", "RB", "WR", "TE", "D", "K"].index(x["pos"]) if x["pos"] in ("QB", "RB", "WR", "TE", "D", "K") else 9, -x["playoff_pts"])),
-        "schedule": [{"w": wk, "opp": TNAME[a if h == t else h]} for wk, h, a in REM if t in (h, a)]}
+        "schedule": [{"w": wk, "opp": TNAME[a if h == t else h]} for wk, h, a in REM if t in (h, a)],
+        "weeks_lu": [team_week(t, w) for w in WKS]}
 nextw = min(CUR + 1, PO3)
 bubble = []
 for t in IDS:
@@ -948,7 +958,7 @@ elif mine["po"] >= 90:
     take.append(f"You're in ({r1(mine['po'])}%) but the bye isn't safe yet ({r1(mine['bye'])}%). Regular season wins still matter a lot.")
 else:
     take.append(f"Playoffs aren't safe ({r1(mine['po'])}%). Win now beats playoff matchups right now.")
-take.append(f"You win it all in {r1(ch)}% of sims. Your biggest threat is {lead['team']} at {lead['champ_pct']}%." + (f" That's {'up' if ch > prev_run['champ_pct'] else 'down'} from {prev_run['champ_pct']}% last update." if prev_run and abs(ch - prev_run["champ_pct"]) >= 1 else ""))
+take.append(f"You win it all in {r1(ch)}% of sims" + (f" ({'up' if ch > prev_run['champ_pct'] else 'down'} from {prev_run['champ_pct']}% last update)" if prev_run and abs(ch - prev_run["champ_pct"]) >= 1 else "") + f". Your biggest threat is {lead['team']} at {lead['champ_pct']}%.")
 okr = [x for x in trades if x["kind"] == "realistic" and not x["blocked"] and x["change_pts"] > 0]
 if okr:
     b = okr[0]

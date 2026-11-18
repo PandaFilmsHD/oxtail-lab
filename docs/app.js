@@ -83,7 +83,7 @@ function line(el, pts, { yfmt = v => v.toFixed(0) + '%', color = '#f0b429', labe
 }
 
 // ---------- tabs ----------
-function tab(name) { $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name)); $$('section').forEach(s => s.hidden = s.id !== name); history.replaceState(null, '', location.search + '#' + name); if (RENDER[name]) RENDER[name](); }
+function tab(name) { $$('nav.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === name); if (b.dataset.tab === name) b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }); $$('section').forEach(s => s.hidden = s.id !== name); history.replaceState(null, '', location.search + '#' + name); if (RENDER[name]) RENDER[name](); }
 $$('nav.tabs button').forEach(b => b.addEventListener('click', () => tab(b.dataset.tab)));
 function seg(id, onChange) { $$('#' + id + ' button').forEach(b => b.addEventListener('click', () => { $$('#' + id + ' button').forEach(x => x.classList.toggle('on', x === b)); onChange(b.dataset.v); })); }
 
@@ -98,11 +98,18 @@ function renderHome() {
   $('#take').replaceChildren(...s.take.map((t, i) => { const li = h('li', {}, t); li.style.animationDelay = i * 70 + 'ms'; return li; }));
   const tw = s.this_week; $('#tw-h').textContent = `🗓️ Week ${tw.week} best lineup`;
   const lu = h('table', {}, h('tbody', {}, tw.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), x.slot, VAL(x.player), 26), pl(x.player), tierEl((x.player)))), h('td', {}, f1(x.pts))))));
-  $('#thisweek').replaceChildren(
-    tw.opponent ? h('p', { style: 'margin:0 0 10px' }, `vs ${tw.opponent}: you win `, h('b', { style: 'color:var(--gold)' }, pct(tw.win_pct)), ` of sims. Projected ${f1(tw.total)} to ${f1(tw.opp_proj)}.`) : '',
-    h('div', { class: 'tw' }, lu), h('p', { class: 'sub', style: 'margin:10px 0 0' }, 'Bench: ' + tw.bench.map(b => `${b.player} ${f1(b.pts)}`).join(', ')));
+  const sw = (D.schedule || []).find(x => x.w === tw.week), alerts = [];
+  if (sw) sw.lineup.forEach(x => { if (x.opp !== 'BYE' && x.chance >= 0.8) return;
+    const fa = (D.waivers || []).filter(w => w.pos === POS(x.player) && w.this_week_gain > 0).sort((a, b) => b.this_week_gain - a.this_week_gain)[0];
+    const benchAlt = sw.bench.find(b => b.opp !== 'BYE' && (D.tester.elig[x.slot] || []).includes(b.pos));
+    alerts.push(h('div', { class: 'alert' }, h('b', {}, x.opp === 'BYE' ? `⚠️ ${x.player} is on bye. ` : `⚠️ ${x.player} might not play (${Math.round(x.chance * 100)}%). `),
+      fa ? `Add ${fa.player} (+${f1(fa.this_week_gain)} this week), drop ${fa.drop}.` : benchAlt ? `Start ${benchAlt.player} (${f1(benchAlt.pts)}) instead.` : `Check his status before kickoff.`)); });
+  $('#thisweek').replaceChildren(...alerts,
+    tw.opponent ? h('p', { style: 'margin:0 0 10px' }, `vs ${tw.opponent}: you win `, h('b', { style: 'color:var(--gold)' }, pct(tw.win_pct)), ` of sims. You ${f1(tw.total)} vs them ${f1(tw.opp_proj)}.`) : '',
+    h('div', { class: 'tw' }, lu), h('div', { class: 'chips2', style: 'margin-top:10px' }, h('span', { class: 'mut', style: 'font-size:12px;font-weight:800;align-self:center' }, 'BENCH'), tw.bench.filter(b => b.pts > 0).map(b => h('span', { class: 'chip2' }, pl(b.player), h('small', {}, ' ' + f1(b.pts))))),
+    tw.bench.some(b => b.pts <= 0) ? h('p', { class: 'sub', style: 'margin:6px 0 0' }, 'Out or on bye: ' + tw.bench.filter(b => b.pts <= 0).map(b => b.player).join(', ')) : '');
   line($('#trend'), H.runs.map(r => ({ y: r.champ_pct, at: r.at, w: r.week })), { label: q => `Wk ${q.w} · ${new Date(q.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric' })}: ` });
-  hbar($('#swing'), s.swing, { label: r => r.what.replace(' out for the playoffs', ''), value: r => r.change_pts, fmt: v => sgn(v) + ' pts', color: () => '#ff4d6d', tipText: r => `${r.what}: title odds ${sgn(r.change_pts)}` });
+  hbar($('#swing'), s.swing, { label: r => r.what.replace(' out for the playoffs', ''), value: r => r.change_pts, fmt: v => sgn(v) + '%', color: () => '#ff4d6d', tipText: r => `If ${r.what.replace(' out for the playoffs', '')} gets hurt for the playoffs: title odds ${sgn(r.change_pts)}%` });
 }
 
 // ---------- trades ----------
@@ -118,9 +125,9 @@ function renderTrades() {
       r.pitch ? h('div', { class: 'tmsg' }, h('div', { class: 'k' }, '💬 SEND THEM THIS'), h('div', { class: 'txt' }, r.pitch),
         h('button', { class: 'btn small', onclick: e => { navigator.clipboard.writeText(r.pitch).then(() => { e.target.textContent = 'COPIED ✓'; setTimeout(() => e.target.textContent = 'COPY', 1500); }); } }, 'COPY')) : '',
       h('div', { class: 'foot' }, h('div', { class: 'boost', style: r.change_pts < 0 ? 'color:var(--red)' : '' }, sgn(r.change_pts) + '%', h('small', {}, `title odds → ${pct(r.title_pct)}`)),
-        h('div', { class: 'meta' }, `Their lineup ${sgn(r.partner_weekly_gain)}/wk`, h('br'), `Your Wk${D.tester.po[1]}/${D.tester.po[2]}: ${f1(r.wk16)} / ${f1(r.wk17)}`),
+        h('div', { class: 'meta' }, `Their lineup ${sgn(r.partner_weekly_gain)}/wk`, h('br'), r.wk16_before != null ? `Your Wk${D.tester.po[1]}: ${f1(r.wk16_before)} → ${f1(r.wk16)}` : `Your Wk${D.tester.po[1]}: ${f1(r.wk16)}`, h('br'), r.wk17_before != null ? `Your Wk${D.tester.po[2]}: ${f1(r.wk17_before)} → ${f1(r.wk17)}` : `Your Wk${D.tester.po[2]}: ${f1(r.wk17)}`),
         h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => { why.hidden = !why.hidden; if (!why.hidden && !why.childNodes.length) why.append(...whyTrade(r)); } }, 'WHY?'),
-          h('button', { class: 'btn small', onclick: () => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); } }, 'TEST IT'))), why); c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; })
+          h('button', { class: 'btn small', onclick: () => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); setTimeout(() => { $('#run').click(); $('#run').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120); } }, 'TEST IT'))), why); c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; })
     : [h('div', { class: 'box mut' }, 'No trades in this group right now.')]));
   table($('#ttable'), [
     { k: 'give', h: 'You give', l: 1, f: r => h('span', {}, ...names(r.give).flatMap((n, i) => [i ? ' + ' : '', pl(n)])) },
@@ -154,8 +161,26 @@ function whyTrade(r) {
 }
 function openTeam(id) {
   const t = (D.teams || {})[String(id)]; if (!t) return;
-  const lu = (L, title) => h('div', {}, h('h3', {}, title), h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot), h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), POS(x.player), VAL(x.player), 26), pl(x.player), tierEl((x.player)))), h('td', {}, f1(x.pts)))),
-    h('tr', {}, h('td', {}), h('td', { class: 'l' }, h('b', {}, 'TOTAL')), h('td', {}, h('b', {}, f1(L.total))))))));
+  const WL = t.weeks_lu || [];
+  let cur = (WL.find(x => x.label === 'Final') || WL[WL.length - 1] || {}).w;
+  const luBox = h('div', {}), wkBtns = h('div', { class: 'weekbar', style: 'margin-top:10px' });
+  const drawLu = () => {
+    const L = WL.find(x => x.w === cur); if (!L) return;
+    wkBtns.replaceChildren(...WL.map(x => h('button', { class: 'wk' + (x.w === cur ? ' on' : '') + (/Final|Semis|Round/.test(x.label) ? ' po' : ''), onclick: () => { cur = x.w; drawLu(); } }, h('div', { class: 'n' }, x.label === 'Final' ? '🏆 Final' : x.label === 'Semis' ? '⚔️ Semis' : x.label === 'Round 1' ? 'Rd 1' : 'W' + x.w), h('div', { class: 's' }, f1(x.expected)))));
+    const top = L.lineup.slice().sort((a, b) => b.pts - a.pts).slice(0, 3);
+    const easy = L.lineup.filter(x => x.rank >= 22).map(x => x.player.endsWith('D/ST') ? x.player : x.player.split(' ').slice(-1)[0]);
+    const risky = L.lineup.filter(x => x.chance < 0.8).map(x => `${x.player} (${Math.round(x.chance * 100)}%)`);
+    luBox.replaceChildren(
+      h('h3', {}, `${L.label === 'Final' || L.label === 'Semis' ? '🏆 ' : '🗓️ '}${L.label} (Wk ${L.w}) best lineup · ${f1(L.total)}`),
+      h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Why ${f1(L.expected)}: their top scorers that week are ${top.map(x => `${x.player} ${f1(x.pts)}`).join(', ')}.` + (easy.length ? ` Easy matchups for ${easy.join(', ')}.` : '') + (risky.length ? ` Might not play: ${risky.join(', ')}.` : '') + (Math.abs(L.total - L.expected) >= 0.5 ? ` The ${f1(L.expected)} on the League page is a bit ${L.expected < L.total ? 'lower' : 'higher'} because it also covers bench guys stepping in if someone sits.` : '')),
+      h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot),
+        h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), POS(x.player), VAL(x.player), 26), h('span', {}, pl(x.player), ' ', tierEl(x.player),
+          h('div', { class: 'mut', style: 'font-size:12px' }, x.opp, x.rank ? h('span', { class: x.rank >= 22 ? 'pos' : x.rank <= 11 ? 'neg' : '' }, ` #${x.rank}`) : '')))),
+        h('td', {}, f1(x.pts), x.chance < 1 ? h('span', { class: 'opp ' + (x.chance < 0.7 ? 'neg' : '') }, Math.round(x.chance * 100) + '% to play') : ''))),
+        h('tr', {}, h('td', {}), h('td', { class: 'l' }, h('b', {}, 'TOTAL')), h('td', {}, h('b', {}, f1(L.total))))))));
+    setTimeout(() => { const on = wkBtns.querySelector('.on'); if (on) wkBtns.scrollLeft = on.offsetLeft - wkBtns.clientWidth / 2 + on.clientWidth / 2; }, 30);
+  };
+  drawLu();
   const bench = t.roster.filter(x => !x.starter);
   const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox' },
     h('button', { class: 'x', onclick: () => m.remove() }, '×'),
@@ -163,7 +188,7 @@ function openTeam(id) {
     h('div', { class: 'sub', style: 'margin:6px 0 14px;font-size:14px' }, `${t.record} · ${f1(t.pf)} points for · ${t.status}`),
     h('div', { class: 'tiles', style: 'grid-template-columns:repeat(auto-fit,minmax(150px,1fr))' },
       [['t2', '✅ Playoffs', t.odds.po], ['t3', '😴 Bye', t.odds.bye], ['t1', '🏁 Final', t.odds.fi], ['t4', '🏆 Title', t.odds.ch]].map(([c, k, v]) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, pct(v))))),
-    h('div', { class: 'grid2', style: 'margin-top:8px' }, lu(t.this_week, `🗓️ Week ${D.summary.week} best lineup`), lu(t.semis, `🏆 Semis (Wk ${t.semis.week}) lineup`)),
+    wkBtns, luBox,
     h('h3', {}, '🪑 Bench'), h('div', { class: 'chips2' }, bench.map(x => h('span', { class: 'chip2' }, pl(x.player), h('small', {}, ` ${x.pos} · ${f1(x.ros_pg)}/g`), x.status && x.status !== 'ACTIVE' ? h('small', { class: 'neg' }, ' ' + x.status.replace('_', ' ')) : ''))),
     t.schedule.length ? [h('h3', {}, '📅 Their remaining games'), h('div', { class: 'chips2' }, t.schedule.map(g => h('span', { class: 'chip2' }, `Wk ${g.w}: ${g.opp}`)))] : '',
     !t.me ? h('div', { class: 'bar', style: 'margin-top:16px' }, h('button', { class: 'btn small', onclick: () => { m.remove(); LAB.partner = t.id; LAB.get.clear(); tab('lab'); } }, '🧪 BUILD A TRADE WITH THEM'),
@@ -284,7 +309,7 @@ function renderTeam() {
 
 // ---------- league ----------
 function renderLeague() {
-  hbar($('#lchart'), D.league.filter(r => r.champ_pct > 0.05), { label: r => r.team, value: r => r.champ_pct, fmt: v => v.toFixed(1) + '%', color: r => r.me ? '#ffc83d' : '#4cc9ff' });
+  hbar($('#lchart'), D.league.filter(r => r.champ_pct > 0.05), { label: r => r.team.length > 18 ? r.team.slice(0, 17) + '…' : r.team, value: r => r.champ_pct, fmt: v => v.toFixed(1) + '%', color: r => r.me ? '#ffc83d' : '#4cc9ff' });
   table($('#ltable'), [
     { k: 'team', h: 'Team (tap one)', l: 1, f: r => h('b', {}, r.team + ' ›') }, { k: 'record', h: 'Record' }, { k: 'pf', h: 'PF', f: r => f1(r.pf) }, { k: 'playoffs_pct', h: 'Playoffs', f: r => pct(r.playoffs_pct) }, { k: 'bye_pct', h: 'Bye', f: r => pct(r.bye_pct) },
     { k: 'champ_pct', h: 'Title', f: r => pct(r.champ_pct) }, { k: 'final_pct', h: 'Final', f: r => pct(r.final_pct) }, { k: 'win_this_week_pct', h: 'Win this week', f: r => pct(r.win_this_week_pct) },
