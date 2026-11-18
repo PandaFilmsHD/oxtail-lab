@@ -18,4 +18,4 @@ p = ROOT / "docs/data/alerts.json"
 feed = json.loads(p.read_text()).get("alerts", []) if p.exists() else []
 feed = [a] + [x for x in feed if x["id"] != a["id"]]
 p.write_text(json.dumps({"alerts": feed[:60]}, separators=(",", ":")))
-send(a["title"], a["body"], priority=5, click=f"{SITE}?league=787523197&alert={a['id']}", tag=a["id"])
+send(a["title"], a["body"], priority=5, click=f"{SITE}?league=787523197&alert={a["id"]}", tag=a["id"] + str(int(datetime.datetime.now().timestamp())), alert=a)
