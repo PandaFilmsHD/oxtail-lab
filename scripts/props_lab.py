@@ -389,7 +389,7 @@ def main():
                              *[(f"{a} @ {h} Over {x:g}", totl > x) for x in [half(tot - k) for k in (5, 7, 9, 11)]],
                              *[(f"{a} @ {h} Under {x:g}", totl < x) for x in [half(tot + k) for k in (5, 7, 9, 11)]]):
                 pa = float(ind.mean())
-                if 0.70 <= pa <= 0.90:
+                if 0.70 <= pa <= (0.93 if "moneyline" in lab else 0.90):
                     LEGS.append({"kindg": "total" if (" Over " in lab or " Under " in lab) else "ml" if "moneyline" in lab else "spread", "lean": (0.004 if (" Under " in lab and angles) else 0.0), "label": lab, "game": gk, "who": lab.split()[0], "p": pa, "ind": ind, "type": "game", "kick": k_})
         games.append({"home": h, "away": a, "kick": k_, "started": started, "spread": spr, "total": tot, "roof": roof, "weather": wx, "angles": angles + s_angles,
                       "sim": {"home_win": round(100 * p_home_win, 1), "home_cover": round(100 * p_home_cover, 1), "over": round(100 * p_over, 1),
@@ -698,7 +698,34 @@ def main():
         if len(long_parlays) >= 6:
             break
     LONGS.sort(key=lambda z: -(z["lean"] + 0.05 * z["p"]))
-    longshots = {"singles": [{k: v for k, v in L_.items() if k not in ("ind", "game", "who")} for L_ in LONGS[:30]], "parlays": long_parlays}
+    # favorite stacks: 4-6 heavy favorites / safe alt spreads (one per game) that add up to about +250 to +400
+    fs_ = []
+    favml = []
+    for g in games:   # every favorite's moneyline that wins 60%+ in the sims
+        if g["started"]:
+            continue
+        hw = g["sim"]["home_win"] / 100; fav = g["home"] if hw >= 0.5 else g["away"]; pf = max(hw, 1 - hw)
+        if pf >= 0.60:
+            favml.append({"label": f"{fav} moneyline", "p": pf, "game": tuple(sorted((g["home"], g["away"]))), "kindg": "ml"})
+    gl_ = favml + sorted([L_ for L_ in gpool if L_["kindg"] == "spread" and L_["p"] >= 0.75], key=lambda z: -z["p"])[:10]   # every favorite ML, plus the safest alt spreads
+    for n_ in (4, 5, 6):
+        for combo in itertools.combinations(gl_, n_):
+            if len({c["game"] for c in combo}) < n_:
+                continue
+            pj = math.prod(c["p"] for c in combo)
+            if 0.20 <= pj <= 0.32:
+                fs_.append((pj, n_, combo))
+    fs_.sort(key=lambda z: (-sum(1 for c in z[2] if "moneyline" in c["label"]), -z[0]))   # prefer straight moneylines, then the safest
+    fav_stacks, used = [], {}
+    for pj, n_, combo in fs_:
+        if any(used.get(c["label"], 0) >= 2 for c in combo):
+            continue
+        for c in combo:
+            used[c["label"]] = used.get(c["label"], 0) + 1
+        fav_stacks.append({"p": round(100 * pj, 1), "fair": amer(pj), "legs": [{"label": c["label"], "p": round(100 * c["p"], 1), "lean": 0} for c in combo]})
+        if len(fav_stacks) >= 4:
+            break
+    longshots = {"fav_stacks": fav_stacks, "singles": [{k: v for k, v in L_.items() if k not in ("ind", "game", "who")} for L_ in LONGS[:30]], "parlays": long_parlays}
     legs_out = [{"label": L_["label"], "p": round(100 * L_["p"], 1), "fair": amer(L_["p"]), "type": L_["type"], "kick": L_["kick"], "lean": round(100 * L_["lean"], 1),
                  "game": "-".join(L_["game"]), "bits": bits(L_)} for L_ in pool]
 
