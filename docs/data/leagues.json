@@ -14,7 +14,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T03:49:01Z",
-   "champ_pct": 10.3
+   "champ_pct": 10.4
   },
   {
    "id": "395789116",
@@ -30,11 +30,10 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T03:48:56Z",
-   "champ_pct": 39.0
+   "champ_pct": 39.1
   }
  ],
  "status": {
-  "at": "2026-11-18T03:48:47Z",
   "espn_ok": true,
   "message": null
  }
