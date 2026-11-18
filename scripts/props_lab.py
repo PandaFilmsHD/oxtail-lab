@@ -61,6 +61,120 @@ def load(p, d=None):
         return d
 
 
+# ------------------------------------------------------------------ constants
+GL = {
+    # forecast wind mph (outdoor only) -> total shift. Game-time-wind coefficients were -2.1 (10-14) and -2.8 (15+),
+    # multiplied by 0.7 because forecasts miss.
+    "wind_tiers": [(15, -2.0), (10, -1.5)],
+    "wind_hit": {"10": {"old": 56.5, "new": 59.6, "n": 651}, "15": {"old": 51.4, "new": 61.4, "n": 210}},
+    # rain at kickoff: -3.9 pts (SE 1.1), unders 60.3% (2016-20) / 74.6% (2021-25), n=131. Scale by forecast chance and trust 0.6.
+    "rain_full": -3.9, "rain_trust": 0.6, "rain_min_prob": 40,
+    # SNF+MNF unders 55.4% / 57.9% (n=372). Regression says -2.2 but 2006-15 went 48% and 2026 so far 8-12, so use -1.0.
+    "prime": -1.0,
+    "max_total_shift": 4.5,     # wind + rain + prime can stack; never move the total more than this
+    # weeks 1-4 dogs: 54.8% / 54.0% ATS 2016-25 (n=623), 52.6% 2006-15, 51.7% 1999-05, 54.2% 2026. Mean +1.0 pt, shrunk to 0.7.
+    "early_dog": 0.7, "early_dog_weeks": 4,
+    # probation (log only): +0.3 total pts per snap-weighted defensive starter ruled Out/Doubtful (both teams summed, cap 5).
+    "use_def_out": False, "def_out_per": 0.3, "def_out_cap": 5.0,
+    # 2-team 6-pt teaser break-even per leg: sqrt(1/decimal). -110 -> 72.4%, -120 -> 73.9%, -130 -> 75.2%
+    "teaser_price": -120,
+}
+
+
+def total_shift(wx, roof, wd, gt):
+    """Points to add to the closing total, plus the angle text. wx = weather() dict or None."""
+    shift, angles = 0.0, []
+    if wx and roof != "dome":
+        for th, s in GL["wind_tiers"]:
+            if wx.get("wind", 0) >= th:
+                h = GL["wind_hit"][str(th)]
+                shift += s
+                angles.append(f"Wind {wx['wind']} mph forecast. Unders hit {h['old']}% (2016-20) and {h['new']}% (2021-25) at {th}+ mph.")
+                break
+        rp = wx.get("rain") or 0
+        if rp >= GL["rain_min_prob"]:
+            s = GL["rain_full"] * GL["rain_trust"] * rp / 100
+            shift += s
+            angles.append(f"{rp}% rain chance. Unders hit 60% (2016-20) and 75% (2021-25) in games played in rain.")
+    snf = wd == "Sunday" and (gt or "") >= "19:00"
+    if snf or wd == "Monday":
+        shift += GL["prime"]
+        angles.append("SNF/MNF. Unders hit 55.4% (2016-20) and 57.9% (2021-25) on Sunday and Monday nights (Thursday games: no edge).")
+    shift = max(-GL["max_total_shift"], min(GL["max_total_shift"], shift))
+    return shift, angles
+
+
+def spread_shift(week, spr):
+    """Home-margin points to add (spr = home expected margin). Positive spr = home favored."""
+    try:
+        wk = int(week)
+    except (TypeError, ValueError):
+        return 0.0, []
+    if 1 <= wk <= GL["early_dog_weeks"] and spr != 0:
+        s = -GL["early_dog"] if spr > 0 else GL["early_dog"]      # move toward the dog
+        return s, [f"Week {wk} underdog. Early-season dogs covered 54.8% (2016-20) and 54.0% (2021-25)."]
+    return 0.0, []
+
+
+def sample_game(spr, tot, resid, pool, rng, n, t_shift=0.0, m_shift=0.0, noise=0.6):
+    """Joint (home margin, total) sims.
+    resid: current DIST['_game_resid'] rows [margin - spread, total - total_line, spread] (2016-25).
+    pool : new DIST['_game_pool'] rows [margin - spread, total - total_line, spread, total_line, season] (2006-25).
+    Half the draws = current residual method (smooth tails); half = real margins from games with ~the same spread
+    (keeps exact mass on 3, 7, 10, 14). Out of sample this cut the average calibration miss on alt spreads from 2.2 to ~1.5 pts
+    of probability and improved Brier in both 2016-20 and 2021-25."""
+    na = n // 2; nb = n - na
+    # A) current method
+    near = resid[np.abs(resid[:, 2] - spr) <= max(3.0, abs(spr) * 0.35)]
+    near = near if len(near) >= 150 else resid
+    near = near - np.array([np.median(near[:, 0]), np.median(near[:, 1]), 0])
+    i = rng.integers(0, len(near), na)
+    mar_a = spr + near[i, 0] + rng.normal(0, noise, na)
+    tr_a = near[i, 1]
+    # B) direct margins, favorite's view (home and away favorites pooled)
+    psp = pool[:, 2]
+    pfs = np.abs(psp)
+    pfm = np.where(psp >= 0, 1.0, -1.0) * (psp + pool[:, 0])
+    fs, sgn = abs(spr), (1.0 if spr >= 0 else -1.0)
+    for w in (0.0, 0.5, 1.0, 1.5, 2.5, 4.0, 99):
+        sel = np.where(np.abs(pfs - fs) <= w)[0]
+        if len(sel) >= 250:
+            break
+    j = sel[rng.integers(0, len(sel), nb)]
+    fm = pfm[j] + np.round(fs - pfs[sel].mean())
+    mar_b = sgn * fm
+    tr_b = pool[j, 1] - np.median(pool[sel, 1])
+    if m_shift:   # integer-preserving shift: move |m_shift| of draws by one full point
+        mar_b = mar_b + np.sign(m_shift) * (rng.random(nb) < min(1.0, abs(m_shift)))
+        mar_a = mar_a + m_shift
+    mar = np.r_[mar_a, mar_b]
+    totl = tot + t_shift + np.r_[tr_a, tr_b] + rng.normal(0, noise, n)
+    p = rng.permutation(n)
+    return mar[p], totl[p]
+
+
+def teaser_legs(h, a, spr, mar, kick):
+    """6-pt teaser legs that historically clear the 2-team break-even. Only dogs +1.5..+2.5 qualify
+    (77.7% 2016-25, 75.0% 2006-15, 78.8% 2026). Favorites -7.5..-8.5 went 72.5%: below the 73.9% needed at -120."""
+    out = []
+    fs = abs(spr)
+    if 1.5 <= fs <= 2.5:
+        dog = a if spr > 0 else h
+        fm = mar if spr > 0 else -mar           # favorite margin
+        line = fs + 6
+        p = float(np.mean(fm < line))           # dog +line covers
+        out.append({"label": f"{dog} +{line:g} (6-pt teaser leg)", "p": p, "hist": 77.7, "kick": kick, "type": "teaser"})
+    return out
+
+
+def teaser_breakeven(price=None):
+    price = price or GL["teaser_price"]
+    d = 1 + (price / 100 if price > 0 else 100 / -price)
+    return math.sqrt(1 / d)
+
+
+
+
 def half(x):
     """Alt lines on the half point so they can't push."""
     return x if x % 1 else x - 0.5
@@ -94,6 +208,8 @@ def main():
     if not lines or not DIST:
         print("props_lab: no lines or fits yet"); return
     resid = np.array(DIST["_game_resid"], dtype=float)
+    pool = np.array(DIST.get("_game_pool") or [r + [0, 0] for r in DIST["_game_resid"]], dtype=float)
+    TEASERS = []
     ANG = DIST["_angles"]
 
     # best prices for game markets (Odds API), keyed by home team
@@ -205,20 +321,9 @@ def main():
         spr, tot = L["spread"], L["total"]   # spread = home expected margin
         wx = weather(h, k_) if k_ and not started else None
         roof = "dome" if h in ROOF else (L.get("roof") or "outdoors")
-        prime = L.get("wd") in ("Thursday", "Monday") or (L.get("wd") == "Sunday" and (L.get("gt") or "") >= "19:00")
-        angles, shift = [], 0.0
-        if wx and wx["wind"] >= 10:
-            s_ = ANG["wind10"]["shift"] * 0.7   # forecasts miss, so trust it 70%
-            shift += s_; angles.append(f"Wind {wx['wind']} mph forecast. Unders hit {ANG['wind10']['hit_old']}% (2016-20) and {ANG['wind10']['hit_new']}% (2021-25) in 10+ mph wind.")
-        if prime:
-            shift += ANG["prime"]["shift"]; angles.append(f"Prime time. Unders hit {ANG['prime']['hit_old']}% and {ANG['prime']['hit_new']}% in night games.")
-        # 50,000 sims: real past games' misses vs the line (keeps key numbers like 3 and 7), from games with a similar spread
-        near = resid[np.abs(resid[:, 2] - spr) <= max(3.0, abs(spr) * 0.35)]
-        near = near if len(near) >= 150 else resid
-        near = near - np.array([np.median(near[:, 0]), np.median(near[:, 1]), 0])   # keep the shape, center on the line: the line itself is the best guess
-        idx = rng.integers(0, len(near), N)
-        mar = spr + near[idx, 0] + rng.normal(0, 0.6, N)
-        totl = tot + shift + near[idx, 1] + rng.normal(0, 0.6, N)
+        shift, angles = total_shift(wx, roof, L.get("wd"), L.get("gt"))   # wind tiers, rain, SNF/MNF (backtested vs closing lines)
+        m_shift, s_angles = spread_shift(cur, spr)                            # weeks 1-4 dogs
+        mar, totl = sample_game(spr, tot, resid, pool, rng, N, t_shift=shift, m_shift=m_shift)   # half the sims use real margins: keeps 3 and 7 right
         hp = np.maximum(0, (totl + mar) / 2); ap = np.maximum(0, (totl - mar) / 2)
         sims[h] = (hp, ap, mar); sims[a] = (ap, hp, -mar)
         b = gbest.get(h, {})
@@ -244,10 +349,12 @@ def main():
                 continue
             pm = imp(dflt) / (imp(dflt) + imp(other))   # the market's chance with the vig taken out (what Kalshi/Polymarket trade near)
             edge = p - pm
-            if edge >= MIN_EDGE and side == "tot" and angles:   # only the angles that held up in the backtest create game plays
+            if edge >= MIN_EDGE and ((side == "tot" and angles) or (side == "spr" and s_angles)):   # only the angles that held up in the backtest create game plays
                 plays.append({"pick": label, "p": round(100 * p, 1), "p_mkt": round(100 * pm, 1), "edge": round(100 * edge, 1), "max_c": int(100 * p - 2), "kind": side})
         if not started:
             gk = tuple(sorted((h, a)))
+            for t in teaser_legs(h, a, spr, mar, k_):
+                t["game"] = gk; t["breakeven"] = round(100 * teaser_breakeven(), 1); TEASERS.append(t)
             fav, dog, fm = (h, a, mar) if spr > 0 else (a, h, -mar)
             for lab, ind in ((f"{fav} moneyline", fm > 0),
                              *[(f"{fav} {-x:+g} alt spread", fm > x) for x in (1.5, 2.5, 3.5, 4.5, 6.5, 7.5) if x < abs(spr)],
@@ -257,7 +364,7 @@ def main():
                 pa = float(ind.mean())
                 if 0.70 <= pa <= 0.90:
                     LEGS.append({"kindg": "total" if (" Over " in lab or " Under " in lab) else "ml" if "moneyline" in lab else "spread", "lean": (0.004 if (" Under " in lab and angles) else 0.0), "label": lab, "game": gk, "who": lab.split()[0], "p": pa, "ind": ind, "type": "game", "kick": k_})
-        games.append({"home": h, "away": a, "kick": k_, "started": started, "spread": spr, "total": tot, "roof": roof, "weather": wx, "angles": angles,
+        games.append({"home": h, "away": a, "kick": k_, "started": started, "spread": spr, "total": tot, "roof": roof, "weather": wx, "angles": angles + s_angles,
                       "sim": {"home_win": round(100 * p_home_win, 1), "home_cover": round(100 * p_home_cover, 1), "over": round(100 * p_over, 1),
                               "home_pts": round(float(np.mean(hp)), 1), "away_pts": round(float(np.mean(ap)), 1), "fair_total": round(float(np.median(totl)), 1),
                               "fair_home_ml": amer(p_home_win), "blowout": round(100 * float(np.mean(np.abs(mar) >= 17)), 1), "one_score": round(100 * float(np.mean(np.abs(mar) <= 8)), 1)},
@@ -547,7 +654,7 @@ def main():
                            for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
     rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games")}
     out = {"unit": UNIT, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
-           "parlays": parlays, "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},
+           "parlays": parlays, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),
            "props": [x for x in props if x["grade"]][:80], "all_props": len(props),

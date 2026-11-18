@@ -674,6 +674,9 @@ async function renderProps() {
     const sect = (t, L) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t), h('div', { class: 'bgrid' }, ...srt(L).map(card))] : [];
     const sbar = h('div', { class: 'seg', style: 'margin:0 0 6px' }, ...[['value', '💎 Best value'], ['likely', '🎯 Most likely to hit']].map(([v, t]) => h('button', { class: PPS === v ? 'on' : '', onclick: () => { PPS = v; renderProps(); } }, t)));
     out = [tip, sbar, ...sect('🔥 Model\'s confident parlays (bigger payout, every leg is one the sims like more than the market)', P.conf), ...sect('🏈 4-team game parlays (+100 or better)', P.g4), ...sect('🏈 3-team game parlays', P.g3), ...sect('🎯 2-leg player props', P['2']), ...sect('🎯 3-leg player props (+100ish)', P['3'])];
+    const T = PLD.teasers || [];
+    if (T.length) out.push(h('h3', { style: 'margin-top:18px' }, '🧷 6-point teaser legs'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Underdogs of +1.5 to +2.5 teased up 6 points have covered about 78% since 2006. A 2-team teaser at -120 needs ${T[0].breakeven}% per leg, so pair two of these from different games.`),
+      h('div', { class: 'leglist' }, ...T.map(t => h('div', { class: 'legpick' }, h('span', { class: 'lp hi' }, Math.round(t.p) + '%'), h('span', { class: 'll' }, t.label), h('span', { class: 'mut', style: 'margin-left:auto' }, kickT(t.kick))))));
     // build your own
     const legs = PLD.legs || [];
     const chosen = legs.filter(l => PLPICK.has(l.label));
