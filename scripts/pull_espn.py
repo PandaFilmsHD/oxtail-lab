@@ -224,6 +224,30 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         print(f"  news {x['n']}: {json.dumps(x.get('news'))[:400]}")
     print(f"  injury news: {sum(1 for x in hurt if (x.get('news') or {}).get('text'))}/{len(hurt)} hurt players have fresh notes")
 
+    # Transaction history: every add, drop and trade this season, so we can learn each manager's habits
+    try:
+        txs = []
+        for wk_ in range(1, cur + 1):
+            dt = get(BASE, {"view": "mTransactions2", "scoringPeriodId": wk_})
+            for t_ in dt.get("transactions") or []:
+                if t_.get("type") in ("ROSTER", "DRAFT"):
+                    continue
+                txs.append({"w": wk_, "type": t_.get("type"), "status": t_.get("status"), "team": t_.get("teamId"),
+                            "date": t_.get("proposedDate") or t_.get("processDate"),
+                            "items": [{"pid": it.get("playerId"), "t": it.get("type"), "from": it.get("fromTeamId"), "to": it.get("toTeamId")} for it in (t_.get("items") or [])]})
+            time.sleep(0.15)
+        seen_ = set(); txu = []
+        for t_ in txs:
+            k_ = (t_["type"], t_["team"], t_["date"], tuple((i["pid"], i["t"]) for i in t_["items"]))
+            if k_ not in seen_:
+                seen_.add(k_); txu.append(t_)
+        tp = ROOT / "data" / str(LEAGUE) / "transactions.json"
+        tp.parent.mkdir(parents=True, exist_ok=True)
+        tp.write_text(json.dumps(txu, separators=(",", ":")))
+        from collections import Counter
+        print(f"  transactions: {len(txu)} ({dict(Counter((t_['type'], t_['status']) for t_ in txu).most_common(8))})")
+    except Exception as e:
+        print(f"  transactions: skipped ({e})")
     # Sleeper's weekly projections (a 3rd opinion to average with ours and ESPN's)
     if cur not in SLEEPER:
         try:
