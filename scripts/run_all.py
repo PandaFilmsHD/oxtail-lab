@@ -20,6 +20,7 @@ if "--no-pull" not in sys.argv:
     else:
         run(["scripts/pull_nflverse.py"])
     run(["scripts/pull_props.py"])
+    run(["scripts/pull_kalshi.py"])
     run(["scripts/pull_fp.py"])
 leagues = json.loads((ROOT / "data" / "leagues.json").read_text()) if (ROOT / "data" / "leagues.json").exists() else {}
 for d in sorted((ROOT / "data").iterdir()):
