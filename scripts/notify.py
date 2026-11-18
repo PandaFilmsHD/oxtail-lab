@@ -80,4 +80,6 @@ if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "publish":
     publish_public_key()
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "test":
     publish_public_key()
-    send("🔔 Oxtail alerts are on (test)", "This came straight from GitHub to the Oxtail app. Tap to open it. Real alerts: injuries, lineup problems, in-game updates.", ["bell"], 4)
+    send("✅ Oxtail alerts are on", "This is a test. Real alerts look like the next two.", ["bell"], 3, tag="t1")
+    send("🚨 Bowers OUT (example)", "No backup TE. Add Colby Parkinson (8.4) for Wk 11.", ["rotating_light"], 5, tag="t2")
+    send("🔒 Lineup locks Thu 5:15 PM (example)", "Stroud, Fairbairn, McGowan play Thursday. You're set.", ["lock"], 3, tag="t3")
