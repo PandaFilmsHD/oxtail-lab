@@ -54,6 +54,14 @@ function table(el, cols, rows, { key, rowClass, onRow, sort } = {}) {
   draw();
 }
 const pl = n => /D\/ST$/.test(n) ? h('span', {}, n) : h('a', { class: 'pl', href: '#', onclick: e => { e.preventDefault(); e.stopPropagation(); openCard(n); } }, n);
+const shortName = n => lastName(n) === n ? n : n.split(' ')[0][0] + '. ' + lastName(n);
+const plS = n => { const a = pl(n); a.textContent = shortName(n); a.title = n; return a; };   // same link, "J. Gibbs" so it fits on a phone
+const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+// staggered rise for a list of cards; capped so long lists don't wait
+function stagger(root, sel = ':scope > *:not([hidden])', step = 45, max = 8) { if (!root || RM()) return; $$(sel, root).forEach((e, i) => { e.classList.remove('rise'); void e.offsetWidth; e.style.setProperty('--d', Math.min(i, max) * step + 'ms'); e.classList.add('rise'); if (!e._rl) { e._rl = ev => { if (ev.target === e && ev.animationName === 'rise') e.classList.remove('rise'); }; e.addEventListener('animationend', e._rl); } }); }
+// count up any big number already on screen ("54%", "121.1"), landing on the exact same text
+function autoCount(root, sel) { if (RM()) return; $$(sel, root).forEach(el => { const m = /^(\d+(?:\.(\d+))?)(%?)$/.exec(el.textContent.trim()); if (!m) return; const d = (m[2] || '').length, to = +m[1]; countUp(el, to, v => v.toFixed(d) + m[3], 750); }); }
+const skel = n => h('div', { class: 'skel' }, ...Array.from({ length: n }, () => h('div', { class: 'sk' })));
 
 // ---------- charts ----------
 function hbar(el, rows, { label, value, fmt, color, tipText }) {
@@ -66,7 +74,7 @@ function hbar(el, rows, { label, value, fmt, color, tipText }) {
   rows.forEach((r, i) => {
     const y = i * (bh + gap) + 3, v = value(r), g = document.createElementNS(ns, 'g');
     const t = document.createElementNS(ns, 'text'); t.setAttribute('x', lw - 8); t.setAttribute('y', y + bh / 2 + 4); t.setAttribute('text-anchor', 'end'); t.textContent = label(r); g.append(t);
-    const rc = document.createElementNS(ns, 'rect'); rc.setAttribute('x', x(Math.min(0, v))); rc.setAttribute('y', y + 2); rc.setAttribute('height', bh - 4); rc.setAttribute('rx', 3); rc.setAttribute('width', Math.max(1, Math.abs(x(v) - x(0)))); rc.setAttribute('fill', color(r)); g.append(rc);
+    const rc = document.createElementNS(ns, 'rect'); rc.setAttribute('x', x(Math.min(0, v))); rc.setAttribute('y', y + 2); rc.setAttribute('height', bh - 4); rc.setAttribute('rx', 3); rc.setAttribute('width', Math.max(1, Math.abs(x(v) - x(0)))); rc.setAttribute('fill', color(r)); rc.setAttribute('class', 'hgrow' + (v < 0 ? ' l' : '')); rc.style.animationDelay = Math.min(i, 10) * 35 + 'ms'; g.append(rc);
     const vt = document.createElementNS(ns, 'text'); vt.setAttribute('x', (v >= 0 ? x(v) : x(0)) + 5); vt.setAttribute('y', y + bh / 2 + 4); vt.setAttribute('style', 'fill:#e8ecf2'); vt.textContent = fmt(v); g.append(vt);
     g.addEventListener('mousemove', e => showTip(e, tipText ? tipText(r) : label(r) + ': ' + fmt(v))); g.addEventListener('mouseleave', hideTip);
     svg.append(g);
@@ -79,13 +87,13 @@ function line(el, pts, { yfmt = v => v.toFixed(0) + '%', color = '#f0b429', labe
   const ys = pts.map(p => p.y), lo = Math.max(0, Math.min(...ys) - 5), hi = Math.min(100, Math.max(...ys) + 5);
   const X = i => pad + i / (pts.length - 1) * (W - pad - 10), Y = v => H_ - 22 - (v - lo) / (hi - lo || 1) * (H_ - 40);
   [lo, (lo + hi) / 2, hi].forEach(v => { const t = document.createElementNS(ns, 'text'); t.setAttribute('x', 2); t.setAttribute('y', Y(v) + 4); t.textContent = yfmt(v); svg.append(t); const l = document.createElementNS(ns, 'line'); l.setAttribute('x1', pad); l.setAttribute('x2', W - 10); l.setAttribute('y1', Y(v)); l.setAttribute('y2', Y(v)); l.setAttribute('stroke', '#283141'); svg.append(l); });
-  const p = document.createElementNS(ns, 'path'); p.setAttribute('d', pts.map((q, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(q.y)).join('')); p.setAttribute('fill', 'none'); p.setAttribute('stroke', color); p.setAttribute('stroke-width', 2.5); svg.append(p);
-  pts.forEach((q, i) => { const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', X(i)); c.setAttribute('cy', Y(q.y)); c.setAttribute('r', 4); c.setAttribute('fill', color); c.addEventListener('mousemove', e => showTip(e, (label ? label(q) : '') + yfmt(q.y))); c.addEventListener('mouseleave', hideTip); svg.append(c); });
+  const p = document.createElementNS(ns, 'path'); p.setAttribute('d', pts.map((q, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(q.y)).join('')); p.setAttribute('fill', 'none'); p.setAttribute('stroke', color); p.setAttribute('stroke-width', 2.5); p.setAttribute('stroke-linejoin', 'round'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('pathLength', 100); p.setAttribute('stroke-dasharray', '100 100'); p.setAttribute('stroke-dashoffset', 100); p.setAttribute('class', 'drawin'); svg.append(p);
+  pts.forEach((q, i) => { const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', X(i)); c.setAttribute('cy', Y(q.y)); c.setAttribute('r', pts.length > 20 ? 3 : 4); c.setAttribute('fill', color); c.setAttribute('class', 'pop'); c.style.animationDelay = (0.5 + i / pts.length * 0.9) + 's'; c.addEventListener('mousemove', e => showTip(e, (label ? label(q) : '') + yfmt(q.y))); c.addEventListener('mouseleave', hideTip); svg.append(c); });
   el.append(svg);
 }
 
 // ---------- tabs ----------
-function tab(name) { $$('nav.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === name); if (b.dataset.tab === name) b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }); $$('section').forEach(s => s.hidden = s.id !== name); history.replaceState(null, '', location.search + '#' + name); if (RENDER[name]) RENDER[name](); }
+function tab(name) { $$('nav.tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === name); if (b.dataset.tab === name) b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }); $$('section').forEach(s => s.hidden = s.id !== name); history.replaceState(null, '', location.search + '#' + name); if (RENDER[name]) RENDER[name](); stagger($('#' + name)); }
 $$('nav.tabs button').forEach(b => b.addEventListener('click', () => tab(b.dataset.tab)));
 function seg(id, onChange) { $$('#' + id + ' button').forEach(b => b.addEventListener('click', () => { $$('#' + id + ' button').forEach(x => x.classList.toggle('on', x === b)); onChange(b.dataset.v); })); }
 
@@ -124,7 +132,7 @@ function renderLive() {
   const side = (x, cls) => h('div', { class: 'lside ' + cls }, h('div', { class: 'lname' }, x.name), h('div', { class: 'lpts', 'data-v': x.pts }, '0.0'), h('div', { class: 'lleft' }, L.final ? 'final' : `${f1(x.left)} still to come`));
   const me = side(L.me, 'me'), op = side(L.opp, 'op');
   const bar = h('div', { class: 'lbar' }, h('i', { style: 'width:50%' }));
-  const rows = x => h('div', { class: 'lrows' }, x.rows.map(r => h('div', { class: 'lrow st-' + r.state }, h('span', { class: 'mut lpos' }, r.pos), h('span', { class: 'lpl' }, pl(r.player)), stateChip(r), h('b', { class: 'lp' }, f1(r.pts)))));
+  const rows = x => h('div', { class: 'lrows' }, x.rows.map(r => h('div', { class: 'lrow st-' + r.state }, h('span', { class: 'mut lpos' }, r.pos), h('span', { class: 'lpl' }, plS(r.player)), stateChip(r), h('b', { class: 'lp' }, f1(r.pts)))));
   const det = h('details', { class: 'ldet' }, h('summary', {}, 'Player by player'), h('div', { class: 'grid2', style: 'gap:10px;margin-top:8px' }, h('div', {}, h('div', { class: 'k' }, 'YOU'), rows(L.me)), h('div', {}, h('div', { class: 'k' }, L.opp.name.toUpperCase()), rows(L.opp))));
   const won = L.final && L.me.pts > L.opp.pts;
   box.replaceChildren(h('div', { class: 'box livecard' + (L.final ? ' fin' : '') },
@@ -152,11 +160,12 @@ function renderMatchup() {
   box.hidden = false;
   const btn = h('button', { class: 'btn small blue', onclick: () => shareMatchup(btn) }, '📤 Share');
   box.replaceChildren(h('h3', {}, `⚔️ Week ${tw.week} matchup`),
-    h('div', { class: 'muhead' }, h('div', {}, h('div', { class: 'k' }, 'YOU'), h('div', { class: 'mut' }, f1(tw.total))), h('div', { class: 'muwp' }, h('b', {}, pct(tw.win_pct)), h('small', { class: 'mut' }, 'to win')), h('div', { style: 'text-align:right' }, h('div', { class: 'k' }, o.name), h('div', { class: 'mut' }, f1(tw.opp_proj)))),
+    h('div', { class: 'muhead' }, h('div', { class: 'mus me' }, h('div', { class: 'k' }, 'YOU'), h('div', { class: 'mupts' }, f1(tw.total))), h('div', { class: 'muwp' }, h('b', {}, pct(tw.win_pct)), h('small', { class: 'mut' }, 'to win')), h('div', { class: 'mus op' }, h('div', { class: 'k' }, o.name), h('div', { class: 'mupts' }, f1(tw.opp_proj)))),
     h('div', { class: 'murows' }, rows.map(([a, b], i) => { const ea = a && (!b || a.pts > b.pts), eb = b && (!a || b.pts > a.pts);
-      const r = h('div', { class: 'murow' }, h('div', { class: 'mup' + (ea ? ' edge' : '') }, a ? [pl(a.player), h('b', {}, f1(a.pts))] : '—'), h('div', { class: 'muslot' }, (a || b).slot), h('div', { class: 'mup r' + (eb ? ' edge' : '') }, b ? [h('b', {}, f1(b.pts)), pl(b.player)] : '—'));
+      const r = h('div', { class: 'murow' }, h('div', { class: 'mup' + (ea ? ' edge' : '') }, a ? [plS(a.player), h('b', {}, f1(a.pts))] : '—'), h('div', { class: 'muslot' }, (a || b).slot), h('div', { class: 'mup r' + (eb ? ' edge' : '') }, b ? [h('b', {}, f1(b.pts)), plS(b.player)] : '—'));
       r.style.animationDelay = i * 45 + 'ms'; return r; })),
     h('p', { class: 'sub', style: 'margin:10px 0 6px' }, `You have the edge at ${wins} of ${n_} spots. Their side is their best possible lineup.`), btn);
+  autoCount(box, '.muwp b, .mupts');
 }
 async function shareMatchup(btn) {
   const { tw, o, rows } = muPairs();
@@ -192,15 +201,16 @@ function seasonChart(el) {
   const S = D.season_odds, pts = (S && S.weeks) || [];
   if (pts.length < 2) { line(el, H.runs.map(r => ({ y: r.champ_pct, at: r.at, w: r.week })), { label: q => `Wk ${q.w}: ` }); return; }
   el.replaceChildren();
-  const ns = 'http://www.w3.org/2000/svg', W = Math.max(300, el.clientWidth - 20), H_ = 190, pl_ = 30, pb = 26, svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H_}`);
+  const ns = 'http://www.w3.org/2000/svg', W = Math.max(300, el.clientWidth - 20), H_ = 190, pl_ = 38, pb = 26, svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H_}`);
   const X = i => pl_ + i / (pts.length - 1) * (W - pl_ - 12), Y = v => H_ - pb - v / 100 * (H_ - pb - 12);
   const mk = (tag, at) => { const e = document.createElementNS(ns, tag); for (const k in at) e.setAttribute(k, at[k]); svg.append(e); return e; };
   [0, 50, 100].forEach(v => { mk('line', { x1: pl_, x2: W - 12, y1: Y(v), y2: Y(v), stroke: '#283141' }); const t = mk('text', { x: 2, y: Y(v) + 4 }); t.textContent = v + '%'; });
-  pts.forEach((q, i) => { if (i % Math.ceil(pts.length / 8) === 0 || i === pts.length - 1) { const t = mk('text', { x: X(i), y: H_ - 6, 'text-anchor': 'middle' }); t.textContent = 'W' + q.w; } });
+  const st_ = Math.ceil(pts.length / 8);
+  pts.forEach((q, i) => { if ((i % st_ === 0 && pts.length - 1 - i >= Math.max(2, st_ * .75)) || i === pts.length - 1) { const t = mk('text', { x: X(i), y: H_ - 6, 'text-anchor': i === pts.length - 1 ? 'end' : i === 0 ? 'start' : 'middle' }); t.textContent = 'W' + q.w; } });
   const path = (key, color, dash) => { const p = mk('path', { d: pts.map((q, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(q[key])).join(''), fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', pathLength: 100, 'stroke-dasharray': '100 100', 'stroke-dashoffset': 100, class: 'drawin' + (dash ? ' dash' : '') }); return p; };
   path('playoffs', '#4cc9ff', true); path('title', '#ffc83d');
   if (S.now) { const i = pts.length - 1, nd = mk('circle', { cx: X(i), cy: Y(S.now.title), r: 7, fill: '#3ddc84', stroke: '#0b0c24', 'stroke-width': 2, class: 'pop' }); nd.style.animationDelay = '1.4s';
-    const t = mk('text', { x: X(i) - 12, y: Y(S.now.title) + 20, 'text-anchor': 'end', fill: '#3ddc84', 'font-weight': 800 }); t.textContent = 'now ' + Math.round(S.now.title) + '%'; }
+    const t = mk('text', { x: X(i) - 12, y: Y(S.now.title) + 20, 'text-anchor': 'end', fill: '#3ddc84', 'font-weight': 800, stroke: '#17194a', 'stroke-width': 4, 'paint-order': 'stroke', class: 'nowl' }); t.textContent = 'now ' + Math.round(S.now.title) + '%'; }
   const info = h('div', { class: 'sinfo mut' }, 'Tap a week to see what happened.');
   pts.forEach((q, i) => {
     const mv = (S.moves || {})[String(q.w)] || [];
@@ -209,7 +219,7 @@ function seasonChart(el) {
     const hit = mk('rect', { x: X(i) - 12, y: 0, width: 24, height: H_, fill: 'transparent', style: 'cursor:pointer' });
     hit.addEventListener('click', () => info.replaceChildren(h('b', {}, `Week ${q.w}: `), `title ${pct(q.title)}, playoffs ${pct(q.playoffs)} (from scores up to then)` + (i === pts.length - 1 && S.now ? `. Full model right now: title ${pct(S.now.title)}, playoffs ${pct(S.now.playoffs)}.` : ''), mv.length ? h('div', { style: 'margin-top:4px;color:#ff6bd6' }, mv.join(' · ')) : ''));
   });
-  el.append(svg, h('div', { class: 'slegend' }, h('span', { style: 'color:#ffc83d' }, '━ Title'), h('span', { style: 'color:#4cc9ff' }, '━ Playoffs'), h('span', { style: 'color:#ff6bd6' }, '◯ Your moves'), S.now ? h('span', { style: 'color:#3ddc84' }, '● Now') : ''), info);
+  el.append(svg, h('div', { class: 'slegend' }, h('span', { style: '--c:#ffc83d' }, h('i', { class: 'ln' }), 'Title'), h('span', { style: '--c:#4cc9ff' }, h('i', { class: 'ln' }), 'Playoffs'), h('span', { style: '--c:#ff6bd6' }, h('i', { class: 'rg' }), 'Your moves'), S.now ? h('span', { style: '--c:#3ddc84' }, h('i', { class: 'dt' }), 'Now') : ''), info);
 }
 function celebrate() {
   const k = `lastch:${LID}`, last = parseFloat(LSG(k)), ch = D.summary.kpis.ch;
@@ -575,9 +585,9 @@ function alertsBox() {
   return box;
 }
 function renderHow() {
-  if (!$('#alertsbox')) $('#how').prepend(alertsBox());
-  if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
-    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · live mode 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
+  if (!$('#alertsbox')) $('#how h2').after(alertsBox());
+  if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'margin:-2px 0 12px;color:var(--mut)' }, 'App version: checking…'); $('#how h2').after(v);
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · polish 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]
@@ -753,6 +763,7 @@ function renderSched() {
     h('div', { class: 'box' }, h('h3', {}, '🛡️ Your best lineup · ' + f1(x.total)), lu(x.lineup, true),
       x.bench.length ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Bench: ' + x.bench.map(b => `${b.player} ${b.opp === 'BYE' ? '(bye)' : f1(b.pts) + (b.chance != null && b.chance < 1 ? ` (${Math.round(b.chance * 100)}% to play)` : '')}`).join(', ')) : ''),
     x.opp_lineup ? h('div', { class: 'box' }, h('h3', {}, `⚔️ ${x.opponent} · ${f1(x.opp_total)}`), lu(x.opp_lineup, false)) : ''));
+  autoCount($('#wkview'), '.vs .v, .vs .big');
 }
 // ---------- breakouts ----------
 let BP = 'all', BO = 'all';
@@ -779,6 +790,7 @@ function renderBoom() {
       h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => openCard(b.player) }, 'PLAYER CARD'),
         h('button', { class: 'btn small', onclick: () => window.askCoach && askCoach(`Is ${b.player} about to break out? The breakout sim gives him ${b.score}% to be a weekly starter. Should I ${b.action === 'ADD' ? 'pick him up and who would I drop' : b.action === 'BUY' ? 'try to trade for him and what would it cost' : 'start or hold him'}?`) }, '🤖 ASK COACH')));
     c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; }) : [h('div', { class: 'box mut' }, 'Nobody in this group right now.')]), moreBtn('boom', B.length, renderBoom));
+  autoCount($('#bcards'), '.bpct');
 }
 seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBoom(); });
 // tab bar: fade + arrows on whichever side has more tabs
@@ -916,6 +928,7 @@ function shareBtns(pl, title) {
 }
 
 async function renderProps() {
+  if (!PLD && !$('#pbody').children.length) $('#pbody').replaceChildren(skel(3));
   if (!PLD || Date.now() - (PLD._got || 0) > 5 * 60 * 1000) {   // re-check every 5 minutes so new prices and reasons show up without restarting the app
     const f_ = await fetch('data/props_lab.json?v=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
     if (f_) { f_._got = Date.now(); PLD = f_; }
@@ -1056,6 +1069,7 @@ async function renderProps() {
       !(PLD.recent || []).length ? h('div', { class: 'box mut' }, 'No graded picks yet. This week\'s picks get graded after the games.') : ''];
   }
   body.replaceChildren(...out.filter(Boolean));
+  stagger(body); autoCount(body, '.pbig');
 }
 seg('pview', v => { PLV = v; renderProps(); });
 
@@ -1114,13 +1128,13 @@ setTimeout(checkPendingAlert, 900);
 // (keeps checking for 2 minutes, since the site can take a minute to publish a brand-new alert)
 let FRESH_T = 0;
 async function showFreshAlert() {
-  if (document.hidden || $$('.modal').length) return;
+  if (document.hidden || $$('.modal:not(.closing)').length) return;
   const t0 = Date.now(); FRESH_T = t0;
   for (let i = 0; i < 9 && FRESH_T === t0 && !document.hidden; i++) {
     ALERTS = null;
     const seen = seenAlerts();
     const a = (await loadAlerts()).find(x => !seen.has(x.id) && Date.now() - new Date(x.at) < 20 * 60 * 1000);
-    if (a) { if (!$$('.modal').length) { openAlert(a); renderAlertList(); } else markSeen(a.id); return; }   // never close something you have open
+    if (a) { if (!$$('.modal:not(.closing)').length) { openAlert(a); renderAlertList(); } else markSeen(a.id); return; }   // never close something you have open
     if ($$('.asheetwrap').length) return;
     await new Promise(r => setTimeout(r, 15000));
   }
@@ -1194,6 +1208,9 @@ async function renderAlertList() {
   document.addEventListener('visibilitychange', () => { const id = new URLSearchParams(location.search).get('alert'); if (!document.hidden && id && !$$('.asheetwrap').length) showAlertById(id); });
 })();
 
+// modals fade and slide away instead of vanishing: every close goes through .remove(), so catch it there
+{ const rm_ = Element.prototype.remove;
+  Element.prototype.remove = function () { if (this.classList && this.classList.contains('modal') && this.isConnected && !RM()) { if (this._closing) return; this._closing = true; this.classList.add('closing'); setTimeout(() => rm_.call(this), 190); return; } return rm_.call(this); }; }
 document.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('modal')) e.target.remove(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = $$('.modal'); if (m.length) m[m.length - 1].remove(); } });
 

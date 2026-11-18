@@ -461,3 +461,124 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .pop{transform-box:fill-box;transform-origin:center;animation:popin .4s 1s both}@keyframes popin{from{transform:scale(0)}}
 .slegend{display:flex;gap:14px;font-size:12px;font-weight:800;margin-top:4px}.sinfo{font-size:13px;margin-top:6px;min-height:20px}
 @media (prefers-reduced-motion:reduce){.drawin,.pop,.murow,.lst.live.big{animation:none!important;stroke-dashoffset:0}}
+
+/* ===== polish 1: shared tokens, motion, spacing ===== */
+:root{--r-md:14px;--r-sm:10px;--in-bg:#0f1138;--in-bd:#2c3080;--ease:cubic-bezier(.2,.8,.2,1);--ease-out:cubic-bezier(.16,1,.3,1);--gap:16px}
+/* header + sticky nav */
+.live{font-size:12.5px;line-height:1.35;align-items:flex-start}.live i{flex:none;margin-top:4px}
+.navwrap{margin:0 -16px;padding:0 16px;background:linear-gradient(#0a0b1ef5 72%,#0a0b1e00)}
+.navarr.l{left:6px}.navarr.r{right:6px}
+nav.tabs button{transition:transform .12s var(--ease),box-shadow .12s,filter .15s,background .2s,color .2s}
+section{animation:fade .22s ease-out}
+section>h2:first-child{margin-top:12px}
+h2{line-height:1.2}
+.box h3{line-height:1.25}
+.box{border-radius:var(--r)}
+.box+.box,.box+.hero{margin-top:0}
+#home>.box,#home>#livebox>.box{margin-bottom:var(--gap)}
+/* staggered rise when a tab's cards show up */
+.rise{animation:rise .34s var(--ease-out) both;animation-delay:var(--d,0ms)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+/* press feedback on anything tappable */
+.tap,.todoi,.pathrow,.legpick,.lchip,.weekbar .wk,.seg button,.chip2,.picks label,.shr,.mus,.tile,.pcard,.chips button,.asx,.chatx{transition:transform .14s var(--ease),border-color .15s,background .2s,box-shadow .15s}
+.tap:active,.todoi:active,.pathrow:active,.legpick:active,.lchip:active,.chip2:active,.picks label:active,.chips button:active,.shr:active{transform:scale(.97)}
+.weekbar .wk:active{transform:translateY(1px) scale(.96)}
+.seg button:active{transform:scale(.94)}
+.asx:active,.chatx:active,.mbox .x:active{transform:scale(.9)}
+.mbox .x{transition:transform .12s var(--ease)}
+tr.click:active td{background:#2c3080}
+.btn{transition:transform .1s var(--ease),box-shadow .1s,filter .15s}
+.seg button{transition:background .2s,color .2s,transform .14s var(--ease)}
+/* button rows everywhere (parlays, breakouts, etc) */
+.tbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.tbtns .btn{flex:1 1 auto;text-align:center}
+/* modals: fade + slide up, and back down on close */
+.mbox{animation:mup .3s var(--ease-out)}
+@keyframes mup{from{opacity:0;transform:translateY(28px) scale(.985)}}
+.modal.closing{animation:fadeout .19s ease-in forwards;pointer-events:none}
+.modal.closing .mbox{animation:mdown .19s ease-in forwards}
+.modal.closing .asheet{animation:sheetdown .19s ease-in forwards}
+@keyframes fadeout{to{opacity:0}}
+@keyframes mdown{to{opacity:0;transform:translateY(24px) scale(.985)}}
+@keyframes sheetdown{to{transform:translateY(100%)}}
+.asheet{animation:slideup .3s var(--ease-out)}
+.mbox .tiles{margin-bottom:14px}
+/* loading: shimmer instead of a blank screen */
+.skel{display:grid;gap:12px}
+.sk{height:120px;border-radius:var(--r);background:linear-gradient(100deg,#1a1d55 30%,#262a76 50%,#1a1d55 70%);background-size:300% 100%;animation:shim 1.2s linear infinite;border:2px solid #2c3080}
+.sk:first-child{height:84px}
+@keyframes shim{from{background-position:100% 0}to{background-position:0 0}}
+body.loading #home .box{position:relative;overflow:hidden}
+body.loading #home .box:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,#ffffff10 50%,transparent 70%);background-size:300% 100%;animation:shim 1.2s linear infinite}
+/* trade lab picks: name grows, badge and pts never get cut */
+.picks label>span:not(.tier):not(.pp){flex:1;min-width:0;line-height:1.25}
+.picks label .tier{flex:none}
+.picks .pp{margin-left:0;flex:none;white-space:nowrap;text-align:right}
+/* week matchup card */
+.muhead{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin-bottom:12px}
+.mus{min-width:0}.mus.op{text-align:right}
+.mus .k{font-family:var(--game);font-size:14px;letter-spacing:.4px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus.me .k{color:var(--fg)}
+.mupts{font-family:var(--game);font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}.mus.me .mupts{color:var(--gold)}
+.muwp b{font-size:32px;line-height:1;text-shadow:0 3px 0 #0007}.muwp small{font-size:11.5px}
+.murow{grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr);gap:5px}
+.mup{align-items:center;padding:8px 9px;border:1px solid transparent;font-size:13px;line-height:1.2}
+.mup>a,.mup>span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mup b{flex:none;font-variant-numeric:tabular-nums}
+.mup.r{justify-content:space-between}.mup.r>a,.mup.r>span{text-align:right}
+.muslot{font-family:var(--game);font-weight:400;font-size:11.5px;letter-spacing:.4px}
+#mubox>.btn{margin-top:4px}
+/* live scoreboard */
+.livecard{position:relative;overflow:hidden}
+.livecard:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:sweep 2.4s ease-in-out infinite}
+.livecard.fin:before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.lscore{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+.lside{min-width:0}.lname{font-size:13px;color:var(--mut)}.lside.me .lname{color:var(--fg)}
+.lpts{font-variant-numeric:tabular-nums;text-shadow:0 3px 0 #0007}
+.lwin{align-items:baseline}
+.lrow{grid-template-columns:34px minmax(0,1fr) auto 40px;padding:6px 8px}
+.lrow .lpos{font-family:var(--game);font-size:11.5px;letter-spacing:.3px}
+.lrow .lp{font-family:var(--body);font-weight:900;min-width:0;color:var(--fg);font-variant-numeric:tabular-nums}
+.ldet .k{font-family:var(--game);font-size:12px;letter-spacing:.5px;color:var(--mut);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ldet summary{padding:4px 0;list-style-position:inside}
+.ldet[open] .lrows{animation:rise .25s var(--ease-out)}
+/* season odds chart legend */
+.slegend{flex-wrap:wrap;gap:6px 14px;margin-top:6px}
+.slegend span{display:inline-flex;align-items:center;gap:6px;color:var(--c)}
+.slegend i{display:inline-block;flex:none}
+.slegend .ln{width:16px;height:3px;border-radius:2px;background:var(--c)}
+.slegend .ln.dash{background:repeating-linear-gradient(90deg,var(--c) 0 5px,transparent 5px 8px)}
+.slegend .rg{width:11px;height:11px;border-radius:50%;border:2px solid var(--c)}
+.slegend .dt{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.sinfo{background:var(--in-bg);border:2px solid var(--in-bd);border-radius:var(--r-sm);padding:7px 10px;line-height:1.4}
+.chart .nowl{font-size:12.5px}
+/* what changed */
+#changelist .todoi{align-items:center;cursor:default}
+/* coach's take: more room for the text on phones */
+@media(max-width:600px){
+  .coach{gap:10px}.coach .face{width:42px;height:42px;font-size:24px;border-radius:13px}
+  .coach li{padding:9px 11px;font-size:14px}
+  .mbox h2{font-size:22px;line-height:1.15}
+  .muwp b{font-size:28px}.mupts{font-size:21px}
+  .lpts{font-size:38px}
+}
+@media (prefers-reduced-motion:reduce){.rise,.sk,.livecard:before,body.loading #home .box:after{animation:none!important}}
+.lhead .lst{margin:0;display:inline-flex;align-items:center;gap:5px;line-height:1.3}
+.lst.live{font-size:11px}.lst.live.big{font-size:13px}
+.lhead>.mut{font-family:var(--game);font-size:14px;letter-spacing:.4px}
+@media(max-width:600px){
+  .picks label{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:10px;row-gap:3px}
+  .picks label>input{grid-row:1/3}
+  .picks label>span:not(.tier):not(.pp){grid-row:1/3;align-self:center}
+  .picks label .tier{grid-column:3;grid-row:1;justify-self:end}
+  .picks label .pp{grid-column:3;grid-row:2}
+  .picks label:not(:has(.tier)) .pp{grid-row:1/3;align-self:center}
+}
+.mbox .tiles{margin-bottom:20px}
+#how .box>ul{margin:0;padding-left:20px;display:grid;gap:8px;line-height:1.5}
+#alertsbox{margin-bottom:var(--gap)}
+#appver{font-size:12px}
+.hgrow{transform-box:fill-box;transform-origin:left center;animation:hgrow .55s var(--ease-out) both}.hgrow.l{transform-origin:right center}
+@keyframes hgrow{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.hgrow{animation:none!important}}
