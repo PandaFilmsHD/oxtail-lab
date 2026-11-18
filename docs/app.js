@@ -759,17 +759,18 @@ async function parlayImage(pl, title) {
   y += 50; x.fillStyle = '#ffc83d'; x.font = font(32, 800); x.fillText(pl.legs.length > 1 ? 'WHY THESE GO TOGETHER' : 'WHY WE LIKE IT', pad, y); y += 48;
   x.fillStyle = '#e8eaff'; x.font = font(30, 500); whyLines.forEach(t => { x.fillText(t, pad + 4, y); y += 40; });
   x.fillStyle = '#7d82c9'; x.font = font(24, 500); x.fillText('Chances from 50,000 simulated games. Not a guarantee. Bet small.', pad, H - 50);
-  return await new Promise(r => c.toBlob(r, 'image/png'));
+  return await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));   // JPEG: Snapchat and every other app accept it
 }
 async function shareParlay(pl, title, btn) {
   const text = parlayText(pl, title);
   try {
     const blob = await parlayImage(pl, title);
-    const file = new File([blob], 'oxtail-parlay.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; }
+    const file = new File([blob], 'oxtail-pick.jpg', { type: 'image/jpeg' });
+    // image only: Snapchat (and some other apps) drop the whole share when text rides along; the text is one tap away in 📋 Copy
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
     if (navigator.share) { await navigator.share({ text }); return; }
     await navigator.clipboard.writeText(text).catch(() => {});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'oxtail-parlay.png'; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'oxtail-pick.jpg'; a.click();
     if (btn) { btn.textContent = '✅ Copied + saved'; setTimeout(() => btn.textContent = '📤 Share', 2000); }
   } catch (e) { if (e && e.name === 'AbortError') return; try { await navigator.clipboard.writeText(text); if (btn) btn.textContent = '✅ Copied'; } catch (e2) {} }
 }
@@ -862,6 +863,28 @@ async function renderProps() {
         (() => { const bp = g.plays[0]; const fav = s.home_win >= 50 ? g.home : g.away;
           return shareBtns(itemPl(bp ? `${bp.pick} (${g.away} @ ${g.home})` : `${fav} to win (${g.away} @ ${g.home})`, bp ? bp.p : Math.max(s.home_win, 100 - s.home_win), gw, bp ? `market ${Math.round(bp.p_mkt)}% · max ${bp.max_c}¢` : kickT(g.kick)), 'Game'); })());
     }))];
+  } else if (PLV === 'bygame') {
+    const gk = (a, b) => [a, b].sort().join('-');
+    const games = (PLD.games || []).filter(g => !g.started).sort((a, b) => (a.kick || '').localeCompare(b.kick || ''));
+    const K = (PLD.kalshi || {}), kal = [...(K.buys || []), ...(K.safe || [])];
+    const out_ = [h('div', { class: 'box ptip' }, '🗓️ The best picks in each game: game lines, Kalshi buys and player props, strongest edge first. Tap any pick for why.')];
+    for (const g of games) {
+      const key = gk(g.home, g.away), picks = [];
+      g.plays.forEach(pl => picks.push({ t: '🏈', label: pl.pick, p: pl.p, edge: pl.edge, price: `up to ${pl.max_c}¢`, why: pl.why && pl.why.length ? gameWhy(g) : gameWhy(g) }));
+      kal.filter(x => x.game === key).forEach(x => picks.push({ t: '💸', label: x.label, p: x.p, edge: x.edge, price: `Kalshi ${x.cost}¢`, why: x.why }));
+      (PLD.props || []).filter(x => gk(x.team, x.opp) === key).forEach(x => picks.push({ t: '📈', label: `${x.player} ${x.side} ${x.line != null ? x.line + ' ' : ''}${x.market.toLowerCase()}`, p: x.p, edge: x.edge, price: `up to ${x.max_c}¢`, why: x.why }));
+      const seen = new Set(); const top = picks.sort((a, b) => b.edge - a.edge).filter(x => !seen.has(x.label) && seen.add(x.label)).slice(0, 6);
+      const s = g.sim;
+      out_.push(h('div', { class: 'box', style: 'margin-top:12px;padding:12px' },
+        h('div', { class: 'phead tap', onclick: () => openWhy(`${g.away} @ ${g.home}`, gameWhy(g), kickT(g.kick)) }, h('div', {}, h('div', { class: 'bn' }, `${g.away} @ ${g.home}`), h('div', { class: 'k' }, `${kickT(g.kick)} · ${g.home} ${(-g.spread) > 0 ? '+' : ''}${-g.spread} · O/U ${g.total}${g.weather ? ` · ${g.weather.wind} mph wind` : g.roof === 'dome' ? ' · indoors' : ''}`)),
+          h('div', { style: 'text-align:right' }, h('b', {}, `${s.away_pts}-${s.home_pts}`), h('div', { class: 'k' }, 'avg sim score'))),
+        ...g.angles.slice(0, 2).map(a => h('div', { class: 'k', style: 'color:var(--gold);margin-top:4px' }, '📐 ' + a.split('.')[0])),
+        top.length ? h('div', { class: 'leglist', style: 'margin-top:8px' }, ...top.map(x => h('div', { class: 'legpick tap', onclick: () => openWhy(x.label, x.why, `${Math.round(x.p)}% ours · edge +${x.edge} pts`) },
+          h('span', { class: 'lp ' + (x.edge >= 5 ? 'hi' : '') }, Math.round(x.p) + '%'), h('span', { class: 'll' }, `${x.t} ${x.label}`, h('div', { class: 'k' }, `edge +${x.edge} pts · ${x.price}`)),
+          shareIcon(x.label, x.p, x.why, `${g.away} @ ${g.home}`))))
+          : h('div', { class: 'k mut', style: 'margin-top:6px' }, 'No pick clears the bar in this game. The lines look right.')));
+    }
+    out = out_;
   } else if (PLV === 'kalshi') {
     const K = PLD.kalshi || {};
     const mins = K.at ? Math.round((Date.now() - new Date(K.at)) / 6e4) : null;
