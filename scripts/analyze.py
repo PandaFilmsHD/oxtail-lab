@@ -236,6 +236,65 @@ for n, p in P.items():
     pr["log"] = [{k: x.get(k) for k in ("w", "opp", "pts", "xfp", "tgt", "rec", "recyd", "car", "rushyd", "td", "tsh", "csh", "snap", "att", "passyd", "rz_tgt", "rz_car")} for x in u]
     PROF[n] = pr
 
+
+# ---------------- automatic availability: who plays which week, from ESPN status + practice reports + ESPN news ----------------
+import re as _re
+SEASON_END = _re.compile(r"(remainder of the (?:20\d\d )?season|season-ending|out for the (?:rest of the )?season|torn (?:his )?acl|tearing his acl|ruptured (?:his )?achilles|torn achilles)", _re.I)
+RET_WK = _re.compile(r"(?:return|back|activated|debut)\D{0,40}?week (\d{1,2})|week (\d{1,2})\D{0,25}?(?:return|comeback)", _re.I)
+LONG = _re.compile(r"(several weeks|multiple weeks|extended (?:period|absence)|four to six weeks|4-6 weeks|six to eight weeks|long-term)", _re.I)
+SHORT = _re.compile(r"(day-to-day|week-to-week|considered questionable|optimistic|expected to play|should be fine)", _re.I)
+def auto_avail(n):
+    p = P[n]; inj = p.get("inj") or "ACTIVE"
+    if inj == "ACTIVE":
+        return None
+    txt = p.get("outlook") or ""
+    rep = ((USAGE.get(norm(n)) or {}).get("injury") or {})
+    prac = (rep.get("practice") or "") if (rep.get("week") or 0) >= CUR else ""   # only this week's practice reports count
+    played = [int(w) for w, v in p["wk"].items() if v and int(w) < CUR]
+    last = max(played) if played else CUR - 1
+    q, why = {}, ""
+    if SEASON_END.search(txt) and inj in ("OUT", "INJURY_RESERVE"):
+        return {str(w): 0.0 for w in WKS}, "Out for the season (ESPN news)."
+    m_ = RET_WK.search(txt); ret = None
+    if m_:
+        ret = int(m_.group(1) or m_.group(2))
+        if ret < CUR:
+            ret = None   # old news about a week that already passed
+    if inj == "INJURY_RESERVE":
+        start = max(CUR, last + 5)   # NFL IR: at least 4 games missed
+        if ret: start = max(start, ret)
+        if "Limited" in prac or "Full" in prac: start = max(CUR, start - 1)   # practicing = return window opened
+        ramp = [0.4, 0.65, 0.8, 0.85]
+        for w in WKS:
+            q[str(w)] = 0.0 if w < start else ramp[min(w - start, 3)]
+        why = f"On IR (last played Wk {last}). Earliest realistic return Wk {start}" + (" per ESPN news" if ret else "") + (", and he's back at practice" if ("Limited" in prac or "Full" in prac) else "") + "."
+    elif inj in ("OUT", "SUSPENSION"):
+        lg = LONG.search(txt)
+        steps = [0.0, 0.2, 0.5, 0.75, 0.85] if lg else [0.0, 0.6, 0.8, 0.9]
+        if ret: steps = [0.0] * max(0, ret - CUR) + [0.7, 0.85, 0.9]
+        for i, w in enumerate(WKS):
+            q[str(w)] = steps[min(i, len(steps) - 1)]
+        why = "Ruled out this week" + (", news says it's a multi-week injury" if lg else "") + (f", ESPN says return around Wk {ret}" if ret else "") + "."
+    elif inj == "DOUBTFUL":
+        for i, w in enumerate(WKS):
+            q[str(w)] = [0.25, 0.75, 0.92][min(i, 2)]
+        why = "Doubtful this week."
+    else:   # QUESTIONABLE
+        c0 = 0.9 if "Full" in prac else 0.5 if "Did Not" in prac else 0.75
+        if SHORT.search(txt): c0 = max(c0, 0.85)
+        for i, w in enumerate(WKS):
+            q[str(w)] = c0 if i == 0 else 0.95
+        why = "Questionable this week" + (f" ({prac.replace(' in Practice', '').replace(' In Practice', '').lower()})" if prac else "") + "."
+    return q, why
+AUTO, AUTO_WHY = {}, {}
+for n in P:
+    r_ = auto_avail(n)
+    if r_:
+        AUTO[n], AUTO_WHY[n] = r_
+MANUAL = {k: v for k, v in AVAIL.items() if isinstance(v, dict) and v.get("manual")}
+AVAIL = {**AUTO, **MANUAL}   # your own "manual": true entries in assumptions.json still win
+print(f"auto availability: {len(AUTO)} injured players, {len(MANUAL)} manual overrides; Puka: {AUTO.get('Puka Nacua')}")
+
 # ---------------- fill-in check: did he only score because the starter in front of him was hurt? ----------------
 HURT = ("OUT", "INJURY_RESERVE", "SUSPENSION", "DOUBTFUL")
 def team_weeks(nfl):
@@ -268,6 +327,32 @@ for n, p in P.items():
         FILLIN[n] = {"starter": m, "out_weeks": sorted(out_w), "with_pg": (sum(with_) / len(with_)) if len(with_) >= 2 else None, "n_with": len(with_)}
         break
 print(f"fill-in guys (scored mostly while the starter was out): {len(FILLIN)}", ", ".join(f"{k} (behind {v['starter']})" for k, v in FILLIN.items()))
+
+# ---------------- role changes: judge a guy on games since his job changed, not the whole season ----------------
+ROLE = {}
+for n, p in P.items():
+    if p["pos"] not in ("RB", "WR", "TE", "QB"):
+        continue
+    u = [x for x in (USAGE.get(norm(n)) or {}).get("weeks", []) if x["w"] < CUR and x.get("snap") is not None]
+    if len(u) < 4:
+        continue
+    best = None
+    for k in range(1, len(u) - 2):   # at least 3 games in the new role
+        a, b = [x["snap"] for x in u[:k]], [x["snap"] for x in u[k:]]
+        d = sum(b) / len(b) - sum(a) / len(a)
+        if abs(d) >= 20 and (best is None or abs(d) > abs(best[1])):
+            best = (k, d)
+    if not best:
+        continue
+    k, d = best
+    since = u[k]["w"]
+    pts = [v for w_, v in p["wk"].items() if int(w_) >= since and int(w_) < CUR and v]
+    if len(pts) < 3:
+        continue
+    ROLE[n] = {"since": since, "avg": round(sum(pts) / len(pts), 1), "games": len(pts), "dir": "up" if d > 0 else "down",
+               "snap_before": round(sum(x["snap"] for x in u[:k]) / k), "snap_after": round(sum(x["snap"] for x in u[k:]) / (len(u) - k))}
+AVG = {n: (ROLE[n]["avg"] if n in ROLE and n not in FILLIN else p["avg"]) for n, p in P.items()}   # "his average" = average in his current role
+print(f"role changes: {len(ROLE)} (e.g. " + ", ".join(f"{k} since Wk{v['since']} {v['avg']} vs {P[k]['avg']}" for k, v in list(ROLE.items())[:5]) + ")")
 
 # ---------------- backtest: which mix of season avg / last 4 / usage actually predicted past weeks best? ----------------
 # Vegas: each team's implied points for a week (spread + over/under), keyed by ESPN team code
@@ -359,7 +444,7 @@ for n, p in P.items():
         if pr["xfp"] > 0 and pr.get("fpoe") is not None:
             ratio_ = (pr["xfp"] + pr["fpoe"]) / pr["xfp"]
             xf *= max(0.75, min(1.35, 1 + (ratio_ - 1) * g_ / (g_ + EFF_K)))
-    parts = [(BW[0], p["avg"])] + ([(BW[1], r)] if r is not None else []) + ([(BW[2], xf)] if xf else []) + ([(0.2, pr["espn_ros_pg"])] if pr.get("espn_ros_pg") else [])
+    parts = [(BW[0], AVG[n])] + ([(BW[1], r)] if r is not None else []) + ([(BW[2], xf)] if xf else []) + ([(0.2, pr["espn_ros_pg"])] if pr.get("espn_ros_pg") else [])
     parts = [x for x in parts if x[0] > 0] or [(1, p["avg"])]
     if p["pos"] in ("D", "K"):   # one huge D/ST game shouldn't drive the number: lean on the median game and ESPN's rest-of-season
         gs = sorted(v_ for v_ in p["wk"].values() if v_)
@@ -377,7 +462,7 @@ for n, p in P.items():
         blend = min(blend, fi["with_pg"]) if fi["with_pg"] is not None else blend * 0.4
     base = OVR.get(n, blend)
     av = AVAIL.get(n)
-    if av and av.get("v"):
+    if av and av.get("v") and av.get("manual"):
         base = av["v"]
     v, q = {}, {}
     for w in WKS:
@@ -391,7 +476,8 @@ for n, p in P.items():
         v[w] = p["proj"] if (w == CUR and p.get("proj") is not None) else round(base * f * vf, 2)
         inj = p.get("inj") or "ACTIVE"
         if av:
-            q[w] = (1.0 if p.get("proj") else 0.0) if w == CUR else float(av.get(str(w), 0))
+            q[w] = float(av.get(str(w), 0))
+            if w == CUR and p.get("proj") == 0: q[w] = 0.0
         elif inj in ("OUT", "INJURY_RESERVE", "SUSPENSION"):
             q[w] = 0.0
         elif inj == "DOUBTFUL":
@@ -584,12 +670,12 @@ def avail(n):  # share of his remaining games he's expected to play (bye weeks d
 def pub(n):
     """What other managers think he's worth: mostly ESPN's rest-of-season number (what they see in the app),
     plus season average and recent form, scaled by how often managers actually start him."""
-    p = P[n]; rec = V[n]["recent"] if V[n]["recent"] is not None else p["avg"]
+    p = P[n]; av_ = AVG.get(n, p["avg"]); rec = V[n]["recent"] if V[n]["recent"] is not None else av_
     gl_ = games_left(p, 17)
     er = p["espn_ros"] / gl_ if p.get("espn_ros") and gl_ else None
-    if er is not None and p["avg"] > 0 and not (0.35 * p["avg"] <= er <= 2.5 * p["avg"]):
+    if er is not None and av_ > 0 and not (0.35 * av_ <= er <= 2.5 * av_):
         er = None
-    base_ = OVR.get(n, (0.5 * er + 0.35 * p["avg"] + 0.15 * rec) if er is not None else (0.7 * p["avg"] + 0.3 * rec))
+    base_ = OVR.get(n, (0.5 * er + 0.35 * av_ + 0.15 * rec) if er is not None else (0.7 * av_ + 0.3 * rec))
     st = p.get("start_pct")
     perceive = 0.75 + 0.5 * (st / 100) if st is not None else 1.0
     return base_ * perceive * avail(n)
@@ -807,7 +893,8 @@ print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0
 
 # ---------------- waivers ----------------
 fa = [n for n, p in P.items() if p["t"] == 0 and p["pos"] in SKILL + ("D", "K")]
-bench = sorted([n for n in ROSTER[ME] if n not in CORE and n not in AVAIL and (P[n].get("own") or 0) < 60], key=lambda n: ros(n) + po_pts(n))   # don't drop hurt guys we expect back, or names the league still values (trade those instead)
+BACK = {n for n, a in AVAIL.items() if sum(float(a.get(str(w), 0)) for w in PLW) / max(1, len(PLW)) >= 0.4}   # hurt but expected back for the playoffs
+bench = sorted([n for n in ROSTER[ME] if n not in CORE and n not in BACK and (P[n].get("own") or 0) < 60], key=lambda n: ros(n) + po_pts(n))   # don't drop hurt guys we expect back, or names the league still values (trade those instead)
 waivers = []
 for n in fa:
     pos = P[n]["pos"]
@@ -1350,6 +1437,10 @@ def verdict(n, p, pr):
     if qs and min(qs) < 0.95: R.append(("🚑", f"Only about {round(100 * sum(qs) / len(qs))}% likely to play in the playoffs."))
     if any(not opp(p, w) for w in (SEMI, FINAL)): R.append(("💤", "Has a bye during the fantasy playoffs."))
     dep = pr.get("depth") or {}
+    if n in AUTO_WHY and n not in MANUAL:
+        a_ = AVAIL[n]; R.append(("🩺", AUTO_WHY[n] + " Chance to play: " + ", ".join(f"Wk {w} {round(100 * float(a_[str(w)]))}%" for w in WKS if w >= CUR and float(a_.get(str(w), 0)) > 0)[:120] + "."))
+    if n in ROLE and n not in FILLIN and abs(ROLE[n]["avg"] - p["avg"]) >= 1.5:
+        ro = ROLE[n]; R.append(("📈" if ro["dir"] == "up" else "📉", f"His role changed in Wk {ro['since']} (snaps {ro['snap_before']}% → {ro['snap_after']}%). He's averaged {ro['avg']} since then vs {p['avg']} on the season, so we judge him on the new role."))
     if n in FILLIN:
         fi = FILLIN[n]
         R.append(("🔁", f"Most of his points came in Weeks {', '.join(map(str, fi['out_weeks']))} while {fi['starter']} was out. {fi['starter']} is back, so he's valued as a backup now" + (f" ({fi['with_pg']:.1f} pts a game when they both played)." if fi["with_pg"] is not None else " (he's barely played with him back).")))
@@ -1367,7 +1458,7 @@ def verdict(n, p, pr):
         if starts and n in CORE: call, line = "KEEP", "Core piece of your playoff lineup. Not going anywhere."
         elif starts: call, line = "KEEP", "Starts for you in the playoffs. Only move him for a clear upgrade at his spot."
         elif v >= 25: call, line = "SELL", "Not in your best playoff lineup, but the league still values him. Use him as a trade chip."
-        elif ros_pg(n) < 6 and not AVAIL.get(n): call, line = "DROP", "Not helping you. His roster spot could be a waiver add."
+        elif ros_pg(n) < 6 and n not in BACK: call, line = "DROP", "Not helping you. His roster spot could be a waiver add."
         else: call, line = "HOLD", "Bench depth. Fine to keep as injury insurance."
     elif fa_:
         call, line = ("ADD", "Worth a waiver claim for your roster.") if mv >= 15 or ros_pg(n) >= 9 else ("PASS", "Not worth a roster spot right now.")
