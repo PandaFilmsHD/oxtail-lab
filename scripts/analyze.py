@@ -233,6 +233,39 @@ for n, p in P.items():
     pr["log"] = [{k: x.get(k) for k in ("w", "opp", "pts", "xfp", "tgt", "rec", "recyd", "car", "rushyd", "td", "tsh", "csh", "snap", "att", "passyd", "rz_tgt", "rz_car")} for x in u]
     PROF[n] = pr
 
+# ---------------- fill-in check: did he only score because the starter in front of him was hurt? ----------------
+HURT = ("OUT", "INJURY_RESERVE", "SUSPENSION", "DOUBTFUL")
+def team_weeks(nfl):
+    ws = set()
+    for e in USAGE.values():
+        if e.get("team") == nfl:
+            ws.update(x["w"] for x in e.get("weeks", []))
+    return ws
+FILLIN = {}
+for n, p in P.items():
+    if p["pos"] not in ("RB", "WR", "TE"):
+        continue
+    e = USAGE.get(norm(n)) or {}
+    u = [x for x in e.get("weeks", []) if x.get("pts") is not None]
+    if len(u) < 2 or ((e.get("depth") or {}).get("rank") == 1) or p.get("own", 0) >= 70:
+        continue   # starters and guys the whole league rosters aren't fill-ins
+    for m, q_ in P.items():
+        if m == n or q_["nfl"] != p["nfl"] or q_["pos"] != p["pos"] or q_.get("inj") in HURT:
+            continue
+        em = USAGE.get(norm(m)) or {}
+        if q_["avg"] < 0.8 * p["avg"] or ((em.get("depth") or {}).get("rank") != 1 and not (q_["avg"] > p["avg"] and q_.get("own", 0) >= 60)):
+            continue   # the guy in front of him has to actually be the better player
+        played = {x["w"] for x in em.get("weeks", []) if (x.get("snap") or 0) >= 25}
+        out_w = {x["w"] for x in u if x["w"] not in played}
+        pts_out = sum(league_pts(x) for x in u if x["w"] in out_w)
+        tot = sum(league_pts(x) for x in u)
+        if tot <= 0 or pts_out / tot < 0.6:
+            continue
+        with_ = [league_pts(x) for x in u if x["w"] in played]
+        FILLIN[n] = {"starter": m, "out_weeks": sorted(out_w), "with_pg": (sum(with_) / len(with_)) if len(with_) >= 2 else None, "n_with": len(with_)}
+        break
+print(f"fill-in guys (scored mostly while the starter was out): {len(FILLIN)}", ", ".join(f"{k} (behind {v['starter']})" for k, v in FILLIN.items()))
+
 V = {}
 for n, p in P.items():
     r = recent(p)
@@ -244,6 +277,9 @@ for n, p in P.items():
     blend = sum(w_ * x for w_, x in parts) / sum(w_ for w_, _ in parts)
     if pr.get("trend"):  # usage going up or down lately moves value up to 10%
         blend *= max(0.9, min(1.1, 1 + 0.4 * (pr["trend"] - 1)))
+    fi = FILLIN.get(n)
+    if fi:   # his points came with the starter out; the starter's back, so value him as the backup he is now
+        blend = min(blend, fi["with_pg"]) if fi["with_pg"] is not None else blend * 0.4
     base = OVR.get(n, blend)
     av = AVAIL.get(n)
     if av and av.get("v"):
@@ -851,6 +887,9 @@ def verdict(n, p, pr):
     if qs and min(qs) < 0.95: R.append(("🚑", f"Only about {round(100 * sum(qs) / len(qs))}% likely to play in the playoffs."))
     if any(not opp(p, w) for w in (PO2, PO3)): R.append(("💤", "Has a bye during the fantasy playoffs."))
     dep = pr.get("depth") or {}
+    if n in FILLIN:
+        fi = FILLIN[n]
+        R.append(("🔁", f"Most of his points came in Weeks {', '.join(map(str, fi['out_weeks']))} while {fi['starter']} was out. {fi['starter']} is back, so he's valued as a backup now" + (f" ({fi['with_pg']:.1f} pts a game when they both played)." if fi["with_pg"] is not None else " (he's barely played with him back).")))
     if dep.get("rank", 1) > 1 and p["pos"] != "QB" and p.get("inj") not in ("OUT", "INJURY_RESERVE"): R.append(("🪜", f"Listed {dep['pos']}{dep['rank']} on the depth chart."))
     rz = (pr.get("rz_tgt") or 0) + (pr.get("rz_car") or 0)
     if pr.get("games") and rz / pr["games"] >= 2.2: R.append(("🎯", f"Big red zone role: {rz} red zone chances in {pr['games']} games."))
