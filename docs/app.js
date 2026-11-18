@@ -667,3 +667,29 @@ let _hiddenAt = 0;
 document.addEventListener('visibilitychange', () => { if (document.hidden) _hiddenAt = Date.now(); else if (_hiddenAt && Date.now() - _hiddenAt > 10 * 60 * 1000) location.reload(); });
 
 
+
+// ---------- alert reports: tapping a phone alert opens ?alert=<id> ----------
+let ALERTS = null;
+async function loadAlerts() { if (!ALERTS) ALERTS = await fetch('data/alerts.json?v=' + Date.now()).then(r => r.ok ? r.json() : { alerts: [] }).catch(() => ({ alerts: [] })); return ALERTS.alerts || []; }
+function openAlert(a) {
+  const ago = m => { const d = (Date.now() - new Date(m)) / 6e4; return d < 60 ? Math.round(d) + ' min ago' : d < 1440 ? Math.round(d / 60) + ' hr ago' : Math.round(d / 1440) + ' days ago'; };
+  const sec = (k, t) => t ? h('div', { class: 'arep' }, h('div', { class: 'k' }, k), h('p', {}, t)) : '';
+  const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'mbox', style: 'max-width:520px' },
+    h('button', { class: 'x', onclick: () => m.remove() }, '×'),
+    h('h2', { style: 'font-size:24px;line-height:1.2' }, a.title),
+    h('div', { class: 'sub', style: 'margin:4px 0 12px' }, ago(a.at) + (a.leagues && a.leagues.length ? ' · ' + a.leagues.join(', ') : '')),
+    sec('📰 WHAT HAPPENED', a.report.what), sec('📊 WHAT IT MEANS', a.report.means), sec('✅ WHAT TO DO', a.report.todo),
+    h('div', { class: 'bar', style: 'margin-top:12px' }, (a.actions || []).map(x => h('button', { class: 'btn small', onclick: () => {
+      m.remove();
+      if (x.league && x.league !== LID) { location.href = `?league=${x.league}#${x.tab || 'home'}`; return; }
+      if (x.player) openCard(x.player); else if (x.tab) tab(x.tab);
+    } }, x.label)))));
+  document.body.append(m);
+}
+(async () => {
+  const id = new URLSearchParams(location.search).get('alert');
+  const list = await loadAlerts();
+  const box = document.getElementById('alertlist');
+  if (box) box.replaceChildren(...(list.length ? list.slice(0, 5).map(a => h('div', { class: 'todoi', onclick: () => openAlert(a) }, h('div', { style: 'flex:1' }, h('b', {}, a.title), h('div', { class: 'td' }, a.body)))) : [h('p', { class: 'mut', style: 'margin:0' }, 'No alerts yet. You\'ll get one when something changes with your players.')]));
+  if (id) { const a = list.find(x => x.id === id); if (a) setTimeout(() => openAlert(a), 600); history.replaceState(null, '', location.pathname + (LID ? '?league=' + LID : '') + location.hash); }
+})();

@@ -351,3 +351,7 @@ body{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left)
 
 .installbar{display:flex;align-items:center;gap:10px;justify-content:space-between;background:linear-gradient(90deg,#2a1f63,#13163f);border:2px solid #ffc83d;border-radius:14px;padding:8px 10px;margin:8px 0;font-weight:800;font-size:14px}
 .isteps{padding-left:22px;line-height:1.5}.isteps li{margin:8px 0;font-size:15px}
+
+.arep{background:#0f1138;border:2px solid #2c3080;border-radius:12px;padding:10px 12px;margin:8px 0}
+.arep .k{font-family:'Lilita One',sans-serif;font-size:12px;color:#ffc83d;letter-spacing:.5px}
+.arep p{margin:4px 0 0;line-height:1.45;font-size:14.5px}

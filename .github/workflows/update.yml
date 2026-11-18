@@ -3,6 +3,8 @@ name: Update league + sims
 on:
   schedule:
     - cron: "*/30 * * * *"   # checks ESPN every 30 min; sims only rerun when something changed
+    - cron: "5-55/10 16-23 * * 0"   # game day: every 10 min Sunday 8am-4pm PT
+    - cron: "5-55/10 0-5 * * 1,2,5" # every 10 min Sun/Mon/Thu night games (Pacific evening = UTC after midnight)
   workflow_dispatch: {}   # lets you hit "Run workflow" on the Actions tab any time
 
 permissions:
@@ -43,6 +45,7 @@ jobs:
         run: |
           python scripts/run_all.py
           python scripts/notify.py publish
+          python scripts/alerts.py || echo "alerts failed"
       - name: Save results
         run: |
           git config user.name "oxtail-bot"

@@ -96,7 +96,7 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
                 "trade_deadline": (st_.get("tradeSettings") or {}).get("deadlineDate"), "veto_votes": (st_.get("tradeSettings") or {}).get("vetoVotesRequired"),
                 "waiver_type": "FAAB" if (st_.get("acquisitionSettings") or {}).get("isUsingAcquisitionBudget") else "Rolling/priority"}
 
-    teams, roster_of = [], {}
+    teams, roster_of, slot_of = [], {}, {}
     for t in d["teams"]:
         name = t.get("name") or f'{t.get("location", "")} {t.get("nickname", "")}'.strip()
         rec = t["record"]["overall"]
@@ -104,6 +104,7 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
                       "t": rec.get("ties", 0), "pf": round(rec["pointsFor"], 1), "waiver": t.get("waiverRank"), "scores": {}})
         for e in t.get("roster", {}).get("entries", []):
             roster_of[e["playerId"]] = t["id"]
+            slot_of[e["playerId"]] = e.get("lineupSlotId")   # where he's set in that team's lineup right now (20 = bench, 21 = IR)
     tmap = {t["id"]: t for t in teams}
     me = want_team
     sw = swid.lower()
@@ -175,14 +176,14 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
                 played = [v for v in wk.values() if v != 0]
                 avg = round(sum(played) / len(played), 1) if played else 0
             players.append({"id": p["id"], "n": p["fullName"], "pos": pos, "nfl": abbr.get(p.get("proTeamId"), "FA"),
-                            "t": roster_of.get(p["id"], 0), "inj": p.get("injuryStatus") or ("ACTIVE" if not p.get("injured") else "OUT"),
+                            "t": roster_of.get(p["id"], 0), "slot": slot_names.get(slot_of.get(p["id"]), slot_of.get(p["id"])), "inj": p.get("injuryStatus") or ("ACTIVE" if not p.get("injured") else "OUT"),
                             "avg": avg, "proj": proj, "own": round(own.get("percentOwned", 0)), "own_chg": round(own.get("percentChange", 0) or 0, 1),
                             "start_pct": round(own.get("percentStarted", 0) or 0), "espn_ros": round(season_proj, 1) if season_proj else None,  # ESPN keeps this as a rest-of-season projection
                             "outlook": (outlook or "")[:600], "wk": wk})
         time.sleep(0.3)
 
     # Latest injury news straight from ESPN's injury + news feeds (the outlook text above can be weeks old)
-    hurt = [x for x in players if x["inj"] not in ("ACTIVE", None) and (x["t"] or x["own"] >= 3) and x["pos"] != "D"]
+    hurt = [x for x in players if x["pos"] != "D" and ((x["inj"] not in ("ACTIVE", None) and (x["t"] or x["own"] >= 3)) or x["t"] == me)]   # injured guys + everyone on my team (for alerts)
     for x in hurt:
         if x["id"] in NEWS:
             x["news"] = NEWS[x["id"]]; continue
