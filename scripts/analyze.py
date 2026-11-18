@@ -1745,7 +1745,51 @@ this_week = {"week": CUR, "total": r1(mine["means"][CUR]), "lineup": lu,
 my_game = next(([h, a] for wk, h, a in REM if wk == CUR and ME in (h, a)), None)
 if my_game:
     o = my_game[0] if my_game[1] == ME else my_game[1]
-    this_week["opponent"] = TNAME[o]; this_week["win_pct"] = r1(mine["wk"]); this_week["opp_proj"] = r1(base[o]["means"][CUR])
+    this_week["opponent"] = TNAME[o]; this_week["win_pct"] = r1(mine["wk"]); this_week["opp_proj"] = r1(base[o]["means"][CUR]); this_week["opp_id"] = o
+
+# ---------------- live game day: real points so far + what's left, updated every run during games ----------------
+live_out = None
+try:
+    import datetime as _dtl
+    LV = M.get("live") or {}
+    _kick = (json.loads((ROOT / "data" / "usage.json").read_text()).get("kick") or {}).get(str(CUR), {}) if (ROOT / "data" / "usage.json").exists() else {}
+    PID = {p["id"]: n for n, p in P.items() if p.get("id") is not None}
+    _nowl = _dtl.datetime.now(_dtl.timezone.utc)
+    GAME_H = 3.25
+    def side_live(t):
+        d_ = LV.get(str(t)) or {}
+        rows, have, rem, var = [], 0.0, 0.0, 0.0
+        n_pre = n_live = 0
+        for pid, sid, pts, played in d_.get("rows") or []:
+            if sid in (20, 21):
+                continue
+            n = PID.get(pid)
+            nfl = P[n]["nfl"] if n else None
+            k_ = _kick.get(nfl)
+            proj = ev(n, CUR) if n else 0.0
+            if not k_:
+                state, frac = ("done" if played else "bye"), 0.0
+            else:
+                el = (_nowl - _dtl.datetime.fromisoformat(k_.replace("Z", "+00:00"))).total_seconds() / 3600
+                state = "pre" if el < 0 else "live" if el < GAME_H else "done"
+                frac = 1.0 if el < 0 else max(0.0, 1 - el / GAME_H) if el < GAME_H else 0.0
+            n_pre += state == "pre"; n_live += state == "live"
+            left = proj * frac
+            have += pts; rem += left; var += (p_sd(n, proj) ** 2 * frac) if n and proj > 0 else 0
+            rows.append({"player": n or f"#{pid}", "pos": P[n]["pos"] if n else "", "nfl": nfl or "", "pts": round(pts, 1), "proj": r1(proj), "left": r1(left), "state": state, "kick": k_})
+        return {"pts": round(d_.get("pts") or have, 1), "left": r1(rem), "var": var, "rows": rows, "pre": n_pre, "live": n_live}
+    if my_game and LV and str(ME) in LV and str(o) in LV:
+        a_, b_ = side_live(ME), side_live(o)
+        started = any(r["state"] != "pre" for r in a_["rows"] + b_["rows"] if r["kick"])
+        done = not (a_["pre"] or a_["live"] or b_["pre"] or b_["live"])
+        sd_l = math.sqrt(SD_K ** 2 * (a_["var"] + b_["var"]) + 1e-6)
+        diff = a_["pts"] + a_["left"] - b_["pts"] - b_["left"]
+        wp = (100.0 if diff > 0 else 0.0 if diff < 0 else 50.0) if done or sd_l < 0.5 else 50 * (1 + math.erf(diff / (sd_l * math.sqrt(2))))
+        for x_ in (a_, b_):
+            x_.pop("var")
+        live_out = {"active": started and not done, "final": done and started, "week": CUR, "win_pct": r1(wp), "me": {"name": TNAME[ME], **a_}, "opp": {"name": TNAME[o], "id": o, **b_}, "at": M["at"]}
+except Exception as ex_:
+    print("live failed", ex_)
 
 
 # ---------------- week by week: my best lineup every week, and who I'm playing ----------------
@@ -2009,6 +2053,68 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
         report.append({"startsit_pct": r1(100 * pairs_ok / pairs_n) if pairs_n else None, "w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "sleeper_mae": r1(pe_s / ns_) if ns_ else None, "props_mae": r1(pe_o / no_) if no_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
                        "games": calls, "picked_right": right, "brier": round(brier / calls, 3) if calls else None})
 
+# ---------------- title odds every week this season ----------------
+# Past weeks: what a simple model would have said at that time, using only the scores up to that week (no hindsight).
+# Current week: the full model. Your roster moves are marked on the weeks they happened.
+season_odds = {"weeks": [], "moves": {}}
+try:
+    SP = M.get("sched_past") or []
+    rng_b = np.random.default_rng(7)
+    NB = 6000
+    NPb = 4 if SET.get("playoff_teams") == 4 else 6
+    allg = SP + [m for m in M["sched"] if m[0] <= REG]
+    def backsim(k):
+        w0 = {t: 0.0 for t in IDS}; pf0 = {t: 0.0 for t in IDS}
+        for wk_, h_, a_ in SP:
+            if wk_ <= k:
+                sh, sa = TEAMS[h_]["scores"].get(str(wk_), 0), TEAMS[a_]["scores"].get(str(wk_), 0)
+                w0[h_] += (sh > sa) + 0.5 * (sh == sa); w0[a_] += (sa > sh) + 0.5 * (sh == sa); pf0[h_] += sh; pf0[a_] += sa
+        mu = np.array([np.mean([v for w_, v in TEAMS[t]["scores"].items() if int(w_) <= k and v > 0] or [100]) for t in IDS])
+        lg_ = mu.mean(); mu = (k * mu + 2 * lg_) / (k + 2)   # early weeks: lean on the league average
+        wins = np.tile(np.array([w0[t] for t in IDS]), (NB, 1)); pf = np.tile(np.array([pf0[t] for t in IDS]), (NB, 1))
+        for wk_, h_, a_ in allg:
+            if wk_ <= k:
+                continue
+            sc_ = mu[None, :] + EMP_SD * rng_b.standard_normal((NB, len(IDS)))
+            hw = sc_[:, IX[h_]] > sc_[:, IX[a_]]
+            wins[:, IX[h_]] += hw; wins[:, IX[a_]] += ~hw; pf[:, IX[h_]] += sc_[:, IX[h_]]; pf[:, IX[a_]] += sc_[:, IX[a_]]
+        seeds = np.argsort(-(wins * 100000 + pf), axis=1, kind="stable")
+        def g():
+            return mu[None, :] + EMP_SD * rng_b.standard_normal((NB, len(IDS)))
+        r_ = np.arange(NB)
+        def pick(a, b):
+            G = g(); return np.where(G[r_, a] > G[r_, b], a, b), np.where(G[r_, a] > G[r_, b], b, a)
+        s_ = [seeds[:, i] for i in range(NPb)]
+        if NPb == 6:
+            w36, _ = pick(s_[2], s_[5]); w45, _ = pick(s_[3], s_[4]); f1, _ = pick(s_[0], w45); f2, _ = pick(s_[1], w36)
+        else:
+            f1, _ = pick(s_[0], s_[3]); f2, _ = pick(s_[1], s_[2])
+        ch_, _ = pick(f1, f2)
+        me_ = IX[ME]
+        return r1(100 * (ch_ == me_).mean()), r1(100 * (seeds[:, :NPb] == me_).any(axis=1).mean())
+    if SP:
+        for k in range(0, CUR):
+            c_, p_ = backsim(k)
+            season_odds["weeks"].append({"w": k + 1, "title": c_, "playoffs": p_, "est": True})   # odds going into week k+1
+    season_odds["now"] = {"w": CUR, "title": r1(mine["ch"]), "playoffs": r1(mine["po"])}   # the full model, shown as its own dot (the line stays one model all season)
+    _tp = ROOT / "data" / LID / "transactions.json"
+    if _tp.exists():
+        PIDN = {p["id"]: n for n, p in P.items() if p.get("id") is not None}
+        for t_ in json.loads(_tp.read_text()):
+            if t_.get("type") not in ("FREEAGENT", "WAIVER", "TRADE_ACCEPT", "TRADE_UPHOLD") or (t_.get("status") not in ("EXECUTED", None)) or (t_.get("type") != "TRADE_ACCEPT" and t_.get("status") != "EXECUTED"):
+                continue
+            _g = [i for i in t_["items"] if i.get("to") == ME]; _v = [i for i in t_["items"] if i.get("from") == ME]
+            got = [PIDN[i["pid"]] for i in _g if i["pid"] in PIDN] + ([f"{sum(1 for i in _g if i['pid'] not in PIDN)} other"] if any(i["pid"] not in PIDN for i in _g) else [])
+            gave = [PIDN[i["pid"]] for i in _v if i["pid"] in PIDN] + ([f"{sum(1 for i in _v if i['pid'] not in PIDN)} other"] if any(i["pid"] not in PIDN for i in _v) else [])
+            if not got and not gave:
+                continue
+            txt = ("Trade: " if "TRADE" in str(t_.get("type")) else "") + ", ".join([f"+{x}" for x in got] + [f"-{x}" for x in gave])
+            L_ = season_odds["moves"].setdefault(str(t_["w"]), [])
+            if txt not in L_ and txt.replace("Trade: ", "") not in L_:
+                L_.append(txt)
+except Exception as ex_:
+    print("season odds failed", ex_)
+
 hist_p = OUT / "history.json"
 hist = json.loads(hist_p.read_text()) if hist_p.exists() else {"runs": [], "moves": []}
 stamp = M["at"]
@@ -2110,7 +2216,7 @@ try:
         changes = {"since_hrs": None, "items": []}
 except Exception as ex_:
     print("changes failed", ex_); changes = {"since_hrs": None, "items": []}
-latest = {"changes": changes, "summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "stream_plan": stream_plan, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
+latest = {"live": live_out, "season_odds": season_odds, "changes": changes, "summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "stream_plan": stream_plan, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (SEMI, FINAL) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 

@@ -109,6 +109,113 @@ function renderToss() {
     t.notes.length ? h('ul', { class: 'bwhy' }, t.notes.map(n => h('li', {}, n))) : ''))
     : [h('p', { class: 'mut', style: 'margin:0' }, 'No close calls this week. Your best lineup is clear.')]));
 }
+
+// ---------- live game day, matchup preview, season odds ----------
+const LSG = k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, LSS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+function stateChip(r) {
+  if (r.state === 'live') return h('span', { class: 'lst live' }, 'LIVE');
+  if (r.state === 'done') return h('span', { class: 'lst done' }, 'FINAL');
+  if (r.state === 'bye') return h('span', { class: 'lst bye' }, 'BYE');
+  return h('span', { class: 'lst pre' }, r.kick ? new Date(r.kick).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '');
+}
+function renderLive() {
+  const L = D.live, box = $('#livebox');
+  if (!L || !(L.active || L.final)) { box.replaceChildren(); return; }
+  const side = (x, cls) => h('div', { class: 'lside ' + cls }, h('div', { class: 'lname' }, x.name), h('div', { class: 'lpts', 'data-v': x.pts }, '0.0'), h('div', { class: 'lleft' }, L.final ? 'final' : `${f1(x.left)} still to come`));
+  const me = side(L.me, 'me'), op = side(L.opp, 'op');
+  const bar = h('div', { class: 'lbar' }, h('i', { style: 'width:50%' }));
+  const rows = x => h('div', { class: 'lrows' }, x.rows.map(r => h('div', { class: 'lrow st-' + r.state }, h('span', { class: 'mut lpos' }, r.pos), h('span', { class: 'lpl' }, pl(r.player)), stateChip(r), h('b', { class: 'lp' }, f1(r.pts)))));
+  const det = h('details', { class: 'ldet' }, h('summary', {}, 'Player by player'), h('div', { class: 'grid2', style: 'gap:10px;margin-top:8px' }, h('div', {}, h('div', { class: 'k' }, 'YOU'), rows(L.me)), h('div', {}, h('div', { class: 'k' }, L.opp.name.toUpperCase()), rows(L.opp))));
+  const won = L.final && L.me.pts > L.opp.pts;
+  box.replaceChildren(h('div', { class: 'box livecard' + (L.final ? ' fin' : '') },
+    h('div', { class: 'lhead' }, L.final ? h('span', { class: 'lst done big' }, won ? '🏆 YOU WON' : 'FINAL') : h('span', { class: 'lst live big' }, '● LIVE'), h('span', { class: 'mut' }, `Week ${L.week}`)),
+    h('div', { class: 'lscore' }, me, h('div', { class: 'lvs' }, 'vs'), op),
+    h('div', { class: 'lwin' }, h('span', {}, 'Chance you win'), h('b', { class: 'lwp' }, '0%')), bar, det));
+  countUp($('.lpts', me), L.me.pts, v => v.toFixed(1)); countUp($('.lpts', op), L.opp.pts, v => v.toFixed(1)); countUp($('.lwp', box), L.win_pct);
+  requestAnimationFrame(() => requestAnimationFrame(() => { $('i', bar).style.width = L.win_pct + '%'; }));
+  const k_ = `won:${LID}:${L.week}`;
+  if (won && !LSG(k_)) { LSS(k_, '1'); setTimeout(() => confetti(140), 600); }
+}
+function muPairs() {
+  const tw = D.summary.this_week, o = tw.opp_id != null && D.teams ? D.teams[String(tw.opp_id)] : null;
+  if (!o || !o.this_week) return null;
+  const theirs = o.this_week.lineup.slice(), rows = [];
+  for (const x of tw.lineup) { const i = theirs.findIndex(y => y.slot === x.slot); const y = i >= 0 ? theirs.splice(i, 1)[0] : null; rows.push([x, y]); }
+  theirs.forEach(y => rows.push([null, y]));
+  return { tw, o, rows };
+}
+function renderMatchup() {
+  const box = $('#mubox'), M_ = muPairs();
+  if (!M_ || (D.live && (D.live.active || D.live.final))) { box.hidden = true; return; }
+  const { tw, o, rows } = M_;
+  const wins = rows.filter(([a, b]) => a && b && a.pts > b.pts).length, n_ = rows.filter(([a, b]) => a && b).length;
+  box.hidden = false;
+  const btn = h('button', { class: 'btn small blue', onclick: () => shareMatchup(btn) }, '📤 Share');
+  box.replaceChildren(h('h3', {}, `⚔️ Week ${tw.week} matchup`),
+    h('div', { class: 'muhead' }, h('div', {}, h('div', { class: 'k' }, 'YOU'), h('div', { class: 'mut' }, f1(tw.total))), h('div', { class: 'muwp' }, h('b', {}, pct(tw.win_pct)), h('small', { class: 'mut' }, 'to win')), h('div', { style: 'text-align:right' }, h('div', { class: 'k' }, o.name), h('div', { class: 'mut' }, f1(tw.opp_proj)))),
+    h('div', { class: 'murows' }, rows.map(([a, b], i) => { const ea = a && (!b || a.pts > b.pts), eb = b && (!a || b.pts > a.pts);
+      const r = h('div', { class: 'murow' }, h('div', { class: 'mup' + (ea ? ' edge' : '') }, a ? [pl(a.player), h('b', {}, f1(a.pts))] : '—'), h('div', { class: 'muslot' }, (a || b).slot), h('div', { class: 'mup r' + (eb ? ' edge' : '') }, b ? [h('b', {}, f1(b.pts)), pl(b.player)] : '—'));
+      r.style.animationDelay = i * 45 + 'ms'; return r; })),
+    h('p', { class: 'sub', style: 'margin:10px 0 6px' }, `You have the edge at ${wins} of ${n_} spots. Their side is their best possible lineup.`), btn);
+}
+async function shareMatchup(btn) {
+  const { tw, o, rows } = muPairs();
+  const W = 1080, H = 300 + rows.length * 96 + 120, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const font = (s, w) => `${w} ${s}px Nunito, system-ui, sans-serif`;
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#24287a'); g.addColorStop(1, '#0b0c24'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#ffc83d'; x.lineWidth = 8; x.strokeRect(16, 16, W - 32, H - 32);
+  x.textAlign = 'center'; x.fillStyle = '#ffc83d'; x.font = font(40, 800); x.fillText(`🏈 WEEK ${tw.week} MATCHUP`, W / 2, 90);
+  x.fillStyle = '#fff'; x.font = font(36, 800); x.textAlign = 'left'; x.fillText('ME', 60, 160); x.textAlign = 'right'; x.fillText(o.name.slice(0, 22), W - 60, 160);
+  x.fillStyle = '#3ddc84'; x.font = font(70, 900); x.textAlign = 'center'; x.fillText(pct(tw.win_pct), W / 2, 200);
+  x.fillStyle = '#cfd3ff'; x.font = font(26, 600); x.fillText('chance I win', W / 2, 240);
+  x.font = font(44, 900); x.fillStyle = '#ffc83d'; x.textAlign = 'left'; x.fillText(f1(tw.total), 60, 220); x.textAlign = 'right'; x.fillText(f1(tw.opp_proj), W - 60, 220);
+  let y = 300;
+  for (const [a, b] of rows) {
+    const ea = a && (!b || a.pts > b.pts), eb = b && (!a || b.pts > a.pts);
+    x.fillStyle = '#0f1138'; x.beginPath(); if (x.roundRect) x.roundRect(40, y, W - 80, 80, 16); else x.rect(40, y, W - 80, 80); x.fill();
+    x.textAlign = 'center'; x.fillStyle = '#9aa0e6'; x.font = font(24, 800); x.fillText((a || b).slot, W / 2, y + 50);
+    x.font = font(30, 700); x.textAlign = 'left'; x.fillStyle = ea ? '#3ddc84' : '#fff'; if (a) x.fillText(`${a.player.slice(0, 18)}  ${f1(a.pts)}`, 64, y + 52);
+    x.textAlign = 'right'; x.fillStyle = eb ? '#3ddc84' : '#fff'; if (b) x.fillText(`${f1(b.pts)}  ${b.player.slice(0, 18)}`, W - 64, y + 52);
+    y += 96;
+  }
+  x.textAlign = 'center'; x.fillStyle = '#7d82c9'; x.font = font(24, 500); x.fillText('Projections from Oxtail Lab', W / 2, H - 50);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
+  const text = `Week ${tw.week}: me ${f1(tw.total)} vs ${o.name} ${f1(tw.opp_proj)}. I win ${pct(tw.win_pct)} of sims.`;
+  try {
+    const file = new File([blob], 'matchup.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
+    const a_ = document.createElement('a'); a_.href = URL.createObjectURL(blob); a_.download = 'matchup.jpg'; a_.click(); await navigator.clipboard.writeText(text).catch(() => {});
+    btn.textContent = '✅ Saved'; setTimeout(() => btn.textContent = '📤 Share', 2000);
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+}
+function seasonChart(el) {
+  const S = D.season_odds, pts = (S && S.weeks) || [];
+  if (pts.length < 2) { line(el, H.runs.map(r => ({ y: r.champ_pct, at: r.at, w: r.week })), { label: q => `Wk ${q.w}: ` }); return; }
+  el.replaceChildren();
+  const ns = 'http://www.w3.org/2000/svg', W = Math.max(300, el.clientWidth - 20), H_ = 190, pl_ = 30, pb = 26, svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H_}`);
+  const X = i => pl_ + i / (pts.length - 1) * (W - pl_ - 12), Y = v => H_ - pb - v / 100 * (H_ - pb - 12);
+  const mk = (tag, at) => { const e = document.createElementNS(ns, tag); for (const k in at) e.setAttribute(k, at[k]); svg.append(e); return e; };
+  [0, 50, 100].forEach(v => { mk('line', { x1: pl_, x2: W - 12, y1: Y(v), y2: Y(v), stroke: '#283141' }); const t = mk('text', { x: 2, y: Y(v) + 4 }); t.textContent = v + '%'; });
+  pts.forEach((q, i) => { if (i % Math.ceil(pts.length / 8) === 0 || i === pts.length - 1) { const t = mk('text', { x: X(i), y: H_ - 6, 'text-anchor': 'middle' }); t.textContent = 'W' + q.w; } });
+  const path = (key, color, dash) => { const p = mk('path', { d: pts.map((q, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(q[key])).join(''), fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', pathLength: 100, 'stroke-dasharray': '100 100', 'stroke-dashoffset': 100, class: 'drawin' + (dash ? ' dash' : '') }); return p; };
+  path('playoffs', '#4cc9ff', true); path('title', '#ffc83d');
+  if (S.now) { const i = pts.length - 1, nd = mk('circle', { cx: X(i), cy: Y(S.now.title), r: 7, fill: '#3ddc84', stroke: '#0b0c24', 'stroke-width': 2, class: 'pop' }); nd.style.animationDelay = '1.4s';
+    const t = mk('text', { x: X(i) - 12, y: Y(S.now.title) + 20, 'text-anchor': 'end', fill: '#3ddc84', 'font-weight': 800 }); t.textContent = 'now ' + Math.round(S.now.title) + '%'; }
+  const info = h('div', { class: 'sinfo mut' }, 'Tap a week to see what happened.');
+  pts.forEach((q, i) => {
+    const mv = (S.moves || {})[String(q.w)] || [];
+    if (mv.length) mk('circle', { cx: X(i), cy: Y(q.title), r: 8, fill: 'none', stroke: '#ff6bd6', 'stroke-width': 2, class: 'pop' });
+    const c = mk('circle', { cx: X(i), cy: Y(q.title), r: i === pts.length - 1 ? 6 : 4, fill: '#ffc83d', class: 'pop' }); c.style.animationDelay = (0.9 + i * 0.03) + 's';
+    const hit = mk('rect', { x: X(i) - 12, y: 0, width: 24, height: H_, fill: 'transparent', style: 'cursor:pointer' });
+    hit.addEventListener('click', () => info.replaceChildren(h('b', {}, `Week ${q.w}: `), `title ${pct(q.title)}, playoffs ${pct(q.playoffs)} (from scores up to then)` + (i === pts.length - 1 && S.now ? `. Full model right now: title ${pct(S.now.title)}, playoffs ${pct(S.now.playoffs)}.` : ''), mv.length ? h('div', { style: 'margin-top:4px;color:#ff6bd6' }, mv.join(' · ')) : ''));
+  });
+  el.append(svg, h('div', { class: 'slegend' }, h('span', { style: 'color:#ffc83d' }, '━ Title'), h('span', { style: 'color:#4cc9ff' }, '━ Playoffs'), h('span', { style: 'color:#ff6bd6' }, '◯ Your moves'), S.now ? h('span', { style: 'color:#3ddc84' }, '● Now') : ''), info);
+}
+function celebrate() {
+  const k = `lastch:${LID}`, last = parseFloat(LSG(k)), ch = D.summary.kpis.ch;
+  if (!Number.isNaN(last) && ch - last >= 3) setTimeout(() => confetti(70), 900);
+  LSS(k, String(ch));
+}
 function renderChanges() {
   const C = D.changes || {}, it = C.items || [], box = $('#changebox');
   if (!box) return;
@@ -117,7 +224,7 @@ function renderChanges() {
     ...it.map(x => h('div', { class: 'todoi' }, h('span', { style: 'font-size:18px' }, x.icon), h('div', { style: 'flex:1' }, x.text))));
 }
 function renderHome() {
-  renderChanges();
+  renderChanges(); renderLive(); renderMatchup(); celebrate();
   const _locked = D.summary.trade_deadline && D.summary.trade_deadline < Date.now();
   document.querySelectorAll('[data-tab=trades],[data-tab=lab]').forEach(b => b.hidden = !!_locked);
   renderTodo(); renderToss();
@@ -141,7 +248,7 @@ function renderHome() {
     tw.opponent ? h('p', { style: 'margin:0 0 10px' }, `vs ${tw.opponent}: you win `, h('b', { style: 'color:var(--gold)' }, pct(tw.win_pct)), ` of sims. You ${f1(tw.total)} vs them ${f1(tw.opp_proj)}.`) : '',
     h('div', { class: 'tw' }, lu), h('div', { class: 'chips2', style: 'margin-top:10px' }, h('span', { class: 'mut', style: 'font-size:12px;font-weight:800;align-self:center' }, 'BENCH'), tw.bench.filter(b => b.pts > 0).map(b => h('span', { class: 'chip2' }, pl(b.player), h('small', {}, ' ' + f1(b.pts))))),
     tw.bench.some(b => b.pts <= 0) ? h('p', { class: 'sub', style: 'margin:6px 0 0' }, 'Out or on bye: ' + tw.bench.filter(b => b.pts <= 0).map(b => b.player).join(', ')) : '');
-  line($('#trend'), H.runs.map(r => ({ y: r.champ_pct, at: r.at, w: r.week })), { label: q => `Wk ${q.w} · ${new Date(q.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric' })}: ` });
+  seasonChart($('#trend'));
   hbar($('#swing'), s.swing, { label: r => r.what.replace(' out for the playoffs', ''), value: r => r.change_pts, fmt: v => sgn(v) + '%', color: () => '#ff4d6d', tipText: r => `If ${r.what.replace(' out for the playoffs', '')} gets hurt for the playoffs: title odds ${sgn(r.change_pts)}%` });
 }
 
@@ -470,7 +577,7 @@ function alertsBox() {
 function renderHow() {
   if (!$('#alertsbox')) $('#how').prepend(alertsBox());
   if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
-    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · deadline + priority 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · live mode 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]

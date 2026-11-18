@@ -54,6 +54,24 @@ for L in leagues:
     T = D["tester"]; wi = T["weeks"].index(cur) if cur in T["weeks"] else 0
     tp = {p["n"]: p for p in T["players"]}
     name = (L.get("name") or "").strip()
+    # ---- live game day: lead changes and the final result ----
+    _lv = D.get("live")
+    if _lv and (_lv.get("active") or _lv.get("final")):
+        _m, _o = _lv["me"], _lv["opp"]
+        _lead = "me" if _m["pts"] > _o["pts"] else "opp" if _o["pts"] > _m["pts"] else None
+        _lk = f"{lid}|{_lv['week']}"
+        _prev = STATE.setdefault("lead", {}).get(_lk)
+        if _lv.get("final"):
+            _won = _m["pts"] > _o["pts"]
+            fire(f"final|{_lk}", f"{'🏆' if _won else '😤'} {name}: you {'won' if _won else 'lost'} week {_lv['week']}", f"{_m['pts']} to {_o['pts']} vs {_o['name']}.",
+                 {"what": f"Week {_lv['week']} is final: you {_m['pts']}, {_o['name']} {_o['pts']}.", "means": "Your title odds update on the next run.", "todo": "Check waivers for next week."},
+                 None, [name], [{"label": "OPEN HOME", "tab": "home", "league": lid}], 4)
+        elif _lead and _prev and _lead != _prev and abs(_m["pts"] - _o["pts"]) >= 1:
+            fire(f"lead|{_lk}|{_lv['at']}", f"{'🔥' if _lead == 'me' else '⚠️'} {name}: you {'took the lead' if _lead == 'me' else 'fell behind'}", f"{_m['pts']} to {_o['pts']} vs {_o['name']}. You win {_lv['win_pct']}% from here.",
+                 {"what": f"Live score: you {_m['pts']} ({_m['left']} still to come), {_o['name']} {_o['pts']} ({_o['left']} to come).", "means": f"You win {_lv['win_pct']}% of the time from here.", "todo": "Nothing to do but watch."},
+                 None, [name], [{"label": "LIVE SCORE", "tab": "home", "league": lid}], 3)
+        if _lead:
+            STATE["lead"][_lk] = _lead
     # ---- trade deadline: 48 hours out, send the best realistic offer ----
     _dl = (D.get("summary") or {}).get("trade_deadline") or (M.get("settings") or {}).get("trade_deadline")
     if _dl:
