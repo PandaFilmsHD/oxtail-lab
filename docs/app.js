@@ -109,7 +109,15 @@ function renderToss() {
     t.notes.length ? h('ul', { class: 'bwhy' }, t.notes.map(n => h('li', {}, n))) : ''))
     : [h('p', { class: 'mut', style: 'margin:0' }, 'No close calls this week. Your best lineup is clear.')]));
 }
+function renderChanges() {
+  const C = D.changes || {}, it = C.items || [], box = $('#changebox');
+  if (!box) return;
+  box.hidden = !it.length;
+  $('#changelist').replaceChildren(h('p', { class: 'sub', style: 'margin:0 0 6px' }, `Since about ${C.since_hrs || 24} hours ago`),
+    ...it.map(x => h('div', { class: 'todoi' }, h('span', { style: 'font-size:18px' }, x.icon), h('div', { style: 'flex:1' }, x.text))));
+}
 function renderHome() {
+  renderChanges();
   renderTodo(); renderToss();
   const s = D.summary, k = s.kpis, prev = H.runs.length > 1 ? H.runs[H.runs.length - 2] : null;
   gauge($('#gauge'), k.ch); countUp($('#gnum'), k.ch);
@@ -457,7 +465,7 @@ function alertsBox() {
 function renderHow() {
   if (!$('#alertsbox')) $('#how').prepend(alertsBox());
   if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
-    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · alert fix 5'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · what changed 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]

@@ -1982,7 +1982,55 @@ tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k,
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
           "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS], "v": [r1(V[n]["v"][w]) for w in WKS], "q": [round(V[n]["q"][w], 2) for w in WKS], "s": [r1(p_sd(n, ev(n, w))) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
-latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "stream_plan": stream_plan, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
+# ---------------- what changed since about a day ago ----------------
+changes = []
+STATUS_TXT = {"ACTIVE": "healthy", "QUESTIONABLE": "questionable", "DOUBTFUL": "doubtful", "OUT": "OUT", "INJURY_RESERVE": "on IR", "SUSPENSION": "suspended"}
+try:
+    import datetime as _dtc
+    _sp = ROOT / "data" / LID / "daily_snap.json"
+    _now = _dtc.datetime.now(_dtc.timezone.utc)
+    snap_now = {"at": _now.isoformat(), "ch": r1(mine["ch"]), "po": r1(mine["po"]), "bye": r1(mine["bye"]),
+                "inj": {n: (P[n].get("inj") or "ACTIVE") for n in ROSTER[ME]}, "roster": sorted(ROSTER[ME]),
+                "trades": [f"{t['give']} for {t['get']}" for t in trades[:5]], "claims": [x["player"] for x in waivers if x.get("verdict") == "CLAIM"],
+                "rank": {str(t): r1(base[t]["ch"]) for t in IDS}}
+    S_ = json.loads(_sp.read_text()) if _sp.exists() else {}
+    prev, cur_ = S_.get("prev"), S_.get("cur")
+    if not cur_ or (_now - _dtc.datetime.fromisoformat(cur_["at"])).total_seconds() > 20 * 3600:
+        prev, cur_ = cur_, snap_now   # roll the snapshot about once a day
+    else:
+        cur_ = cur_   # keep today's baseline; compare against yesterday's
+    _sp.write_text(json.dumps({"prev": prev, "cur": cur_}, separators=(",", ":")))
+    if prev:
+        hrs = round((_now - _dtc.datetime.fromisoformat(prev["at"])).total_seconds() / 3600)
+        d_ = snap_now["ch"] - prev["ch"]
+        if abs(d_) >= 0.5:
+            changes.append({"icon": "📈" if d_ > 0 else "📉", "text": f"Title odds {prev['ch']}% → {snap_now['ch']}% ({d_:+.1f})"})
+        dp_ = snap_now["po"] - prev["po"]
+        if abs(dp_) >= 1:
+            changes.append({"icon": "🎟️", "text": f"Playoff odds {prev['po']}% → {snap_now['po']}%"})
+        for n_, st_ in snap_now["inj"].items():
+            was = (prev.get("inj") or {}).get(n_)
+            if was and was != st_:
+                changes.append({"icon": "✅" if st_ == "ACTIVE" else "🚑", "text": f"{n_}: {STATUS_TXT.get(was, was)} → {STATUS_TXT.get(st_, st_)}"})
+        added = set(snap_now["roster"]) - set(prev.get("roster") or []); dropped = set(prev.get("roster") or []) - set(snap_now["roster"])
+        if added or dropped:
+            changes.append({"icon": "🔄", "text": "Roster: " + ", ".join([f"+{x}" for x in sorted(added)] + [f"-{x}" for x in sorted(dropped)])})
+        nt = [t for t in snap_now["trades"] if t not in (prev.get("trades") or [])]
+        if nt:
+            changes.append({"icon": "🤝", "text": f"New trade idea: {nt[0]}"})
+        nc = [c for c in snap_now["claims"] if c not in (prev.get("claims") or [])]
+        if nc:
+            changes.append({"icon": "📥", "text": f"New waiver claim to make: {', '.join(nc[:3])}"})
+        threat = max((t for t in IDS if t != ME), key=lambda t: snap_now["rank"][str(t)])
+        pt_ = (prev.get("rank") or {}).get(str(threat))
+        if pt_ is not None and abs(snap_now["rank"][str(threat)] - pt_) >= 1.5:
+            changes.append({"icon": "👀", "text": f"Biggest rival {TNAME[threat]}: {pt_}% → {snap_now['rank'][str(threat)]}% to win it all"})
+        changes = {"since_hrs": hrs, "items": changes}
+    else:
+        changes = {"since_hrs": None, "items": []}
+except Exception as ex_:
+    print("changes failed", ex_); changes = {"since_hrs": None, "items": []}
+latest = {"changes": changes, "summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "stream_plan": stream_plan, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (SEMI, FINAL) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 
