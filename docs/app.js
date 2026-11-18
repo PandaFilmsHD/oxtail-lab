@@ -686,10 +686,28 @@ function openAlert(a) {
     } }, x.label)))));
   document.body.append(m);
 }
+async function showAlertById(id) {
+  // the report can land a few seconds after the alert itself: show a loading sheet and keep checking for up to 2 minutes
+  const sheet = h('div', { class: 'modal' }, h('div', { class: 'mbox', style: 'max-width:520px;text-align:center' }, h('button', { class: 'x', onclick: () => sheet.remove() }, '×'), h('h2', { style: 'font-size:22px' }, '📣 Loading alert…'), h('p', { class: 'sub' }, 'Grabbing the full report.')));
+  let shown = false;
+  for (let i = 0; i < 24; i++) {
+    ALERTS = null;
+    const a = (await loadAlerts()).find(x => x.id === id);
+    if (a) { sheet.remove(); openAlert(a); shown = true; break; }
+    if (i === 0) document.body.append(sheet);
+    if (!document.body.contains(sheet)) return;   // closed it
+    await new Promise(r => setTimeout(r, 5000));
+  }
+  if (!shown && document.body.contains(sheet)) sheet.querySelector('p').textContent = 'Couldn\'t find this alert\'s report. Pull down to refresh in a minute.';
+  renderAlertList();
+}
+async function renderAlertList() {
+  const list = await loadAlerts(), box = document.getElementById('alertlist');
+  if (box) box.replaceChildren(...(list.length ? list.slice(0, 5).map(a => h('div', { class: 'todoi', onclick: () => openAlert(a) }, h('div', { style: 'flex:1' }, h('b', {}, a.title), h('div', { class: 'td' }, a.body)))) : [h('p', { class: 'mut', style: 'margin:0' }, 'No alerts yet. You\'ll get one when something changes with your players.')]));
+}
 (async () => {
   const id = new URLSearchParams(location.search).get('alert');
-  const list = await loadAlerts();
-  const box = document.getElementById('alertlist');
-  if (box) box.replaceChildren(...(list.length ? list.slice(0, 5).map(a => h('div', { class: 'todoi', onclick: () => openAlert(a) }, h('div', { style: 'flex:1' }, h('b', {}, a.title), h('div', { class: 'td' }, a.body)))) : [h('p', { class: 'mut', style: 'margin:0' }, 'No alerts yet. You\'ll get one when something changes with your players.')]));
-  if (id) { const a = list.find(x => x.id === id); if (a) setTimeout(() => openAlert(a), 600); history.replaceState(null, '', location.pathname + (LID ? '?league=' + LID : '') + location.hash); }
+  if (id) { history.replaceState(null, '', location.pathname + (LID ? '?league=' + LID : '') + location.hash); setTimeout(() => showAlertById(id), 400); }
+  renderAlertList();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => { if (ev.data && ev.data.type === 'alert' && ev.data.id) { $$('.modal').forEach(m => m.remove()); showAlertById(ev.data.id); } });
 })();

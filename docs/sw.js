@@ -1,5 +1,5 @@
 // Oxtail Lab service worker: always try the network first (fresh odds), fall back to the last saved copy when offline.
-const CACHE = 'oxtail-v2';
+const CACHE = 'oxtail-v3';
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'style.css', 'app.js', 'chat.js', 'manifest.webmanifest', 'icons/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {
@@ -17,8 +17,10 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  const id = new URL(url).searchParams.get('alert');
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
-    for (const c of cs) { if ('focus' in c) { c.navigate && c.navigate(url).catch(() => {}); return c.focus(); } }
+    const c = cs[0];
+    if (c) { c.postMessage({ type: 'alert', id }); return c.focus(); }   // app already open: tell it which alert to show
     return self.clients.openWindow(url);
   }));
 });
