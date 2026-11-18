@@ -266,6 +266,54 @@ for n, p in P.items():
         break
 print(f"fill-in guys (scored mostly while the starter was out): {len(FILLIN)}", ", ".join(f"{k} (behind {v['starter']})" for k, v in FILLIN.items()))
 
+# ---------------- backtest: which mix of season avg / last 4 / usage actually predicted past weeks best? ----------------
+EFF_K = 8
+def backtest():
+    rows = []
+    for n, p in P.items():
+        if p["pos"] not in ("QB", "RB", "WR", "TE"):
+            continue
+        wk = {int(k): v for k, v in p["wk"].items() if v}
+        e = USAGE.get(norm(n)) or {}
+        xw = {x["w"]: league_xpts(x["xs"]) for x in e.get("weeks", []) if x.get("xs")}
+        for W in sorted(wk):
+            if W >= CUR:
+                continue
+            prior = [wk[k] for k in sorted(wk) if k < W]
+            if len(prior) < 3:
+                continue
+            xp = [xw[k] for k in sorted(xw) if k < W]
+            if len(xp) < 3:
+                continue
+            avg_, rec_ = sum(prior) / len(prior), sum(prior[-4:]) / len(prior[-4:])
+            xf_ = 0.5 * sum(xp) / len(xp) + 0.5 * sum(xp[-4:]) / len(xp[-4:])
+            act = [wk[k] for k in sorted(xw) if k < W and k in wk]
+            g_ = len(act); ratio_ = sum(act) / max(1, sum(xw[k] for k in sorted(xw) if k < W and k in wk))
+            xf_ *= max(0.75, min(1.35, 1 + (ratio_ - 1) * g_ / (g_ + EFF_K)))   # usage, adjusted for how efficient he's been (shrunk toward average)
+            rows.append((avg_, rec_, xf_, wk[W]))
+    if len(rows) < 200:
+        return None
+    X = np.array(rows)
+    best = None
+    for a in np.arange(0, 1.01, 0.05):
+        for b in np.arange(0, 1.01 - a, 0.05):
+            c = 1 - a - b
+            pred = a * X[:, 0] + b * X[:, 1] + c * X[:, 2]
+            mae = float(np.abs(pred - X[:, 3]).mean())
+            if best is None or mae < best[0]:
+                best = (mae, a, b, c)
+    mae_avg = float(np.abs(X[:, 0] - X[:, 3]).mean())
+    OLD = np.array([0.375, 0.3125, 0.3125]); fit = np.array(best[1:])
+    use = 0.5 * OLD + 0.5 * fit   # lean toward what the backtest says, but don't let one season of data swing everything
+    mae_use = float(np.abs(X[:, :3] @ use - X[:, 3]).mean())
+    old = 0.375 * X[:, 0] + 0.3125 * X[:, 1] + 0.3125 * X[:, 2]
+    return {"n": len(rows), "mae_season_avg": round(mae_avg, 2), "mae_old_mix": round(float(np.abs(old - X[:, 3]).mean()), 2),
+            "mae_best": round(best[0], 2), "mae_used": round(mae_use, 2), "w_avg": round(float(use[0]), 2), "w_recent": round(float(use[1]), 2), "w_xfp": round(float(use[2]), 2),
+            "fit_avg": round(float(best[1]), 2), "fit_recent": round(float(best[2]), 2), "fit_xfp": round(float(best[3]), 2)}
+BT = backtest()
+BW = (0.3, 0.25, 0.25) if not BT else tuple(0.8 * BT[k] for k in ("w_avg", "w_recent", "w_xfp"))   # ESPN's rest-of-season number keeps the other 0.2
+print("backtest:", BT)
+
 V = {}
 for n, p in P.items():
     r = recent(p)
@@ -273,7 +321,12 @@ for n, p in P.items():
     xf = None
     if pr.get("xfp") is not None:
         xf = 0.5 * pr["xfp"] + 0.5 * pr.get("xfp4", pr["xfp"])
-    parts = [(0.3, p["avg"])] + ([(0.25, r)] if r is not None else []) + ([(0.25, xf)] if xf else []) + ([(0.2, pr["espn_ros_pg"])] if pr.get("espn_ros_pg") else [])
+        g_ = pr.get("games") or 0
+        if pr["xfp"] > 0 and pr.get("fpoe") is not None:
+            ratio_ = (pr["xfp"] + pr["fpoe"]) / pr["xfp"]
+            xf *= max(0.75, min(1.35, 1 + (ratio_ - 1) * g_ / (g_ + EFF_K)))
+    parts = [(BW[0], p["avg"])] + ([(BW[1], r)] if r is not None else []) + ([(BW[2], xf)] if xf else []) + ([(0.2, pr["espn_ros_pg"])] if pr.get("espn_ros_pg") else [])
+    parts = [x for x in parts if x[0] > 0] or [(1, p["avg"])]
     blend = sum(w_ * x for w_, x in parts) / sum(w_ for w_, _ in parts)
     if pr.get("trend"):  # usage going up or down lately moves value up to 10%
         blend *= max(0.9, min(1.1, 1 + 0.4 * (pr["trend"] - 1)))
@@ -827,13 +880,21 @@ for t in IDS:
                    "win_this_week_pct": r1(b["wk"]), "wk16_lineup": r1(b["means"][PO2]), "wk17_lineup": r1(b["means"][PO3])})
 league.sort(key=lambda x: (-x["champ_pct"], -x["playoffs_pct"]))
 # ---------------- every team's card ----------------
+from math import erf as _erf
 def team_week(t, w):
     tot_, lu_ = lineup(ROSTER[t], w, detail=True)
     for x in lu_:
         n = x["player"]; x["opp"] = opp(P[n], w) or "BYE"; x["rank"] = opp_rank(P[n], w); x["chance"] = round(V[n]["q"][w], 2) if n in V else 1
     lab = "Final" if w == PO3 else "Semis" if w == PO2 else ("Round 1" if SET.get("playoff_teams") != 4 else "Semis") if w == PO1 else f"Week {w}"
     if SET.get("playoff_teams") == 4 and w == PO2: lab = "Final"
-    return {"w": w, "label": lab, "total": r1(tot_), "expected": r1(base[t]["means"][w]), "lineup": lu_}
+    row = {"w": w, "label": lab, "total": r1(tot_), "expected": r1(base[t]["means"][w]), "lineup": lu_}
+    g = next(((h, a) for wk, h, a in REM if wk == w and t in (h, a)), None)
+    if g:
+        o = g[0] if g[1] == t else g[1]
+        me_, op_ = base[t]["means"][w], base[o]["means"][w]
+        row.update({"opp_id": o, "opponent": TNAME[o], "opp_expected": r1(op_), "opp_record": f'{TEAMS[o]["w"]}-{TEAMS[o]["l"]}',
+                    "win_pct": r1(base[t]["wk"]) if w == CUR else r1(50 * (1 + _erf((me_ - op_) / (SD * 2))))})
+    return row
 team_cards = {}
 for t in IDS:
     rost = ROSTER[t]
@@ -1059,7 +1120,7 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
            "playoff_weeks": [PO1, PO2, PO3], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
            "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy, "ideal_lineups": ideal, "tiers": TIERS,
            "expected_lineup": {w: r1(mine["means"][w]) for w in (PO1, PO2, PO3)}, "take": take, "this_week": this_week, "swing": swing,
-           "sims": A["sims"], "assumptions": {"avail": AVAIL, "override": OVR},
+           "sims": A["sims"], "backtest": BT, "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
 tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,

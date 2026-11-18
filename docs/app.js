@@ -183,12 +183,16 @@ function openTeam(id) {
   const luBox = h('div', {}), wkBtns = h('div', { class: 'weekbar', style: 'margin-top:10px' });
   const drawLu = () => {
     const L = WL.find(x => x.w === cur); if (!L) return;
-    wkBtns.replaceChildren(...WL.map(x => h('button', { class: 'wk' + (x.w === cur ? ' on' : '') + (/Final|Semis|Round/.test(x.label) ? ' po' : ''), onclick: () => { cur = x.w; drawLu(); } }, h('div', { class: 'n' }, x.label === 'Final' ? '🏆 Final' : x.label === 'Semis' ? '⚔️ Semis' : x.label === 'Round 1' ? 'Rd 1' : 'W' + x.w), h('div', { class: 's' }, f1(x.expected)))));
+    wkBtns.replaceChildren(...WL.map(x => h('button', { class: 'wk' + (x.w === cur ? ' on' : '') + (/Final|Semis|Round/.test(x.label) ? ' po' : ''), onclick: () => { cur = x.w; drawLu(); } }, h('div', { class: 'n' }, x.label === 'Final' ? '🏆 Final' : x.label === 'Semis' ? '⚔️ Semis' : x.label === 'Round 1' ? 'Rd 1' : 'W' + x.w), h('div', { class: 's' }, f1(x.expected)), x.win_pct != null ? h('div', { class: 's ' + (x.win_pct >= 50 ? 'pos' : 'neg') }, Math.round(x.win_pct) + '%') : '')));
     const top = L.lineup.slice().sort((a, b) => b.pts - a.pts).slice(0, 3);
     const easy = L.lineup.filter(x => x.rank >= 22).map(x => x.player.endsWith('D/ST') ? x.player : x.player.split(' ').slice(-1)[0]);
     const risky = L.lineup.filter(x => x.chance < 0.8).map(x => `${x.player} (${Math.round(x.chance * 100)}%)`);
-    luBox.replaceChildren(
-      h('h3', {}, `${L.label === 'Final' || L.label === 'Semis' ? '🏆 ' : '🗓️ '}${L.label} (Wk ${L.w}) best lineup · ${f1(L.total)}`),
+    const vs = L.opponent ? h('div', { class: 'vs', style: 'margin-top:4px' }, h('div', { class: 'side' }, h('div', { class: 'k' }, t.name.toUpperCase()), h('div', { class: 'v' }, f1(L.expected))),
+        h('div', { class: 'mid' }, h('div', { class: 'big ' + (L.win_pct >= 50 ? 'pos' : 'neg') }, Math.round(L.win_pct) + '%'), h('div', { class: 'k' }, 'to win')),
+        h('div', { class: 'side', style: 'cursor:pointer', title: 'Open their card', onclick: () => { m.remove(); openTeam(L.opp_id); } }, h('div', { class: 'k' }, L.opponent.toUpperCase() + ' ↗'), h('div', { class: 'v' }, f1(L.opp_expected)), h('div', { class: 'mut', style: 'font-size:12px' }, L.opp_record)))
+      : /Final|Semis|Round/.test(L.label) ? h('p', { class: 'sub', style: 'margin:4px 0 0' }, 'Playoff opponent depends on the bracket.') : '';
+    luBox.replaceChildren(vs,
+      h('h3', {}, `${L.label === 'Final' || L.label === 'Semis' ? '🏆 ' : '🗓️ '}${L.label}${/^Week/.test(L.label) ? '' : ` (Wk ${L.w})`} best lineup · ${f1(L.total)}`),
       h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Why ${f1(L.expected)}: their top scorers that week are ${top.map(x => `${x.player} ${f1(x.pts)}`).join(', ')}.` + (easy.length ? ` Easy matchups for ${easy.join(', ')}.` : '') + (risky.length ? ` Might not play: ${risky.join(', ')}.` : '') + (Math.abs(L.total - L.expected) >= 0.5 ? ` The ${f1(L.expected)} on the League page is a bit ${L.expected < L.total ? 'lower' : 'higher'} because it also covers bench guys stepping in if someone sits.` : '')),
       h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, L.lineup.map(x => h('tr', {}, h('td', { class: 'mut' }, x.slot),
         h('td', { class: 'l' }, h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(x.player, NFL(x.player), POS(x.player), VAL(x.player), 26), h('span', {}, pl(x.player), ' ', tierEl(x.player),
@@ -360,6 +364,11 @@ function renderLeague() {
 
 // ---------- how it works / settings ----------
 function renderHow() {
+  const bt = D.summary.backtest;
+  if (bt && !$('#btbox')) $('#how').append(h('div', { class: 'box', id: 'btbox', style: 'margin-top:16px' }, h('h3', {}, '🎯 How accurate are the projections?'),
+    h('p', {}, `We replayed ${bt.n.toLocaleString()} past player-weeks this season: for each one, we projected him using only what we knew before that week, then checked what he actually scored.`),
+    h('ul', { class: 'bwhy' }, h('li', {}, `Just using season average: off by ${bt.mae_season_avg} pts per player per week.`), h('li', {}, `Our old mix: off by ${bt.mae_old_mix}.`), h('li', {}, `Our mix now: off by ${bt.mae_used}. Best possible mix this season: ${bt.mae_best}.`)),
+    h('p', { class: 'sub', style: 'margin:0' }, `Current mix: ${Math.round(bt.w_xfp * 80)}% usage (what his targets and carries are worth, adjusted for how efficient he is), ${Math.round(bt.w_avg * 80)}% season average, ${Math.round(bt.w_recent * 80)}% last 4 games, 20% ESPN. Usage has been the best predictor every time, so it gets the most weight. It updates every run.`)));
   const s = D.summary, st = s.settings, sc = s.scoring;
   const names = { '3': 'Passing yard', '4': 'Passing TD', '20': 'Interception', '24': 'Rushing yard', '25': 'Rushing TD', '53': 'Reception', '42': 'Receiving yard', '43': 'Receiving TD', '72': 'Fumble lost', '19': 'Passing 2pt', '26': 'Rushing 2pt', '44': 'Receiving 2pt' };
   const slots = Object.entries(st.slots || {}).map(([k, v]) => `${v} ${k}`).join(', ');
