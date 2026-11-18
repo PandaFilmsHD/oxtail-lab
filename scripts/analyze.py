@@ -6,7 +6,7 @@ What it does:
   3. Searches 1-for-1, 2-for-1 and 1-for-2 trades with every team and sims the best ones.
   4. Ranks waiver adds, builds ROS + playoff rankings, finds bubble teams, writes a plain-English take.
 """
-import json, math, os, time, pathlib, itertools
+import json, math, os, sys, time, pathlib, itertools
 import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -682,6 +682,68 @@ if _pp.exists():
             PROPS[n] = round(pts_, 2)
 print(f"sportsbook props matched: {len(PROPS)}")
 
+# ---------------- Kalshi ladders (refreshed every run) -> implied stat medians -> overlay on the props opinion ----------------
+_kp = ROOT / "data" / "kalshi.json"
+KSTAT = {}
+if _kp.exists():
+    try:
+        _kj = json.loads(_kp.read_text())
+        _km = {"Pass yds": ("pass_yds", 1.02), "Rush yds": ("rush_yds", 1.08), "Rec yds": ("rec_yds", 1.08), "Catches": ("rec", 1.03), "Pass TDs": ("pass_tds", 1.0)}
+        for k_, x_ in (_kj.get("props") or {}).items():
+            st_ = {}
+            for mk_, (nm_, skew_) in _km.items():
+                rungs = sorted([(q["strike"], ((q.get("ask") or 0) + (q.get("bid") or q.get("ask") or 0)) / 2) for q in x_.get(mk_, []) if q.get("strike") is not None and q.get("ask")])
+                # P(over strike) falls as the strike rises: find where it crosses 50% (the median), then mean ~ median x skew
+                for (s0, p0), (s1, p1) in zip(rungs, rungs[1:]):
+                    if p0 >= 0.5 >= p1 and p0 != p1:
+                        st_[nm_] = round((s0 + (p0 - 0.5) / (p0 - p1) * (s1 - s0)) * skew_, 2); break
+            if st_:
+                KSTAT[k_] = st_
+    except Exception as ex_:
+        print("kalshi stats failed", ex_)
+_k_used = 0
+for n, p in P.items():
+    ks_ = KSTAT.get(norm(n))
+    need = {"QB": "pass_yds", "RB": "rush_yds", "WR": "rec_yds", "TE": "rec_yds"}.get(p["pos"])
+    if not ks_ or not need or need not in ks_:
+        continue
+    base_ = dict((_pn.get(norm(n)) if "_pn" in dir() and _pn else {}) or {})
+    base_.update(ks_)   # Kalshi is fresher than the weekly sportsbook pull
+    tds = -math.log(1 - base_["td_p"]) if base_.get("td_p") else (0.35 if p["pos"] in ("RB", "WR", "TE") else 0.15)
+    pts_ = (base_.get("pass_yds", 0) * SC.get("3", 0) + base_.get("pass_tds", 0) * SC.get("4", 0) + (0.75 * SC.get("20", 0) if p["pos"] == "QB" else 0) +
+            base_.get("rush_yds", 0) * SC.get("24", 0) + base_.get("rec", 0) * SC.get("53", 0) + base_.get("rec_yds", 0) * SC.get("42", 0) + tds * SC.get("25", 6))
+    PROPS[n] = round(pts_, 2); _k_used += 1
+print(f"kalshi lines folded into props: {_k_used}")
+
+# ---------------- v2 player model (usage + Vegas + defense + teammate injuries + weather; 2-6% better than v1 on 2023-25) ----------------
+V2P = {}
+try:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from props_v2 import V2 as _V2
+    _d2 = json.loads((ROOT / "data" / "prop_dists_v2.json").read_text())
+    _outs = {norm(n) for n, p in P.items() if p.get("inj") in ("OUT", "INJURY_RESERVE", "DOUBTFUL", "SUSPENSION")}
+    _v2 = _V2(_U, _d2, CUR, out_keys=_outs, key=norm)
+    _UK = {norm(v_["name"]): v_ for v_ in USAGE.values()}
+    for n, p in P.items():
+        u_ = _UK.get(norm(n))
+        if not u_ or p["pos"] not in ("QB", "RB", "WR", "TE") or not opp(p, CUR):
+            continue
+        g_ = lambda st: (_v2.our_mean(u_, st) or 0.0)
+        pos = p["pos"]
+        if pos == "QB":
+            if _v2.our_mean(u_, "pass_yds") is None:
+                continue
+            pts_ = g_("pass_yds") * SC.get("3", 0) + g_("pass_tds") * SC.get("4", 0) + 0.75 * SC.get("20", 0) + g_("rush_yds") * SC.get("24", 0) + g_("td") * SC.get("25", 6)
+        else:
+            main_ = "rush_yds" if pos == "RB" else "rec_yds"
+            if _v2.our_mean(u_, main_) is None:
+                continue
+            pts_ = (g_("rush_yds") * SC.get("24", 0) if pos in ("RB", "WR") else 0) + g_("rec") * SC.get("53", 0) + g_("rec_yds") * SC.get("42", 0) + g_("td") * SC.get("25", 6)
+        V2P[n] = round(pts_, 2)
+except Exception as ex_:
+    print("v2 projections unavailable", ex_)
+print(f"v2 projections: {len(V2P)}")
+
 # ---------------- FantasyPros consensus (top players only) -> 5th opinion ----------------
 _fpp = ROOT / "data" / "fp_proj.json"
 FPC = {}
@@ -760,13 +822,13 @@ for n, p in P.items():
         if w == CUR and p.get("proj") is not None:
             wm = STACK.get(p["pos"], 0.5)   # our weight vs ESPN's for this week, learned from graded weeks
             v[w] = round(wm * mine_ + (1 - wm) * p["proj"], 2) if p["proj"] > 0 else 0.0
-            others = [x_[n] for x_ in (SLP, PROPS, FPC) if n in x_]
+            others = [x_[n] for x_ in (SLP, PROPS, FPC, V2P) if n in x_]
             if others and p["proj"] > 0:
                 v[w] = round((2 * v[w] + sum(others)) / (2 + len(others)), 2)   # plain average with Sleeper + sportsbook props: consensus beats any one source
             if v[w] > 0 and BIAS.get(p["pos"]):
                 v[w] = round(max(0.0, v[w] + BIAS[p["pos"]]), 2)
-        elif w == CUR and (n in SLP or n in PROPS or n in FPC):
-            others = [x_[n] for x_ in (SLP, PROPS, FPC) if n in x_]
+        elif w == CUR and (n in SLP or n in PROPS or n in FPC or n in V2P):
+            others = [x_[n] for x_ in (SLP, PROPS, FPC, V2P) if n in x_]
             v[w] = round((mine_ + sum(others)) / (1 + len(others)), 2)
         else:
             v[w] = mine_
