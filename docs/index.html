@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a0b1e">
 <title>Oxtail Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=1794976764">
+<link rel="stylesheet" href="style.css?v=1794977936">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
 </head>
 <body>
@@ -25,6 +25,7 @@
     <button data-tab="ranks"><span class="ic">🏆</span>Rankings</button>
     <button data-tab="team"><span class="ic">🛡️</span>My Team</button>
     <button data-tab="sched"><span class="ic">📅</span>Schedule</button>
+    <button data-tab="boom"><span class="ic">🚀</span>Breakouts</button>
     <button data-tab="league"><span class="ic">🌎</span>League</button>
     <button data-tab="how"><span class="ic">⚙️</span>Settings</button>
   </nav>
@@ -106,6 +107,14 @@
     <div id="wkview"></div>
   </section>
 
+  <section id="boom" hidden>
+    <h2>🚀 Breakout radar</h2>
+    <p class="sub">Guys who aren't weekly starters yet but are trending toward it. For each one we take what his targets and carries are worth right now, add work from teammates who just got hurt, adjust for how efficient he is and his schedule, then simulate the rest of the season 20,000 times. The % is how often he ends up a weekly starter (top 24 RB/WR, top 12 TE).</p>
+    <div class="bar"><div class="seg" id="bpos"><button data-v="all" class="on">All</button><button data-v="RB">RB</button><button data-v="WR">WR</button><button data-v="TE">TE</button></div>
+      <div class="seg" id="bown"><button data-v="all" class="on">Everyone</button><button data-v="fa">Free agents</button><button data-v="mine">Mine</button><button data-v="other">Other teams</button></div></div>
+    <div id="bcards" class="bgrid"></div>
+  </section>
+
   <section id="league" hidden>
     <h2>🌎 League odds</h2>
     <div class="box"><div class="chart" id="lchart"></div></div>
@@ -131,7 +140,7 @@
   </section>
 </div>
 <div class="tip" id="tip" hidden></div>
-<script src="app.js?v=1794976764"></script>
-<script src="chat.js?v=1794977417"></script>
+<script src="app.js?v=1794977936"></script>
+<script src="chat.js?v=1794977936"></script>
 </body>
 </html>

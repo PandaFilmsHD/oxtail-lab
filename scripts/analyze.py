@@ -704,6 +704,116 @@ lim = {"QB": 20, "TE": 20, "RB": 45, "WR": 55}
 ranks = [x for x in ranks if x["ros_n"] <= lim[x["pos"]] or x["po_n"] <= lim[x["pos"]] or x["owner"] == "You"]
 ranks.sort(key=lambda x: -x["playoff_pts"])
 
+
+# ---------------- breakout radar: who's about to become a weekly starter? ----------------
+# 1) opportunity right now = expected fantasy points from his targets/carries the last 3 games (league scoring)
+# 2) + work freed up by a teammate who just got hurt, 3) x efficiency (shrunk toward average) x schedule,
+# 4) Monte Carlo: role sticks or fades back + week-to-week noise -> chance he's a weekly starter the rest of the way
+OUTS = ("OUT", "INJURY_RESERVE", "SUSPENSION")
+GROUP = lambda pos: ("RB",) if pos == "RB" else ("WR", "TE")
+def xlist(n):
+    e = USAGE.get(norm(n)) or {}
+    return [x for x in e.get("weeks", []) if x["w"] < CUR and x.get("xs")]
+STARTER_N = {"RB": 24, "WR": 24, "TE": 12}
+THR = {}
+for pos, k in STARTER_N.items():
+    L = sorted((ros_pg(n) for n, p in P.items() if p["pos"] == pos and p.get("inj") not in OUTS), reverse=True)
+    THR[pos] = L[k - 1] if len(L) >= k else 8
+team_wk = {}
+for e in USAGE.values():
+    for x in e.get("weeks", []):
+        team_wk.setdefault(e.get("team"), set()).add(x["w"])
+brk_rng = np.random.default_rng(777)
+breakouts = []
+for n, p in P.items():
+    pos = p["pos"]
+    if pos not in STARTER_N or p.get("inj") in OUTS or n in FILLIN:
+        continue
+    u = xlist(n)
+    if len(u) < 3:
+        continue
+    e = USAGE.get(norm(n)) or {}
+    tw = sorted(w for w in team_wk.get(e.get("team"), ()) if w < CUR)
+    if not tw or u[-1]["w"] < tw[-1] - 1:   # hasn't played in his team's last 2 games
+        continue
+    xl = [league_xpts(x["xs"]) for x in u]; al = [league_pts(x) for x in u]
+    now = sum(xl[-3:]) / 3
+    before = sum(xl[:-3]) / len(xl[:-3]) if len(xl) >= 5 else sum(xl) / len(xl)
+    # teammates who just went down (played in the team's recent games, now out) free up their work
+    vac, vac_who = 0.0, []
+    recent_team = set(tw[-3:])
+    for m, q_ in P.items():
+        if m == n or q_["nfl"] != p["nfl"] or q_["pos"] not in GROUP(pos) or q_.get("inj") not in OUTS:
+            continue
+        um = xlist(m)
+        if sum(1 for x in um if x["w"] in recent_team) < 2:
+            continue   # already out during his last 3 games, so it's baked into his numbers
+        mx = sum(league_xpts(x["xs"]) for x in um[-4:]) / len(um[-4:])
+        mates = [k for k, q2 in P.items() if q2["nfl"] == p["nfl"] and q2["pos"] in GROUP(pos) and q2.get("inj") not in OUTS and len(xlist(k)) >= 1]
+        pool = sum(sum(league_xpts(x["xs"]) for x in xlist(k)[-3:]) / max(1, len(xlist(k)[-3:])) for k in mates) or 1
+        share = min(0.6, now / pool)
+        vac += 0.7 * mx * share; vac_who.append(m)
+    g = len(xl); ratio = sum(al) / max(1, sum(xl))
+    eff = 1 + (ratio - 1) * g / (g + 8)
+    ng, pf = e.get("ngs") or {}, e.get("pfr") or {}
+    tal = []
+    try:
+        if pos == "RB" and float(ng.get("ryoe_att") or 0) >= 0.3: eff *= 1.03; tal.append(f"he gains {float(ng['ryoe_att']):+.1f} yards per carry more than his blocking gives him")
+        if pos != "RB" and float(ng.get("sep") or 0) >= (3.0 if pos == "TE" else 3.3): eff *= 1.03; tal.append(f"he gets open ({float(ng['sep']):.1f} yards of separation)")
+        if pos != "RB" and float(ng.get("yacoe") or 0) >= 1: eff *= 1.02; tal.append("he makes extra yards after the catch")
+    except (TypeError, ValueError):
+        pass
+    eff = max(0.8, min(1.25, eff))
+    fw = [opp_factor(p, w) for w in ROSW if opp(p, w)]
+    if not fw:
+        continue
+    sched = sum(fw) / len(fw)
+    proj = (now + vac) * eff * sched
+    fade = (before + 0.5 * vac) * eff * sched
+    grew = all(x > before for x in xl[-3:])
+    p_stick = 0.75 if grew or vac > 0 else 0.55
+    N = 20000
+    stick = brk_rng.random(N) < p_stick
+    mu = np.where(stick, proj, 0.5 * (proj + fade)) * np.exp(0.18 * brk_rng.standard_normal(N) - 0.0162)
+    games = [w for w in ROSW if opp(p, w)]
+    k = 1 / 0.55 ** 2   # gamma shape for ~55% week-to-week swing
+    wk = brk_rng.gamma(k, (mu / k)[:, None], (N, len(games)))
+    avg = wk.mean(1)
+    pw = [i for i, w in enumerate(games) if w in PW]
+    p_starter = float((avg >= THR[pos]).mean())
+    p_boom = float((wk[:, pw] >= 20).any(1).mean()) if pw else 0.0
+    if p["avg"] >= THR[pos] * 0.95 or proj < THR[pos] * 0.7:
+        continue   # already a starter, or not close
+    why = []
+    if now - before >= 1.5:
+        why.append(f"His role is growing: his targets and carries are worth {now:.1f} pts a game the last 3 games, up from {before:.1f} before.")
+    if vac_who:
+        why.append(f"{' and '.join(vac_who)} just went down, which opens up about {vac:.1f} pts a game of work for him.")
+    if ratio < 0.9 and g >= 4:
+        why.append(f"He's been unlucky: scoring {sum(al)/g:.1f} a game when his usage says {sum(xl)/g:.1f}. That usually catches up.")
+    s3, sa = mean([x.get("snap") for x in u[-3:]]), mean([x.get("snap") for x in u])
+    if s3 and sa and s3 - sa >= 8:
+        why.append(f"He's on the field more: {s3:.0f}% of snaps lately vs {sa:.0f}% on the season.")
+    if tal:
+        why.append("Talent check: " + ", and ".join(tal) + ".")
+    if sched >= 1.05:
+        why.append("Easy schedule the rest of the way.")
+    elif sched <= 0.95:
+        why.append("Heads up: tough schedule the rest of the way.")
+    if not why:
+        why.append(f"Steady usage worth about {now:.1f} pts a game, which is close to starter level.")
+    owner = "Free agent" if p["t"] == 0 else TNAME.get(p["t"], "?")
+    action = "ADD" if p["t"] == 0 else "STASH" if p["t"] == ME else "BUY"
+    if action == "ADD" and pos in ONE_ONLY and any(P[x]["pos"] == pos for x in ROSTER[ME]):
+        action = "WATCH"   # no backup TE: only worth it as a straight swap
+    breakouts.append({"player": n, "pos": pos, "nfl": p["nfl"], "owner": owner, "mine": p["t"] == ME, "action": action, "own": p.get("own"),
+                      "score": round(100 * p_starter), "p_starter": r1(100 * p_starter), "p_boom": r1(100 * p_boom), "season": r1(p["avg"]),
+                      "usage_now": r1(now), "usage_before": r1(before), "proj": r1(proj), "median": r1(float(np.median(avg))), "threshold": r1(THR[pos]),
+                      "trend": [r1(x) for x in xl], "pts": [r1(x) for x in al], "weeks": [x["w"] for x in u], "why": why})
+breakouts.sort(key=lambda x: (-x["score"], -x["proj"]))
+breakouts = breakouts[:30]
+print(f"breakout radar: {len(breakouts)} candidates; top: " + ", ".join(f"{b['player']} {b['score']}%" for b in breakouts[:6]))
+
 # ---------------- league, bubble, my team ----------------
 league = []
 for t in IDS:
@@ -866,7 +976,7 @@ tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 i
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
           "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
-latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule,
+latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (PO2, PO3) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 

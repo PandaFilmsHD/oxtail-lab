@@ -276,3 +276,16 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 .st.g-good{border-color:#2fa86a!important;background:#0f2a22}
 .st.g-bad{border-color:#c2384f!important;background:#2a0f18}
 .nerdsum{margin:12px 0 4px;background:#13163f;border:2px solid #2c3080;border-radius:12px;padding:10px 12px;line-height:1.5;font-size:14px}
+
+/* breakouts */
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.bcard{background:linear-gradient(160deg,#1c1f5e,#13163f);border:3px solid #2c3080;border-bottom-width:7px;border-radius:20px;padding:14px;animation:pop .35s both}
+.bcard.hot{border-color:#ff9f43;box-shadow:0 0 22px #ff9f4344}
+.bhead{display:flex;gap:10px;align-items:center}.bn{font-family:'Lilita One',sans-serif;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmid{display:flex;gap:14px;align-items:center;margin:12px 0 6px}
+.bring{--p:50;width:92px;height:92px;flex:0 0 92px;border-radius:50%;display:grid;place-content:center;text-align:center;
+  background:radial-gradient(closest-side,#13163f 78%,transparent 80% 100%),conic-gradient(#ff9f43 calc(var(--p)*1%),#2c3080 0)}
+.bpct{font-family:'Lilita One',sans-serif;font-size:26px;line-height:1}.bring .k{font-size:10px;color:#9aa0d8;font-weight:800}
+.bnums{display:grid;gap:3px;font-size:13.5px}.bspark{width:100%;height:58px;display:block}
+.blegend{display:flex;gap:12px;font-size:11px;font-weight:800;margin-top:4px}
+.bwhy{margin:6px 0 10px;padding-left:18px}.bwhy li{font-size:13.5px;line-height:1.4;margin:4px 0}

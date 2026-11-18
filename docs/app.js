@@ -461,7 +461,34 @@ function renderSched() {
       x.bench.length ? h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Bench: ' + x.bench.map(b => `${b.player} ${b.opp === 'BYE' ? '(bye)' : f1(b.pts)}`).join(', ')) : ''),
     x.opp_lineup ? h('div', { class: 'box' }, h('h3', {}, `⚔️ ${x.opponent} · ${f1(x.opp_total)}`), lu(x.opp_lineup, false)) : ''));
 }
-const RENDER = { sched: renderSched, home: renderHome, trades: renderTrades, lab: renderLab, waivers: renderWaivers, ranks: renderRanks, team: renderTeam, league: renderLeague, how: renderHow };
+// ---------- breakouts ----------
+let BP = 'all', BO = 'all';
+function spark2(xs, ps, ws) {
+  const W = 220, H = 54, mx = Math.max(10, ...xs, ...ps), X = i => 6 + i * (W - 12) / Math.max(1, xs.length - 1), Y = v => H - 6 - v / mx * (H - 14);
+  const pth = a => a.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('class', 'bspark');
+  svg.innerHTML = `<path d="${pth(xs)}" fill="none" stroke="#4cc9ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="${pth(ps)}" fill="none" stroke="#ffc83d" stroke-width="2" stroke-dasharray="4 4" opacity=".85"/>` +
+    xs.map((v, i) => `<circle cx="${X(i)}" cy="${Y(v)}" r="3" fill="#4cc9ff"><title>Wk ${ws[i]}: usage worth ${v}, scored ${ps[i]}</title></circle>`).join('');
+  return svg;
+}
+function renderBoom() {
+  const B = (D.breakouts || []).filter(b => (BP === 'all' || b.pos === BP) && (BO === 'all' || (BO === 'fa' ? b.owner === 'Free agent' : BO === 'mine' ? b.mine : b.owner !== 'Free agent' && !b.mine)));
+  const AC = { ADD: ['real', '➕ ADD'], BUY: ['stretch', '💰 BUY'], STASH: ['real', '⭐ YOURS'], WATCH: ['no', '👀 WATCH'] };
+  $('#bcards').replaceChildren(...(B.length ? B.map((b, i) => { const ring = h('div', { class: 'bring' }, h('div', { class: 'bpct' }, b.score + '%'), h('div', { class: 'k' }, 'starter odds')); ring.style.setProperty('--p', b.score);
+    const c = h('div', { class: 'bcard' + (b.score >= 60 ? ' hot' : '') },
+      h('div', { class: 'bhead' }, avatar(b.player, b.nfl, b.pos, VAL(b.player), 44), h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'bn' }, pl(b.player)), h('div', { class: 'sub', style: 'margin:0' }, `${b.pos} · ${b.nfl} · ${b.mine ? 'your team' : b.owner}`)),
+        h('span', { class: 'tag ' + AC[b.action][0] }, AC[b.action][1])),
+      h('div', { class: 'bmid' }, ring, h('div', { class: 'bnums' },
+        h('div', {}, h('span', { class: 'mut' }, 'Season avg '), h('b', {}, f1(b.season))), h('div', {}, h('span', { class: 'mut' }, 'Projected next '), h('b', { class: 'pos' }, f1(b.proj))),
+        h('div', {}, h('span', { class: 'mut' }, 'Starter line '), h('b', {}, f1(b.threshold))), h('div', {}, h('span', { class: 'mut' }, '20+ pt playoff game '), h('b', {}, Math.round(b.p_boom) + '%')))),
+      h('div', { class: 'blegend' }, h('span', { style: 'color:#4cc9ff' }, '━ usage worth'), h('span', { style: 'color:#ffc83d' }, '┅ actually scored')), spark2(b.trend, b.pts, b.weeks),
+      h('ul', { class: 'bwhy' }, b.why.map(t => h('li', {}, t))),
+      h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => openCard(b.player) }, 'PLAYER CARD'),
+        h('button', { class: 'btn small', onclick: () => window.askCoach && askCoach(`Is ${b.player} about to break out? The breakout sim gives him ${b.score}% to be a weekly starter. Should I ${b.action === 'ADD' ? 'pick him up and who would I drop' : b.action === 'BUY' ? 'try to trade for him and what would it cost' : 'start or hold him'}?`) }, '🤖 ASK COACH')));
+    c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; }) : [h('div', { class: 'box mut' }, 'Nobody in this group right now.')]));
+}
+seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBoom(); });
+const RENDER = { boom: renderBoom, sched: renderSched, home: renderHome, trades: renderTrades, lab: renderLab, waivers: renderWaivers, ranks: renderRanks, team: renderTeam, league: renderLeague, how: renderHow };
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const t = $('nav.tabs button.on').dataset.tab; if (['home', 'trades', 'league'].includes(t)) RENDER[t](); }, 200); });
 
 (async () => {

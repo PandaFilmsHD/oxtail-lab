@@ -38,6 +38,7 @@
     D.waivers.forEach(w => lines.push(`${w.player} ${w.pos} | drop ${w.drop} | ${w.ros_gain} | ${w.change_pts ?? '-'} | ${w.ros_ppg} | ${w.playoff_pts} | ${w.own_pct}%`));
     lines.push('\nTEAMS TO WORK (team | record | playoff% | weakest starting spot | spare pieces):');
     D.bubble.forEach(b => lines.push(`${b.team} | ${b.record} | ${b.playoffs_pct}% | ${b.needs} (${b.weakest_starter_pts} pts) | ${b.has_extra}`));
+    if (D.breakouts) { lines.push('\nBREAKOUT RADAR (sim: chance he becomes a weekly starter ROS | owner | action | season avg -> projected | why):'); D.breakouts.slice(0, 15).forEach(b => lines.push(`${b.player} ${b.pos} | ${b.score}% | ${b.owner} | ${b.action} | ${b.season} -> ${b.proj} | ${b.why.join(' ')}`)); }
     if (D.schedule) { lines.push('\nWEEK BY WEEK (my best lineup, opponent, win chance):'); D.schedule.forEach(x => lines.push(`${x.label}: ${x.total}${x.opponent ? ` vs ${x.opponent} ${x.opp_total}, win ${x.win_pct}%` : ''} | ` + x.lineup.map(p => `${p.slot} ${p.player} ${p.pts} vs ${p.opp}`).join(', ') + (x.byes.length ? ' | on bye: ' + x.byes.join(', ') : ''))); }
     const want = new Set();
     D.my_players.forEach(p => want.add(p.player));
@@ -126,6 +127,7 @@ ${METHOD}`;
     (D.schedule || []).filter(x => x.w > s.week).forEach(x => L.push(`${x.label}: best lineup ${x.total}${x.opponent ? ` vs ${x.opponent} ${x.opp_total}, win ${x.win_pct}%` : ''}. ` + x.lineup.map(p => `${p.slot} ${p.player} ${p.pts}${p.chance < 1 ? ` (${Math.round(p.chance * 100)}% to play)` : ''}`).join(', ')));
     L.push('Top trades (title odds change):');
     D.trades.slice(0, 6).forEach(t => L.push(`- give ${t.give}, get ${t.get} from ${t.partner} [${t.kind}] ${t.change_pts > 0 ? '+' : ''}${t.change_pts} pts. Why me: ${(t.why_me || []).join(' ')} Why them: ${(t.why_them || []).join(' ')}`));
+    L.push('Breakout radar (chance to become a weekly starter): ' + (D.breakouts || []).slice(0, 6).map(b => `${b.player} ${b.score}% (${b.owner}, ${b.action})`).join('; '));
     L.push('Top waiver adds: ' + (D.waivers || []).slice(0, 4).map(w => `add ${w.player} drop ${w.drop} (${w.change_pts > 0 ? '+' : ''}${w.change_pts})`).join('; '));
     const ql = (q || '').toLowerCase(), hits = Object.values(CARDS || {}).filter(c => { const parts = c.name.toLowerCase().split(' '); return parts.some(p => p.length > 3 && ql.includes(p)); }).slice(0, 4);
     hits.forEach(c => L.push('PLAYER ' + cardLine(c).split('\n').slice(0, 3).join(' ')));
