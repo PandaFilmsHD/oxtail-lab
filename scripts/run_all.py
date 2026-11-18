@@ -46,8 +46,8 @@ for lid in leagues:
         hp.write_text(hsh)
     lp = ROOT / "docs" / "data" / lid / "latest.json"
     if lp.exists():
-        s = json.loads(lp.read_text())["summary"]
-        index.append({"id": lid, "name": s["league"], "team": s["my_team"], "week": s["week"], "at": s["at"], "champ_pct": s["kpis"]["ch"]})
+        L = json.loads(lp.read_text()); s = L["summary"]
+        index.append({"id": lid, "name": s["league"], "team": s["my_team"], "week": s["week"], "at": s["at"], "champ_pct": s["kpis"]["ch"], "todo": L.get("todo", [])[:4]})
 default = str(CFG.get("default_league"))
 index.sort(key=lambda x: (x["id"] != default, x["name"] or ""))
 (ROOT / "docs" / "data" / "leagues.json").write_text(json.dumps({"leagues": index, "status": status}, indent=1))

@@ -5,7 +5,7 @@ const f1 = v => v == null || v === '' || Number.isNaN(+v) ? '—' : (+v).toFixed
 const pct = v => v == null ? '—' : (+v).toFixed(1) + '%';
 const sgn = v => v == null ? '—' : (v > 0 ? '+' : '') + (+v).toFixed(1);
 const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
-let D, H, CARDS = null, LID = null, BASE = 'data/';
+let D, H, CARDS = null, LID = null, BASE = 'data/', LEAGUES = [];
 const tierOf = v => v == null ? null : v >= 80 ? 'legendary' : v >= 55 ? 'epic' : v >= 30 ? 'rare' : v >= 12 ? 'uncommon' : 'common';
 let TIERS = {};
 const tierEl = n => { const t = typeof n === 'string' ? TIERS[n] : tierOf(n); return t ? h('span', { class: 'tier ' + t, title: 'Tier = rank at his position when healthy' }, t.toUpperCase()) : ''; };
@@ -88,7 +88,24 @@ $$('nav.tabs button').forEach(b => b.addEventListener('click', () => tab(b.datas
 function seg(id, onChange) { $$('#' + id + ' button').forEach(b => b.addEventListener('click', () => { $$('#' + id + ' button').forEach(x => x.classList.toggle('on', x === b)); onChange(b.dataset.v); })); }
 
 // ---------- home ----------
+function renderTodo() {
+  const T = D.todo || [];
+  $('#todo').replaceChildren(...T.map((t, i) => { const c = h('div', { class: 'todoi' + (t.urgent ? ' urgent' : ''), onclick: () => tab(t.tab) }, h('div', { class: 'ti' }, t.icon), h('div', {}, h('b', {}, t.title), h('div', { class: 'td' }, t.detail))); c.style.animationDelay = i * 60 + 'ms'; return c; }));
+  const others = LEAGUES.filter(l => l.id !== LID);
+  $('#otherl').replaceChildren(...(others.length ? [h('div', { class: 'mut', style: 'font-size:12px;font-weight:800;margin:10px 0 6px' }, 'YOUR OTHER LEAGUES'), h('div', { class: 'chips2' }, others.map(l => { const urg = (l.todo || []).filter(t => t.urgent);
+    return h('a', { class: 'chip2 lchip' + (urg.length ? ' urgent' : ''), href: `?league=${l.id}#home`, onclick: () => { try { localStorage.setItem('league', l.id); } catch (e) {} } }, h('b', {}, l.name.trim()), h('small', {}, urg.length ? ` 🚨 ${urg[0].title}` : (l.todo || []).length ? ` · ${(l.todo || []).length} to do` : ' · all set')); }))] : []));
+}
+function renderToss() {
+  const T = D.tossups || [];
+  $('#toss').replaceChildren(...(T.length ? T.slice(0, 4).map(t => h('div', { class: 'toss' },
+    h('div', { class: 'tossh' }, h('span', { class: 'mut' }, t.slot), h('span', { class: 'tag ' + (t.call === 'Coin flip' ? 'stretch' : 'real') }, t.call.toUpperCase())),
+    h('div', { class: 'tossv' }, h('div', { class: t.p_start_better >= 50 ? 'win' : '' }, pl(t.start), h('small', {}, ` ${f1(t.start_pts)} · ${t.start_opp}`)), h('span', { class: 'mut' }, 'vs'), h('div', { class: t.p_start_better < 50 ? 'win' : '' }, pl(t.alt), h('small', {}, ` ${f1(t.alt_pts)} · ${t.alt_opp}`))),
+    h('div', { class: 'tbarw' }, h('i', { style: `width:${t.p_start_better}%` })), h('div', { class: 'mut', style: 'font-size:12px' }, `${t.start.split(' ').slice(-1)[0]} outscores ${t.alt.split(' ').slice(-1)[0]} in ${Math.round(t.p_start_better)}% of sims`),
+    t.notes.length ? h('ul', { class: 'bwhy' }, t.notes.map(n => h('li', {}, n))) : ''))
+    : [h('p', { class: 'mut', style: 'margin:0' }, 'No close calls this week. Your best lineup is clear.')]));
+}
 function renderHome() {
+  renderTodo(); renderToss();
   const s = D.summary, k = s.kpis, prev = H.runs.length > 1 ? H.runs[H.runs.length - 2] : null;
   gauge($('#gauge'), k.ch); countUp($('#gnum'), k.ch);
   const rank = [...D.league].sort((a, b) => b.champ_pct - a.champ_pct).findIndex(r => r.me) + 1;
@@ -272,9 +289,10 @@ $('#clear').addEventListener('click', () => { LAB.give.clear(); LAB.get.clear();
 // ---------- waivers ----------
 function renderWaivers() {
   table($('#wtable'), [
-    { k: 'player', h: 'Add', l: 1, f: r => pl(r.player) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'drop', h: 'Drop', l: 1 },
-    { k: 'ros_gain', h: 'Lineup pts gained', f: r => sgn(r.ros_gain), c: r => cls(r.ros_gain) }, { k: 'this_week_gain', h: 'This week', f: r => sgn(r.this_week_gain), c: r => cls(r.this_week_gain) },
-    { k: 'change_pts', h: 'Title +pts', f: r => r.change_pts == null ? '—' : sgn(r.change_pts) }, { k: 'ros_ppg', h: 'ROS ppg', f: r => f1(r.ros_ppg) },
+    { k: 'verdict', h: 'Call', l: 1, f: r => h('span', { class: 'tag ' + (r.verdict === 'CLAIM' ? 'real' : 'no'), title: r.why }, r.verdict === 'CLAIM' ? '✅ CLAIM' : 'SKIP') },
+    { k: 'player', h: 'Add', l: 1, f: r => h('span', {}, pl(r.player), h('div', { class: 'mut', style: 'font-size:12px;max-width:260px;white-space:normal' }, r.why)) }, { k: 'drop', h: 'Drop', l: 1 },
+    { k: 'this_week_gain', h: 'This week', f: r => sgn(r.this_week_gain), c: r => cls(r.this_week_gain) }, { k: 'ros_gain', h: 'Rest of season', t: 'Lineup points gained, playoff weeks count double', f: r => sgn(r.ros_gain), c: r => cls(r.ros_gain) },
+    { k: 'change_pts', h: 'Title odds', f: r => r.change_pts == null ? '—' : sgn(r.change_pts) + '%' }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'ros_ppg', h: 'ROS ppg', f: r => f1(r.ros_ppg) },
     { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) }, { k: 'opp16', h: 'Semis', l: 1 }, { k: 'opp17', h: 'Final', l: 1 }, { k: 'own_pct', h: 'Rostered', f: r => r.own_pct + '%' }
   ], D.waivers);
 }
@@ -539,7 +557,7 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
 (async () => {
   const v = Date.now();
   const idx = await fetch('data/leagues.json?v=' + v).then(r => r.json()).catch(() => null);
-  const leagues = idx ? idx.leagues : [];
+  const leagues = idx ? idx.leagues : []; LEAGUES = leagues;
   const want = new URLSearchParams(location.search).get('league') || (() => { try { return localStorage.getItem('league'); } catch (e) { return null; } })();
   LID = (leagues.find(l => l.id === want) || leagues[0] || {}).id;
   BASE = LID ? `data/${LID}/` : 'data/';

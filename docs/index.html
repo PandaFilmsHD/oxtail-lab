@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
-<link rel="stylesheet" href="style.css?v=1794978347">
+<link rel="stylesheet" href="style.css?v=1794978619">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
 </head>
 <body>
@@ -34,6 +34,7 @@
   </nav></div>
 
   <section id="home">
+    <div class="box todo"><h3>📋 This week's to-do</h3><div id="todo"></div><div id="otherl"></div></div>
     <div class="hero">
       <div class="box gauge"><div id="gauge"></div><div class="num" id="gnum">0%</div><div class="lbl">CHANCE TO WIN IT ALL</div><div class="rank" id="grank"></div></div>
       <div class="tiles" id="kpis"></div>
@@ -41,7 +42,10 @@
     <h2>🧠 Coach's take</h2>
     <div class="box coach"><div class="face">🦬</div><ul id="take"></ul></div>
     <div class="grid2" style="margin-top:16px">
-      <div class="box"><h3 id="tw-h">This week</h3><div id="thisweek"></div></div>
+      <div style="display:grid;gap:16px;align-content:start">
+        <div class="box"><h3 id="tw-h">This week</h3><div id="thisweek"></div></div>
+        <div class="box"><h3>🤔 Start/sit toss-ups</h3><div id="toss"></div></div>
+      </div>
       <div style="display:grid;gap:16px">
         <div class="box"><h3>📈 Title odds over time</h3><div class="chart" id="trend"></div></div>
         <div class="box"><h3>💥 If this guy gets hurt for the playoffs (title odds)</h3><div class="chart" id="swing"></div></div>
@@ -143,7 +147,7 @@
   </section>
 </div>
 <div class="tip" id="tip" hidden></div>
-<script src="app.js?v=1794978347"></script>
-<script src="chat.js?v=1794978347"></script>
+<script src="app.js?v=1794978619"></script>
+<script src="chat.js?v=1794978619"></script>
 </body>
 </html>

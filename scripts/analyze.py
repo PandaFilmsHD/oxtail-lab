@@ -647,7 +647,7 @@ print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0
 
 # ---------------- waivers ----------------
 fa = [n for n, p in P.items() if p["t"] == 0 and p["pos"] in SKILL + ("D", "K")]
-bench = sorted([n for n in ROSTER[ME] if n not in CORE and n not in AVAIL], key=lambda n: ros(n) + po_pts(n))   # don't drop hurt guys we expect back
+bench = sorted([n for n in ROSTER[ME] if n not in CORE and n not in AVAIL and (P[n].get("own") or 0) < 60], key=lambda n: ros(n) + po_pts(n))   # don't drop hurt guys we expect back, or names the league still values (trade those instead)
 waivers = []
 for n in fa:
     pos = P[n]["pos"]
@@ -657,6 +657,8 @@ for n in fa:
             continue
         drop = same[0]
     else:
+        if not bench:
+            continue
         drop = next((x for x in bench if P[x]["pos"] == pos and ros(x) < ros(n)), bench[0])
         if P[drop]["pos"] in ONE_ONLY and sum(1 for x in ROSTER[ME] if P[x]["pos"] == P[drop]["pos"]) <= 1:
             drop = next((x for x in bench if P[x]["pos"] not in ONE_ONLY), drop)
@@ -917,6 +919,84 @@ for w in WKS:
         row["note"] = f"You have a {mine['bye']:.0f}% chance at a bye this week."
     schedule.append(row)
 
+
+# ---------------- start/sit toss-ups: close calls in this week's lineup ----------------
+def Phi(x):
+    return 0.5 * (1 + erf(x / sqrt(2)))
+def psd(n, mu):
+    sd_ = (PROF.get(n) or {}).get("sd")
+    return max(sd_ or 0, 0.45 * mu, 3.0)
+tossups = []
+sw0 = schedule[0] if schedule else None
+if sw0:
+    st_ = sw0["lineup"]; used_ = {x["player"] for x in st_}
+    benchp = [n for n in ROSTER[ME] if n not in used_ and ev(n, CUR) > 0]
+    for x in st_:
+        sn = x["player"]; ms = ev(sn, CUR)
+        alts = [n for n in benchp if P[n]["pos"] in ELIG.get(x["slot"], ()) and ev(n, CUR) >= ms - 2.5]
+        if not alts:
+            continue
+        a = max(alts, key=lambda n: ev(n, CUR)); ma = ev(a, CUR)
+        pw = Phi((ms - ma) / sqrt(psd(sn, ms) ** 2 + psd(a, ma) ** 2))
+        pa, pb = PROF.get(sn) or {}, PROF.get(a) or {}
+        notes = []
+        if V[sn]["q"][CUR] < 1: notes.append(f"{sn} is {round(100 * V[sn]['q'][CUR])}% to play, so if he's ruled out, {a} is your guy.")
+        if (pb.get("ceiling") or 0) - (pa.get("ceiling") or 0) >= 3: notes.append(f"{a} has the higher ceiling ({pb['ceiling']} vs {pa.get('ceiling')}). Go with him if you need a big week.")
+        if (pa.get("floor") or 0) - (pb.get("floor") or 0) >= 2: notes.append(f"{sn} is safer (floor {pa['floor']} vs {pb.get('floor')}).")
+        ra, rb = opp_rank(P[sn], CUR), opp_rank(P[a], CUR)
+        if ra and rb and abs(ra - rb) >= 10: notes.append(f"Matchups: {sn} vs #{ra}, {a} vs #{rb} (32 = easiest).")
+        call = f"Start {sn}" if pw >= 0.55 else "Coin flip" if pw >= 0.45 else f"Start {a}"
+        tossups.append({"slot": nice_slot(x["slot"]), "start": sn, "start_pts": r1(ms), "alt": a, "alt_pts": r1(ma), "p_start_better": r1(100 * pw), "call": call, "notes": notes,
+                        "start_opp": opp(P[sn], CUR) or "BYE", "alt_opp": opp(P[a], CUR) or "BYE"})
+    tossups.sort(key=lambda t: abs(t["p_start_better"] - 50))
+
+# ---------------- claim or skip on each waiver idea ----------------
+BRK = {b["player"]: b for b in breakouts}
+WEQ = max(1, len(REGW) + WGT["playoff_week_weight"] * len(PW))   # my_score counts playoff weeks double
+for x in waivers:
+    b = BRK.get(x["player"]); cp = x.get("change_pts")
+    if (cp is not None and cp >= 0.5) or x["ros_gain"] >= 3:
+        x["verdict"], x["why"] = "CLAIM", f"Real upgrade: about {x['ros_gain'] / WEQ:+.1f} pts a week in your lineup the rest of the way" + (f", title odds {cp:+.1f}%." if cp is not None else ".")
+    elif x["this_week_gain"] >= 3:
+        x["verdict"], x["why"] = "CLAIM", f"Fills a hole this week ({x['this_week_gain']:+.1f} pts). You can drop him again after."
+    elif b and b["score"] >= 40 and x["drop"] not in {y["player"] for y in (sw0["lineup"] if sw0 else [])} and x["drop"] not in {t["alt"] for t in tossups} | {t["start"] for t in tossups} and x["ros_gain"] >= -1:
+        x["verdict"], x["why"] = "CLAIM", f"Breakout radar gives him {b['score']}% to become a weekly starter. Cheap lottery ticket for {x['drop']}."
+    else:
+        x["verdict"], x["why"] = "SKIP", f"Barely moves the needle ({x['this_week_gain']:+.1f} this week, {x['ros_gain']:+.1f} rest of season)."
+waivers.sort(key=lambda x: (x["verdict"] != "CLAIM", -(x["ros_gain"] + 2 * x["this_week_gain"])))
+seen_drop = {}
+for x in waivers:   # one claim per guy you'd drop: the best one wins, the rest are backups
+    if x["verdict"] == "CLAIM":
+        if x["drop"] in seen_drop:
+            x["verdict"], x["why"] = "SKIP", f"Backup plan if {seen_drop[x['drop']]} is gone. " + x["why"]
+        else:
+            seen_drop[x["drop"]] = x["player"]
+
+# ---------------- this week's to-do list ----------------
+todo = []
+if sw0:
+    for x in sw0["lineup"]:
+        if x["opp"] != "BYE" and x["chance"] >= 0.8:
+            continue
+        pos_ = P[x["player"]]["pos"]
+        fa_ = max([w for w in waivers if w["pos"] == pos_ and w["this_week_gain"] > 0], key=lambda w: w["this_week_gain"], default=None)
+        alt_ = next((b for b in sw0["bench"] if b["opp"] != "BYE" and b["pos"] in ELIG.get(x["slot"], ()) and b["pts"] > 0), None)
+        what = "is on bye" if x["opp"] == "BYE" else f"might not play ({round(100 * x['chance'])}%)"
+        fix = f"Add {fa_['player']} and drop {fa_['drop']} ({fa_['this_week_gain']:+.1f} pts)." if fa_ else f"Start {alt_['player']} ({alt_['pts']}) instead." if alt_ else "Check his status before kickoff."
+        todo.append({"urgent": x["opp"] == "BYE" or x["chance"] < 0.5, "icon": "🚨" if x["opp"] == "BYE" else "🩹", "title": f"{x['player']} {what}", "detail": fix, "tab": "home"})
+for w in [w for w in waivers if w["verdict"] == "CLAIM"][:2]:
+    if any(w["player"] in t["detail"] or w["drop"] in t["detail"] for t in todo):
+        continue
+    todo.append({"urgent": False, "icon": "📥", "title": f"Claim {w['player']}, drop {w['drop']}", "detail": w["why"], "tab": "waivers"})
+for t in tossups[:1]:
+    if 45 <= t["p_start_better"] <= 55:
+        todo.append({"urgent": False, "icon": "🤔", "title": f"Toss-up at {t['slot']}: {t['start']} or {t['alt']}", "detail": f"{t['start']} {t['start_pts']} vs {t['alt']} {t['alt_pts']}. " + " ".join(t["notes"][:1]), "tab": "home"})
+rt = next((x for x in trades if x["kind"] == "realistic" and x["change_pts"] >= 1.5), None)
+if rt:
+    todo.append({"urgent": False, "icon": "🤝", "title": f"Offer {rt['give']} for {rt['get']} ({rt['partner']})", "detail": f"Title odds {rt['change_pts']:+.1f}%. {rt['pitch']}", "tab": "trades"})
+if not todo:
+    todo.append({"urgent": False, "icon": "✅", "title": "You're all set this week", "detail": "Lineup is full, no must-have waiver claims, no trade worth forcing.", "tab": "home"})
+
 # ---------------- change log vs last pull ----------------
 changes = []
 if PREV_P.exists():
@@ -986,7 +1066,7 @@ tester = {"weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 i
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
           "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS], "v": [r1(V[n]["v"][w]) for w in WKS], "q": [round(V[n]["q"][w], 2) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
-latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts,
+latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (PO2, PO3) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 
