@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 11,
    "at": "2026-11-18T06:16:16Z",
-   "champ_pct": 24.7,
+   "champ_pct": 23.6,
    "todo": [
     {
      "urgent": false,
@@ -24,16 +24,9 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Michael Wilson, drop Chimere Dike",
-     "detail": "Real upgrade: about +1.7 pts a week in your lineup the rest of the way, title odds +6.2%.",
-     "tab": "waivers"
-    },
-    {
-     "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Jeremiyah Love + Rhamondre Stevenson for DeVonta Smith + Keenan Allen (Sussy Nutcrackers)",
-     "detail": "Title odds +7.2%. Would you do Jeremiyah Love and Rhamondre Stevenson for DeVonta Smith and Keenan Allen? I think Stevenson slides right into your FLEX spot.",
+     "title": "Offer Jeremiyah Love for DeVonta Smith (Sussy Nutcrackers)",
+     "detail": "Title odds +6.9%. Would you do Jeremiyah Love for DeVonta Smith? I think you're getting the best player in the deal.",
      "tab": "trades"
     }
    ]
@@ -44,7 +37,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:16:26Z",
-   "champ_pct": 11.6,
+   "champ_pct": 11.7,
    "todo": [
     {
      "urgent": true,
@@ -75,13 +68,13 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:16:31Z",
-   "champ_pct": 4.7,
+   "champ_pct": 4.9,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +2.0%.",
      "tab": "waivers"
     },
     {
@@ -95,7 +88,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Kyren Williams + Darren Waller for Dak Prescott + DeVonta Smith (Warrent Acquired )",
-     "detail": "Title odds +1.7%. Would you do Kyren Williams and Darren Waller for Dak Prescott and DeVonta Smith? I think Williams slides right into your FLEX spot over Corum, and Prescott is just sitting on your bench.",
+     "detail": "Title odds +2.1%. Would you do Kyren Williams and Darren Waller for Dak Prescott and DeVonta Smith? I think Williams slides right into your FLEX spot over Corum, and Prescott is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -106,7 +99,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:16:21Z",
-   "champ_pct": 32.3,
+   "champ_pct": 32.6,
    "todo": [
     {
      "urgent": false,
@@ -126,7 +119,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Dalton Kincaid + Zay Flowers for DeVonta Smith + Ollie Gordon II (Tyler's Talented Team)",
-     "detail": "Title odds +8.6%. Would you do Dalton Kincaid and Zay Flowers for DeVonta Smith and Ollie Gordon II? I think Flowers slides right into your WR spot, and you're deep at WR so you can cover Smith's spot.",
+     "detail": "Title odds +8.5%. Would you do Dalton Kincaid and Zay Flowers for DeVonta Smith and Ollie Gordon II? I think Flowers slides right into your WR spot, and you're deep at WR so you can cover Smith's spot.",
      "tab": "trades"
     }
    ]
