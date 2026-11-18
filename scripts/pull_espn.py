@@ -64,10 +64,10 @@ def discover():
         r.raise_for_status()
         for pref in r.json().get("preferences", []):
             e = (pref.get("metaData") or {}).get("entry") or {}
-            if e.get("abbrev") != "ffl" or e.get("seasonId") != SEASON:
+            if (str(e.get("abbrev", "")).lower() != "ffl" and e.get("gameId") != 1) or e.get("seasonId") != SEASON:
                 continue
             for g in e.get("groups", []):
-                out[str(g["groupId"])] = {"name": g.get("groupName"), "team_id": e.get("entryId")}
+                out[str(g["groupId"])] = {"name": (g.get("groupName") or "").strip(), "team_id": e.get("entryId")}
         print(f"found {len(out)} football league(s) on your ESPN account")
     except Exception as ex:
         print("league discovery failed, using config.json leagues:", ex)
