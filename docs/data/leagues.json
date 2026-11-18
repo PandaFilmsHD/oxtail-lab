@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T08:14:00Z",
-   "champ_pct": 28.8,
+   "at": "2026-11-18T08:32:33Z",
+   "champ_pct": 28.9,
    "todo": [
     {
      "urgent": false,
@@ -24,17 +24,17 @@
     },
     {
      "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Elic Ayomanor, drop Chimere Dike",
+     "detail": "Fills a hole this week (+3.3 pts). You can drop him again after.",
+     "tab": "waivers"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Chimere Dike or Seth McGowan",
      "detail": "Chimere Dike 6.3 vs Seth McGowan 5.5. ",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer KC Concepcion for Denzel Boston (KoopKuppKlan)",
-     "detail": "Title odds +1.5%. Would you do KC Concepcion for Denzel Boston? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Boston's spot.",
-     "tab": "trades"
     }
    ]
   },
@@ -43,21 +43,21 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T08:14:23Z",
+   "at": "2026-11-18T08:32:53Z",
    "champ_pct": 14.4,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +1.4 pts a week in your lineup the rest of the way, title odds +1.8%.",
+     "detail": "Real upgrade: about +1.4 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.3%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T08:14:36Z",
+   "at": "2026-11-18T08:33:01Z",
    "champ_pct": 4.2,
    "todo": [
     {
@@ -105,7 +105,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T08:14:10Z",
+   "at": "2026-11-18T08:32:44Z",
    "champ_pct": 31.0,
    "todo": [
     {
