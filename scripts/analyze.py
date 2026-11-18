@@ -167,6 +167,38 @@ for pos_ in SKILL:
 print(f"schedule-adjusted points allowed: {len(AFPA)} defense/position pairs")
 
 
+_AFPA_CACHE = {}
+def afpa_upto(W):
+    """Same schedule-adjusted points allowed, but only from games before week W (no peeking)."""
+    if W in _AFPA_CACHE:
+        return _AFPA_CACHE[W]
+    acc, games, grp = {}, {}, {}
+    for e in USAGE.values():
+        pos_ = e.get("pos")
+        if pos_ not in SKILL:
+            continue
+        wks = [x for x in e.get("weeks", []) if x["w"] < W]
+        if len(wks) < 3:
+            continue
+        pts_ = [league_pts(x) for x in wks]; avg_ = sum(pts_) / len(pts_)
+        for x, pt in zip(wks, pts_):
+            d = TEAMFIX.get(x.get("opp"), x.get("opp"))
+            if not d:
+                continue
+            acc[(d, pos_)] = acc.get((d, pos_), 0) + (pt - avg_)
+            games.setdefault((d, pos_), set()).add(x["w"])
+            grp[(d, pos_, x["w"])] = grp.get((d, pos_, x["w"]), 0) + pt
+    gavg = {}
+    for pos_ in SKILL:
+        vals = [v for (d, ps, w), v in grp.items() if ps == pos_]
+        gavg[pos_] = sum(vals) / len(vals) if vals else 1
+    out = {}
+    for k, tot in acc.items():
+        n_ = len(games[k]); out[k] = (n_ / (n_ + 4)) * (tot / n_) / max(1.0, gavg[k[1]])   # shrunk excess as a fraction
+    _AFPA_CACHE[W] = out
+    return out
+MATCH_S, MATCH_CAP = 1.0, 0.20   # strength + cap of the matchup effect; the backtest below tunes them
+
 def opp_factor(p, w):
     """Matchup multiplier for player p in week w."""
     g = opp(p, w)
@@ -176,7 +208,8 @@ def opp_factor(p, w):
     k = (d, p["pos"])
     if k in AFPA:
         shrink = AFPA_N[k] / (AFPA_N[k] + 4)            # small samples get pulled toward average
-        return max(0.8, min(1.2, 1 + shrink * AFPA[k] / max(1.0, POS_GROUP_AVG[p["pos"]])))
+        cap = min(MATCH_CAP, 0.15 if p["pos"] in ("QB", "RB") else 0.08)   # research: defenses barely move WR/TE
+        return max(1 - cap, min(1 + cap, 1 + MATCH_S * shrink * AFPA[k] / max(1.0, POS_GROUP_AVG[p["pos"]])))
     rk = opp_rank(p, w)
     return 1 + ((rk or 16.5) - 16.5) / 16.5 * WGT["matchup_swing"]
 
@@ -221,6 +254,16 @@ for n, p in P.items():
             al = [league_pts(x) for x in xs]
             xpg = sum(xl) / len(xl)
             pr.update(xfp=round(xpg, 1), xfp4=round(sum(xl[-4:]) / len(xl[-4:]), 1), fpoe=round(sum(al) / len(al) - xpg, 1))
+            # split usage value into TD and non-TD parts: yards/catch efficiency is sticky, TD luck isn't
+            def _xtd(xx):
+                return (xx["pass_touchdown_exp"] * SC.get("4", 0) + xx["rush_touchdown_exp"] * SC.get("25", 0) + xx["rec_touchdown_exp"] * SC.get("43", 0))
+            def _atd(x):
+                return x.get("ptd", 0) * SC.get("4", 0) + x.get("rutd", 0) * SC.get("25", 0) + x.get("retd", 0) * SC.get("43", 0)
+            xtd = [_xtd(x["xs"]) for x in xs]; atd = [_atd(x) for x in xs]
+            nx = [a - b for a, b in zip(xl, xtd)]; na = [a - b for a, b in zip(al, atd)]
+            pr.update(xfp_ntd=round(sum(nx) / len(nx), 2), xfp_td=round(sum(xtd) / len(xtd), 2),
+                      xfp_ntd4=round(sum(nx[-4:]) / len(nx[-4:]), 2), xfp_td4=round(sum(xtd[-4:]) / len(xtd[-4:]), 2),
+                      eff_ntd=round(sum(na) / max(0.1, sum(nx)), 3), games_x=len(xs))
             for x, xv in zip(xs, xl):
                 x["xfp"] = round(xv, 1)
     gl = games_left(p, 17)
@@ -420,17 +463,24 @@ def backtest():
             if len(xp) < 3:
                 continue
             avg_, rec_ = sum(prior) / len(prior), sum(prior[-4:]) / len(prior[-4:])
-            xf_ = 0.5 * sum(xp) / len(xp) + 0.5 * sum(xp[-4:]) / len(xp[-4:])
-            act = [wk[k] for k in sorted(xw) if k < W and k in wk]
-            g_ = len(act); ratio_ = sum(act) / max(1, sum(xw[k] for k in sorted(xw) if k < W and k in wk))
-            xf_ *= max(0.75, min(1.35, 1 + (ratio_ - 1) * g_ / (g_ + EFF_K)))   # usage, adjusted for how efficient he's been (shrunk toward average)
+            # same math as the live model: non-TD usage x shrunk yards/catch efficiency + expected TDs only
+            pw_ = [x for x in e.get("weeks", []) if x.get("xs") and x["w"] < W]
+            xtd_ = [x["xs"]["pass_touchdown_exp"] * SC.get("4", 0) + x["xs"]["rush_touchdown_exp"] * SC.get("25", 0) + x["xs"]["rec_touchdown_exp"] * SC.get("43", 0) for x in pw_]
+            atd_ = [x.get("ptd", 0) * SC.get("4", 0) + x.get("rutd", 0) * SC.get("25", 0) + x.get("retd", 0) * SC.get("43", 0) for x in pw_]
+            nx_ = [xw[x["w"]] - t for x, t in zip(pw_, xtd_)]; na_ = [league_pts(x) - t for x, t in zip(pw_, atd_)]
+            kk = {"QB": 12, "RB": 16}.get(p["pos"], 8); g_ = len(pw_)
+            eff_ = max(0.75, min(1.35, 1 + (sum(na_) / max(0.1, sum(nx_)) - 1) * g_ / (g_ + kk)))
+            m2 = lambda a: 0.5 * sum(a) / len(a) + 0.5 * sum(a[-4:]) / len(a[-4:])
+            xf_ = m2(nx_) * eff_ + m2(xtd_)
             ux = next((x for x in e.get("weeks", []) if x["w"] == W), None)
             tm = None
             if ux:   # his team that week = whoever was playing his opponent
                 o_ = TEAMFIX.get(ux.get("opp"), ux.get("opp"))
                 tm = next((t for t, v in (LINES.get(W) or {}).items() if TEAMFIX.get(v["opp"], v["opp"]) == o_), None)
             itr = it_ratio(tm, W) if tm else None
-            rows.append((avg_, rec_, xf_, wk[W], POSI[p["pos"]], itr if itr else 0.0, opp_factor(p, W) if opp(p, W) else 1.0))
+            dfn = TEAMFIX.get(ux.get("opp"), ux.get("opp")) if ux else None
+            mfrac = afpa_upto(W).get((dfn, p["pos"]), 0.0) if dfn else 0.0
+            rows.append((avg_, rec_, xf_, wk[W], POSI[p["pos"]], itr if itr else 0.0, mfrac))
     if len(rows) < 200:
         return None
     X = np.array(rows)
@@ -446,9 +496,22 @@ def backtest():
     OLD = np.array([0.375, 0.3125, 0.3125]); fit = np.array(best[1:])
     use = 0.5 * OLD + 0.5 * fit   # lean toward what the backtest says, but don't let one season of data swing everything
     mae_use = float(np.abs(X[:, :3] @ use - X[:, 3]).mean())
+    # matchup: how strong should the defense adjustment be? (only games before each week, so no peeking)
+    global MATCH_S, MATCH_CAP
+    base_pred = X[:, :3] @ use
+    mt = {"mae_none": round(float(np.abs(base_pred - X[:, 3]).mean()), 3)}
+    bestm = (mt["mae_none"], 0.0, 0.2)
+    for s_ in np.arange(0, 2.01, 0.1):
+        for cap in (0.1, 0.15, 0.2, 0.25, 0.3):
+            pr_ = base_pred * np.clip(1 + s_ * X[:, 6], 1 - cap, 1 + cap)
+            e_ = float(np.abs(pr_ - X[:, 3]).mean())
+            if e_ < bestm[0] - 1e-9:
+                bestm = (e_, float(s_), cap)
+    MATCH_S, MATCH_CAP = max(0.25, round(bestm[1], 2)), max(0.15, bestm[2])   # published studies: defenses carry over ~0.2-0.27, so keep a small effect even if this season's data says ~0
+    mt.update(mae_best=round(bestm[0], 3), strength=MATCH_S, cap=MATCH_CAP)
     # Vegas: does a high implied team total predict beating the projection, beyond the defense matchup?
     vg = {}
-    pred = (X[:, :3] @ use) * X[:, 6]
+    pred = base_pred * np.clip(1 + MATCH_S * X[:, 6], 1 - MATCH_CAP, 1 + MATCH_CAP)
     for pos, i in POSI.items():
         m_ = (X[:, 4] == i) & (X[:, 5] > 0) & (pred > 2)
         if m_.sum() < 40:
@@ -464,10 +527,29 @@ def backtest():
     old = 0.375 * X[:, 0] + 0.3125 * X[:, 1] + 0.3125 * X[:, 2]
     return {"n": len(rows), "mae_season_avg": round(mae_avg, 2), "mae_old_mix": round(float(np.abs(old - X[:, 3]).mean()), 2),
             "mae_best": round(best[0], 2), "mae_used": round(mae_use, 2), "w_avg": round(float(use[0]), 2), "w_recent": round(float(use[1]), 2), "w_xfp": round(float(use[2]), 2),
-            "fit_avg": round(float(best[1]), 2), "fit_recent": round(float(best[2]), 2), "fit_xfp": round(float(best[3]), 2), "vegas": vg}
+            "fit_avg": round(float(best[1]), 2), "fit_recent": round(float(best[2]), 2), "fit_xfp": round(float(best[3]), 2), "vegas": vg, "matchup": mt}
 BT = backtest()
 BW = (0.3, 0.25, 0.25) if not BT else tuple(0.8 * BT[k] for k in ("w_avg", "w_recent", "w_xfp"))   # ESPN's rest-of-season number keeps the other 0.2
 print("backtest:", BT)
+
+# ---------------- how much to trust us vs ESPN this week, learned from past graded weeks ----------------
+STACK, STACK_N = {}, {}
+_ap = ROOT / "data" / LID / "proj_archive.json"
+if _ap.exists():
+    _arch = json.loads(_ap.read_text()); _rows = {}
+    for wk_s, sn in _arch.items():
+        W = int(wk_s)
+        if W >= CUR:
+            continue
+        for n, (m_, e_) in sn["players"].items():
+            act = (P.get(n) or {}).get("wk", {}).get(str(W))
+            if act and e_ is not None and n in P:
+                _rows.setdefault(P[n]["pos"], []).append((m_, e_, act))
+    for pos, R_ in _rows.items():
+        A_ = np.array(R_)
+        best = min(np.arange(0, 1.01, 0.05), key=lambda w_: float(np.abs(w_ * A_[:, 0] + (1 - w_) * A_[:, 1] - A_[:, 2]).mean()))
+        n_ = len(R_); STACK[pos] = round((n_ * float(best) + 20 * 0.5) / (n_ + 20), 2); STACK_N[pos] = n_   # shrink toward 50/50
+print("our weight vs ESPN this week:", STACK or "50/50 (no graded weeks yet)")
 
 V = {}
 for n, p in P.items():
@@ -476,8 +558,14 @@ for n, p in P.items():
     xf = None
     if pr.get("xfp") is not None:
         xf = 0.5 * pr["xfp"] + 0.5 * pr.get("xfp4", pr["xfp"])
-        g_ = pr.get("games") or 0
-        if pr["xfp"] > 0 and pr.get("fpoe") is not None:
+        g_ = pr.get("games_x") or pr.get("games") or 0
+        if pr.get("xfp_ntd") is not None:
+            # non-TD usage x his yards/catch efficiency (sticky, shrunk; RB rushing is noisier) + expected TDs only (TD luck ignored)
+            kk = {"QB": 12, "RB": 16}.get(p["pos"], 8)
+            eff = max(0.75, min(1.35, 1 + (pr["eff_ntd"] - 1) * g_ / (g_ + kk)))
+            ntd = 0.5 * pr["xfp_ntd"] + 0.5 * pr["xfp_ntd4"]; td = 0.5 * pr["xfp_td"] + 0.5 * pr["xfp_td4"]
+            xf = ntd * eff + td
+        elif pr["xfp"] > 0 and pr.get("fpoe") is not None:
             ratio_ = (pr["xfp"] + pr["fpoe"]) / pr["xfp"]
             xf *= max(0.75, min(1.35, 1 + (ratio_ - 1) * g_ / (g_ + EFF_K)))
     parts = [(BW[0], AVG[n])] + ([(BW[1], r)] if r is not None else []) + ([(BW[2], xf)] if xf else []) + ([(0.2, pr["espn_ros_pg"])] if pr.get("espn_ros_pg") else [])
@@ -509,7 +597,12 @@ for n, p in P.items():
         f = opp_factor(p, w)
         itr = it_ratio(p["nfl"], w)
         vf = itr ** VEGAS_B.get(p["pos"], 0) if itr else 1.0   # Vegas implied team points, only as much as the backtest says it helps
-        v[w] = p["proj"] if (w == CUR and p.get("proj") is not None) else round(base * f * vf, 2)
+        mine_ = round(base * f * vf, 2)
+        if w == CUR and p.get("proj") is not None:
+            wm = STACK.get(p["pos"], 0.5)   # our weight vs ESPN's for this week, learned from graded weeks
+            v[w] = round(wm * mine_ + (1 - wm) * p["proj"], 2) if p["proj"] > 0 else 0.0
+        else:
+            v[w] = mine_
         inj = p.get("inj") or "ACTIVE"
         if av:
             q[w] = float(av.get(str(w), 0))
@@ -811,11 +904,20 @@ for t in IDS:
                 continue   # nobody hands over two starters and gets way worse
             st_g = max((P[x].get("start_pct") or 0) for x in G); st_t = max((P[x].get("start_pct") or 0) for x in T_)
             start_ok = st_g >= st_t - 25   # nobody gives up a guy they start every week for a guy the whole league benches
-            real = two_for_one_ok and start_ok and not (both_start and need < -3) and (ratio >= 1.15 if status[t] == "out" else (ratio >= 0.95 and need >= -1))   # within 5% = fair; eliminated teams want a clear win
-            stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.85 and need >= -6 and st_g >= st_t - 45
+            soon = [w for w in WKS if CUR < w <= CUR + 3] or [CUR]
+            healthy_now = all(sum(V[x]["q"][w] for w in soon) / len(soon) >= 0.6 for x in G)   # a team still playing for something needs guys who play now
+            win_now_ok = healthy_now   # every manager plays to win this week, even 2-8 teams: nobody takes a hurt guy
+            real = two_for_one_ok and start_ok and win_now_ok and not (both_start and need < -3) and (ratio >= 1.15 if status[t] == "out" else (ratio >= 0.95 and need >= -1))   # within 5% = fair; eliminated teams want a clear win
+            stretch = (len(T_) < 2 or best_g >= best_t) and ratio >= 0.85 and need >= -6 and st_g >= st_t - 45 and win_now_ok
             if not real and not stretch:
                 continue
-            cands.append({"t": t, "G": G, "T": T_, "gain": gain, "ratio": ratio, "need": need, "real": real, "r": r})
+            # rough chance they say yes: how much market value they gain, and (if they're still alive) whether their lineup gets better
+            if status[t] == "out":
+                lg_ = 5 * (ratio - 1.1) + (0 if healthy_now else -3.0)
+            else:
+                lg_ = 4 * (ratio - 1.0) + 0.35 * max(-6, min(4, need)) + (0 if start_ok else -1.0) + (0 if healthy_now else -2.0)
+            acc = 100 / (1 + math.exp(-lg_))
+            cands.append({"t": t, "G": G, "T": T_, "gain": gain, "ratio": ratio, "need": need, "real": real, "r": r, "acc": acc})
 cands.sort(key=lambda c: -c["gain"])
 seen, top, nr, ns = set(), [], 0, 0
 quota = A["sims"]["trades_to_sim"]
@@ -946,7 +1048,7 @@ for c in top:
     res_full = run(c["r"], A["sims"]["per_trade"]); res = res_full[ME]
     trades.append({"partner": TNAME[c["t"]], "partner_id": c["t"], "partner_status": status[c["t"]], "give": " + ".join(c["G"]),
                    "get": " + ".join(c["T"]), "title_pct": r1(res["ch"]), "change_pts": r1(res["ch"] - mine["ch"]), "final_pct": r1(res["fi"]),
-                   "value_ratio": round(c["ratio"], 2), "partner_weekly_gain": r1(c["need"]), "kind": "realistic" if c["real"] else "stretch",
+                   "value_ratio": round(c["ratio"], 2), "partner_weekly_gain": r1(c["need"]), "accept_pct": round(c["acc"]), "kind": "realistic" if c["real"] else "stretch",
                    "blocked": c["t"] in NO_TRADE, "wk16": r1(res["means"][SEMI]), "wk17": r1(res["means"][FINAL]), "wk16_before": r1(mine["means"][SEMI]), "wk17_before": r1(mine["means"][FINAL]),
                    # the "why" breakdown
                    "weeks": [{"w": w, "before": r1(mine["means"][w]), "after": r1(res["means"][w]), "po": w in PW} for w in REGW + [w for w in PLW if w not in REGW]],
@@ -954,7 +1056,7 @@ for c in top:
                    "their_po_pct": r1(base[c["t"]]["po"]), "their_title_after": r1(res_all[c["t"]]["ch"]) if (res_all := res_full) else None,
                    "mv_send": r1(sum(MKT.get(n, 0) for n in c["G"])), "mv_get": r1(sum(MKT.get(n, 0) for n in c["T"])), **trade_story(c)})
 trades = [x for x in trades if x["change_pts"] >= 1.0]   # anything smaller is noise, not worth a trade
-trades.sort(key=lambda x: (-x["change_pts"]))
+trades.sort(key=lambda x: (x["kind"] != "realistic", -(x["accept_pct"] * 0.6 + min(x["change_pts"], 10) * 4)))   # most likely to get accepted first, still rewarding bigger gains
 print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0:.1f}s")
 
 # ---------------- waivers ----------------
@@ -1425,8 +1527,18 @@ for wk_s, sn in sorted(ARCH.items(), key=lambda x: int(x[0])):
             continue
         hw = 1.0 if sh > sa else 0.0
         calls += 1; right += int((ph >= 50) == (hw == 1)); brier += (ph / 100 - hw) ** 2
+    pairs_ok, pairs_n = 0, 0
+    byp = {}
+    for n, (m_, e_) in sn["players"].items():
+        act = (P.get(n) or {}).get("wk", {}).get(str(W))
+        if act and n in P: byp.setdefault(P[n]["pos"], []).append((m_, act))
+    for L_ in byp.values():
+        for i in range(len(L_)):
+            for j in range(i + 1, len(L_)):
+                if abs(L_[i][0] - L_[j][0]) <= 3 and L_[i][1] != L_[j][1]:
+                    pairs_n += 1; pairs_ok += int((L_[i][0] > L_[j][0]) == (L_[i][1] > L_[j][1]))
     if n_:
-        report.append({"w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
+        report.append({"startsit_pct": r1(100 * pairs_ok / pairs_n) if pairs_n else None, "w": W, "players": n_, "model_mae": r1(pe_m / n_), "espn_mae": r1(pe_e / ne_) if ne_ else None, "model_mae_vs_espn": r1(pm_e / ne_) if ne_ else None, "team_mae": r1(te / tn) if tn else None,
                        "games": calls, "picked_right": right, "brier": round(brier / calls, 3) if calls else None})
 
 hist_p = OUT / "history.json"
@@ -1473,7 +1585,7 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
            "playoff_weeks": [PO1, PO2, PO3], "po_view": [R1, SEMI, FINAL], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
            "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy, "ideal_lineups": ideal, "tiers": TIERS,
            "expected_lineup": {w: r1(mine["means"][w]) for w in PLW}, "take": take, "this_week": this_week, "swing": swing,
-           "sims": A["sims"], "market_source": MKT_SRC, "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
+           "sims": A["sims"], "stack": STACK, "market_source": MKT_SRC, "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
 tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k, v in RHO.items()], "weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,

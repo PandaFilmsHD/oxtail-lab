@@ -148,7 +148,7 @@ function renderTrades() {
   const names = s => s.split(' + ');
   const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 34), h('div', { class: 'pn' }, pl(n), h('div', {}, h('span', { class: 'pp2' }, POS(n) + ' · ' + (NFL(n) || '')), ' ', tierEl((n)))))));
   $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, 24).map((r, i) => { const why = h('div', { class: 'why', hidden: '' }); const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
-      h('div', { class: 'who' }, h('span', {}, '🤝 ' + r.partner), h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'BLOCKED' : r.kind === 'realistic' ? 'REALISTIC' : 'STRETCH')),
+      h('div', { class: 'who' }, h('span', {}, '🤝 ' + r.partner), h('span', {}, r.accept_pct != null ? h('span', { class: 'tag ' + (r.accept_pct >= 60 ? 'real' : r.accept_pct >= 35 ? 'stretch' : 'no'), title: 'Rough chance they say yes' }, `${r.accept_pct}% YES`) : '', ' ', h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'BLOCKED' : r.kind === 'realistic' ? 'REALISTIC' : 'STRETCH'))),
       h('div', { class: 'swap' }, side('give', 'YOU GIVE', r.give), h('div', { class: 'arrow' }, '➜'), side('get', 'YOU GET', r.get)),
       r.why_them && r.why_them.length ? h('div', { class: 'tpitch' }, h('div', { class: 'k' }, '🎯 WHY ' + r.partner.toUpperCase()), h('div', {}, r.why_them.slice(0, 2).join(' '))) : '',
       r.pitch ? h('div', { class: 'tmsg' }, h('div', { class: 'k' }, '💬 SEND THEM THIS'), h('div', { class: 'txt' }, r.pitch),
@@ -167,6 +167,7 @@ function renderTrades() {
     { k: 'partner_weekly_gain', h: 'Their pts/wk', t: "How much the other team's best lineup changes per week for the rest of the regular season", f: r => sgn(r.partner_weekly_gain), c: r => r.partner_weekly_gain >= -1 ? 'pos' : 'neg' },
     { k: 'value_ratio', h: 'Value ratio', t: 'Trade value you send ÷ value you get (over 1 = you overpay, so they should like it)', f: r => (+r.value_ratio).toFixed(2) },
     { k: 'wk16', h: `Your Wk${PV()[1]}`, f: r => f1(r.wk16) }, { k: 'wk17', h: `Your Wk${PV()[2]}`, f: r => f1(r.wk17) },
+    { k: 'accept_pct', h: 'Chance they say yes', f: r => r.accept_pct != null ? r.accept_pct + '%' : '—' },
     { k: 'kind', h: 'Type', l: 1, f: r => h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'Blocked' : r.kind === 'realistic' ? 'Realistic' : 'Stretch') }
   ], rows, { rowClass: r => r.blocked ? 'dim' : '', onRow: r => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); } });
 }
@@ -397,9 +398,9 @@ function renderLeague() {
 
 // ---------- how it works / settings ----------
 function rcTable(rc) {
-  const head = h('thead', {}, h('tr', {}, ['Week', 'Our model off by', 'ESPN off by', 'Team scores off by', 'Matchups called right'].map(x => h('th', {}, x))));
+  const head = h('thead', {}, h('tr', {}, ['Week', 'Our model off by', 'ESPN off by', 'Team scores off by', 'Matchups called right', 'Close start/sit calls right'].map(x => h('th', {}, x))));
   const rows = rc.slice().reverse().map(r => h('tr', {}, h('td', {}, 'Wk ' + r.w), h('td', { class: r.espn_mae == null ? '' : (r.model_mae_vs_espn <= r.espn_mae ? 'pos' : 'neg') }, f1(r.model_mae) + ' pts'), h('td', {}, r.espn_mae == null ? '—' : f1(r.espn_mae) + ' pts'),
-    h('td', {}, r.team_mae != null ? f1(r.team_mae) + ' pts' : '—'), h('td', {}, r.games ? `${r.picked_right}/${r.games}` : '—')));
+    h('td', {}, r.team_mae != null ? f1(r.team_mae) + ' pts' : '—'), h('td', {}, r.games ? `${r.picked_right}/${r.games}` : '—'), h('td', {}, r.startsit_pct != null ? r.startsit_pct + '%' : '—')));
   return h('div', { class: 'tw' }, h('table', {}, head, h('tbody', {}, rows)));
 }
 function renderHow() {
