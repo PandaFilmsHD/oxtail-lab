@@ -1402,6 +1402,26 @@ for n in fa:
 waivers = [x for x in waivers if x["ros_gain"] > 0 or (x["this_week_gain"] > 0 and x["ros_gain"] > -3)]
 waivers.sort(key=lambda x: -(x["ros_gain"] + 2 * x["this_week_gain"]))
 waivers = waivers[:12]
+# ---------------- playoff streaming plan: best D/ST and K for each of my playoff weeks (free agents + mine), never a backup ----------------
+stream_plan = {}
+try:
+    for pos_ in ("D", "K"):
+        mine_ = [n for n in ROSTER[ME] if P[n]["pos"] == pos_]
+        pool_ = [n for n, p in P.items() if p["pos"] == pos_ and (p["t"] == 0 or n in mine_)]
+        weeks_ = []
+        for w_ in PLW:
+            ranked = sorted(pool_, key=lambda n: -(V[n]["v"].get(w_, 0) * V[n]["q"].get(w_, 1)))[:3]
+            weeks_.append({"week": w_, "label": "Semis" if w_ == SEMI else "Final" if w_ == FINAL else f"Week {w_}",
+                           "options": [{"player": n, "pts": r1(V[n]["v"].get(w_, 0)), "opp": opp(P[n], w_) or "BYE", "mine": n in mine_, "own_pct": P[n].get("own")} for n in ranked],
+                           "mine_pts": r1(max([V[n]["v"].get(w_, 0) for n in mine_] or [0]))})
+        tips = []
+        for wk_ in weeks_:
+            best = wk_["options"][0] if wk_["options"] else None
+            if best and not best["mine"] and best["pts"] - wk_["mine_pts"] >= 1.5:
+                tips.append(f"{wk_['label']} (Week {wk_['week']}): pick up {best['player']} ({best['pts']} vs {best['opp']}) the Tuesday before, dropping your {pos_} for that week. That's +{round(best['pts'] - wk_['mine_pts'], 1)}.")
+        stream_plan[pos_] = {"weeks": weeks_, "tips": tips, "mine": mine_}
+except Exception as ex_:
+    print("stream plan failed", ex_)
 # ---------------- waiver blocks: free agents your likely playoff opponents need most ----------------
 blocks = []
 try:
@@ -1721,7 +1741,22 @@ if sw0:
         ra, rb = opp_rank(P[sn], CUR), opp_rank(P[a], CUR)
         if ra and rb and abs(ra - rb) >= 10: notes.append(f"Matchups: {sn} vs #{ra}, {a} vs #{rb} (32 = easiest).")
         call = f"Start {sn}" if pw >= 0.55 else "Coin flip" if pw >= 0.45 else f"Start {a}"
-        tossups.append({"slot": nice_slot(x["slot"]), "start": sn, "start_pts": r1(ms), "alt": a, "alt_pts": r1(ma), "p_start_better": r1(100 * pw), "call": call, "notes": notes,
+        # what actually matters is beating THIS opponent: a higher-variance guy can be right when you're the underdog
+        win_s = win_a = None
+        if my_game:
+            o_ = my_game[0] if my_game[1] == ME else my_game[1]
+            M_, O_ = base[ME]["means"][CUR], base[o_]["means"][CUR]
+            S2 = team_sd(ROSTER[ME], CUR) ** 2 + team_sd(ROSTER[o_], CUR) ** 2
+            win_s = Phi((M_ - O_) / sqrt(S2))
+            S2a = max(25.0, S2 - psd(sn, ms) ** 2 + psd(a, ma) ** 2)
+            win_a = Phi((M_ - ms + ma - O_) / sqrt(S2a))
+            if win_a - win_s >= 0.005:
+                call = f"Start {a}"
+                notes.insert(0, f"Starting {a} raises your chance to beat {TNAME[o_]} from {round(100 * win_s)}% to {round(100 * win_a)}%" + (" because you're the underdog and he has more upside." if M_ < O_ and ma < ms else "."))
+            elif win_s - win_a >= 0.005:
+                notes.insert(0, f"Keeping {sn} gives you a {round(100 * win_s)}% chance to win vs {round(100 * win_a)}% with {a}" + (" (you're favored, so the safer floor helps)." if M_ > O_ and ms < ma else "."))
+        tossups.append({"win_start": r1(100 * win_s) if win_s is not None else None, "win_alt": r1(100 * win_a) if win_a is not None else None,
+                        "slot": nice_slot(x["slot"]), "start": sn, "start_pts": r1(ms), "alt": a, "alt_pts": r1(ma), "p_start_better": r1(100 * pw), "call": call, "notes": notes,
                         "start_opp": opp(P[sn], CUR) or "BYE", "alt_opp": opp(P[a], CUR) or "BYE"})
     tossups.sort(key=lambda t: abs(t["p_start_better"] - 50))
 
@@ -1947,7 +1982,7 @@ tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k,
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
           "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS], "v": [r1(V[n]["v"][w]) for w in WKS], "q": [round(V[n]["q"][w], 2) for w in WKS], "s": [r1(p_sd(n, ev(n, w))) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
-latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
+latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "stream_plan": stream_plan, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (SEMI, FINAL) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 

@@ -40,6 +40,8 @@ def fire(key, title, body, report, player=None, leagues=(), actions=(), priority
 
 
 leagues = json.loads((ROOT / "docs" / "data" / "leagues.json").read_text()).get("leagues", [])
+_U = json.loads((ROOT / "data" / "usage.json").read_text()) if (ROOT / "data" / "usage.json").exists() else {}
+WIN = {}   # kickoff time -> lines for the pre-lock check
 mine = {}   # player name -> info across leagues
 for L in leagues:
     lid = L["id"]
@@ -101,6 +103,27 @@ for L in leagues:
                   "means": f"That's about {val(b['n']) - val(s['n']):.1f} more expected points.", "todo": f"Swap them unless you know something we don't."},
                  b["n"], [name], [{"label": "OPEN LINEUP", "tab": "home", "league": lid}], 4)
 
+    # ---- pre-lock check: 60-120 min before a kickoff window, who of mine plays then and is the lineup right ----
+    kick_ = (_U.get("kick") or {}).get(str(cur), {})
+    for s in starters + bench:
+        k_ = kick_.get(s.get("nfl") or (tp.get(s["n"]) or {}).get("nfl", ""))
+        if not k_:
+            continue
+        mins = (datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) - NOW).total_seconds() / 60
+        if not 55 <= mins <= 125:
+            continue
+        w_ = WIN.setdefault(k_, {"start": [], "issues": []})
+        if s in starters:
+            w_["start"].append(f"{s['n']} ({name})")
+            if s["inj"] in BAD or s["n"] in byes:
+                w_["issues"].append(f"{s['n']} is {'on bye' if s['n'] in byes else STATUS.get(s['inj'], s['inj'])} but starting in {name}")
+            elif s["inj"] == "QUESTIONABLE":
+                w_["issues"].append(f"{s['n']} is questionable in {name}: check his status before kickoff")
+            better = [b for b in bench if b["pos"] in elig.get(s["slot"], [s["pos"]]) and b["n"] not in byes and b["inj"] not in BAD and val(b["n"]) >= val(s["n"]) + 2]
+            if better:
+                b_ = max(better, key=lambda b: val(b["n"]))
+                w_["issues"].append(f"{name}: {b_['n']} projects {val(b_['n']) - val(s['n']):.1f} more than {s['n']}")
+
 # ---- injury status changes + fresh news for any of my players (one alert per player across leagues) ----
 for n, x in mine.items():
     p, card = x["p"], x["card"] or {}
@@ -134,6 +157,19 @@ if PLB.exists():
     _al = sorted(_al, key=lambda a: 0 if a["key"].startswith("kal|") else 1 if a["key"].startswith("prop|") else 2)   # live-price news first
     for a_ in _al[:5]:
         fire(a_["key"], a_["title"], a_["body"], a_["report"], None, (), [{"label": "PROP LAB", "tab": "props"}], 4 if a_["key"].startswith("prop|") else 3)
+
+for k_, w_ in WIN.items():
+    if not w_["start"]:
+        continue
+    t_ = datetime.datetime.fromisoformat(k_.replace("Z", "+00:00"))
+    lab_ = t_.astimezone(datetime.timezone(datetime.timedelta(hours=-8))).strftime("%a %-I:%M %p")
+    ok_ = not w_["issues"]
+    fire(f"prelock|{k_}", f"{'🔒' if ok_ else '⚠️'} Kickoff {lab_}: " + ("lineups look set" if ok_ else f"{len(w_['issues'])} thing{'s' if len(w_['issues']) > 1 else ''} to fix"),
+         ("Starting: " + ", ".join(w_["start"][:4]) + ("…" if len(w_["start"]) > 4 else "")) if ok_ else "; ".join(w_["issues"][:2]),
+         {"what": f"Games at {lab_} PT lock in about 90 minutes. Your starters in them: " + ", ".join(w_["start"]) + ".",
+          "means": "Everything checks out." if ok_ else " • ".join(w_["issues"]),
+          "todo": "Nothing to do." if ok_ else "Fix these in ESPN before kickoff."},
+         None, [], [{"label": "OPEN LINEUP", "tab": "home"}], 3 if ok_ else 5)
 
 # keep things tidy
 cut = (NOW - datetime.timedelta(days=21)).isoformat()

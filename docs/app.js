@@ -330,6 +330,14 @@ function renderWaivers() {
       h('div', { class: 'leglist' }, ...B.map(b => h('div', { class: 'legpick', onclick: () => openCard(b.player) }, h('span', { class: 'lp hi' }, '+' + b.block_pts), h('span', { class: 'll' }, pl(b.player), h('div', { class: 'k' }, `${b.pos} · ${b.nfl} · helps ${b.teams.map(t => t[0]).join(', ')}${b.my_gain > 0 ? ` · +${b.my_gain} for you too` : ''}`)))))]
       : h('p', { class: 'sub', style: 'margin:0' }, 'Nobody on waivers would crack your likely playoff opponents\' lineups right now. This updates if one of their starters gets hurt.'));
   const ob = $('#blockbox'); if (ob) ob.replaceWith(bb); else $('#wtable').before(bb);
+  const SP = D.stream_plan || {};
+  const sp = h('div', { class: 'box', id: 'streambox', style: 'margin-bottom:14px' }, h('h3', {}, '📅 Playoff D/ST and K plan'),
+    h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Best defense and kicker for each of your playoff weeks. Never more than one of each: swap the Tuesday before.'),
+    ...['D', 'K'].filter(k => SP[k]).map(k => h('div', {}, h('div', { class: 'k', style: 'margin:8px 0 4px;font-weight:800' }, k === 'D' ? '🛡️ DEFENSE' : '🦵 KICKER'),
+      ...(SP[k].tips.length ? SP[k].tips.map(t => h('div', { class: 'k', style: 'color:var(--gold);margin:2px 0' }, '💡 ' + t)) : [h('div', { class: 'k', style: 'margin:2px 0' }, `✅ Your ${k === 'D' ? 'defense' : 'kicker'} is within 1.5 pts of the best option every playoff week. No move needed.`)]),
+      h('div', { class: 'leglist' }, ...SP[k].weeks.map(wk => h('div', { class: 'legpick', style: 'cursor:default' }, h('span', { class: 'k', style: 'min-width:58px' }, wk.label),
+        h('span', { class: 'll' }, ...wk.options.slice(0, 3).map((o, i) => h('div', { style: 'font-size:12.5px' + (o.mine ? ';color:var(--green)' : '') }, `${i + 1}. ${o.player} ${o.opp} · ${o.pts}${o.mine ? ' (yours)' : ''}`)))))))));
+  const os_ = $('#streambox'); if (os_) os_.replaceWith(sp); else $('#wtable').before(sp);
   table($('#wtable'), [
     { k: 'verdict', h: 'Call', l: 1, f: r => h('span', { class: 'tag ' + (r.verdict === 'CLAIM' ? 'real' : 'no'), title: r.why }, r.verdict === 'CLAIM' ? '✅ CLAIM' : 'SKIP') },
     { k: 'player', h: 'Add', l: 1, f: r => h('span', {}, pl(r.player), h('div', { class: 'mut', style: 'font-size:12px;max-width:260px;white-space:normal' }, r.why)) }, { k: 'drop', h: 'Drop', l: 1 },
