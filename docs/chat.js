@@ -73,6 +73,7 @@ ${METHOD}`;
   const el = (t, a = {}, ...k) => h(t, a, ...k);
   const fab = el('button', { class: 'chatfab', title: 'Ask Coach', onclick: () => toggle(true) }, '🤖', el('span', {}, 'Ask Coach'));
   const panel = el('div', { class: 'chatp', hidden: '' });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) toggle(false); });
   document.body.append(fab, panel);
   const md = t => { const d = el('div'); t.split(/\n{2,}/).forEach(par => { const lines = par.split('\n'); if (lines.every(l => /^\s*([-*•]|\d+\.)\s+/.test(l))) { const ul = el('ul'); lines.forEach(l => { const li = el('li'); fmt(li, l.replace(/^\s*([-*•]|\d+\.)\s+/, '')); ul.append(li); }); d.append(ul); } else { const p = el('p'); fmt(p, par); d.append(p); } }); return d; };
   const fmt = (node, txt) => txt.split(/(\*\*[^*]+\*\*)/).forEach(part => { if (/^\*\*[^*]+\*\*$/.test(part)) node.append(el('b', {}, part.slice(2, -2))); else node.append(document.createTextNode(part)); });
