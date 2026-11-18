@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T17:57:15Z",
-   "champ_pct": 31.3,
+   "at": "2026-11-18T18:00:56Z",
+   "champ_pct": 31.4,
    "todo": [
     {
      "urgent": false,
@@ -29,21 +29,28 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T17:57:37Z",
+   "at": "2026-11-18T18:01:16Z",
    "champ_pct": 13.4,
    "todo": [
     {
      "urgent": false,
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Sun 10:00 AM PT",
+     "detail": "Bears D/ST, Bhayshul Tuten, Cam Little, Emeka Egbuka, Emmett Johnson, Isaiah Likely, Rashee Rice, Travis Etienne Jr. play first. Players lock when their game starts.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.7%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.4%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.4%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -53,9 +60,16 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T17:57:47Z",
+   "at": "2026-11-18T18:01:25Z",
    "champ_pct": 3.4,
    "todo": [
+    {
+     "urgent": false,
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Sun 10:00 AM PT",
+     "detail": "Carnell Tate, Chuba Hubbard, Colston Loveland, Luther Burden III, Rashee Rice, Ravens D/ST, Tony Pollard, Trevor Lawrence, Tyler Bass play first. Players lock when their game starts.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -77,9 +91,16 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T17:57:26Z",
+   "at": "2026-11-18T18:01:06Z",
    "champ_pct": 30.1,
    "todo": [
+    {
+     "urgent": false,
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Sun 10:00 AM PT",
+     "detail": "Cam Little, Colston Loveland, Jaguars D/ST, Kenneth Walker III, Luther Burden III, Trevor Lawrence, Zay Flowers play first. Players lock when their game starts.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -91,7 +112,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.5%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.7%.",
      "tab": "waivers"
     },
     {
