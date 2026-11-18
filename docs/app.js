@@ -651,7 +651,7 @@ seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBo
   $$('.navarr').forEach(b => b.addEventListener('click', () => nav.scrollBy({ left: (b.classList.contains('l') ? -1 : 1) * nav.clientWidth * 0.7, behavior: 'smooth' }))); })();
 
 // ---------------- Prop Lab ----------------
-let PLD = null, PLV = 'parlay', PLM = 'all', PLPICK = new Set();
+let PLD = null, PLV = 'parlay', PLM = 'all', PLPICK = new Set(), PGS = 'bets', PPS = 'value';
 const odds = a => (a > 0 ? '+' : '') + a;
 const fairOf = p => { p = Math.min(Math.max(p, 0.01), 0.99); return p >= 0.5 ? Math.round(-100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); };
 const usd = u => '$' + (Math.round(u * ((PLD && PLD.unit) || 25) * 100) / 100).toFixed(2).replace(/\.00$/, '');
@@ -670,8 +670,10 @@ async function renderProps() {
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
       ...pl.legs.map(legRow), h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units || 0.5)}`), h('span', { class: 'k' }, `only if it pays better than ${odds(pl.fair)}`)));
     const P = PLD.parlays || {};
-    const sect = (t, L) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t), h('div', { class: 'bgrid' }, ...L.map(card))] : [];
-    out = [tip, ...sect('🔥 Model\'s confident parlays (bigger payout, every leg is one the sims like more than the market)', P.conf), ...sect('🏈 4-team game parlays (+100 or better)', P.g4), ...sect('🏈 3-team game parlays', P.g3), ...sect('🎯 2-leg player props', P['2']), ...sect('🎯 3-leg player props (+100ish)', P['3'])];
+    const srt = L => PPS === 'likely' ? [...(L || [])].sort((a, b) => b.p - a.p) : L;
+    const sect = (t, L) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t), h('div', { class: 'bgrid' }, ...srt(L).map(card))] : [];
+    const sbar = h('div', { class: 'seg', style: 'margin:0 0 6px' }, ...[['value', '💎 Best value'], ['likely', '🎯 Most likely to hit']].map(([v, t]) => h('button', { class: PPS === v ? 'on' : '', onclick: () => { PPS = v; renderProps(); } }, t)));
+    out = [tip, sbar, ...sect('🔥 Model\'s confident parlays (bigger payout, every leg is one the sims like more than the market)', P.conf), ...sect('🏈 4-team game parlays (+100 or better)', P.g4), ...sect('🏈 3-team game parlays', P.g3), ...sect('🎯 2-leg player props', P['2']), ...sect('🎯 3-leg player props (+100ish)', P['3'])];
     // build your own
     const legs = PLD.legs || [];
     const chosen = legs.filter(l => PLPICK.has(l.label));
@@ -695,10 +697,18 @@ async function renderProps() {
         x.market !== 'Anytime TD' ? h('div', { class: 'k' }, `Sims: usually ${x.p10} to ${x.p90}, middle ${x.median}. Our avg ${x.ours} vs market ${x.mkt}.`) : h('div', { class: 'k' }, `Market ${Math.round(x.p_mkt)}%, ours ${Math.round(x.p)}%.`))))];
     if (!L.length) out.push(h('div', { class: 'box mut' }, 'No props clear the bar right now.'));
   } else if (PLV === 'games') {
-    out = [h('div', { class: 'bgrid' }, ...(PLD.games || []).map(g => { const s = g.sim;
+    const now = Date.now();
+    const best = g => Math.max(0, ...g.plays.map(p => p.edge));
+    const fav = g => Math.max(g.sim.home_win, 100 - g.sim.home_win);
+    let G = (PLD.games || []).filter(g => !g.started);
+    G = PGS === 'bets' ? G.sort((a, b) => (b.plays.length - a.plays.length) || (best(b) - best(a)) || (b.angles.length - a.angles.length) || (fav(b) - fav(a)))
+      : PGS === 'likely' ? G.sort((a, b) => fav(b) - fav(a)) : G.sort((a, b) => (a.kick || '').localeCompare(b.kick || ''));
+    const gbar = h('div', { class: 'seg', style: 'margin:0 0 10px' }, ...[['bets', '🔥 Worth betting first'], ['likely', '🎯 Most likely to win'], ['time', '🕐 Kickoff']].map(([v, t]) => h('button', { class: PGS === v ? 'on' : '', onclick: () => { PGS = v; renderProps(); } }, t)));
+    const done = (PLD.games || []).filter(g => g.started).length;
+    out = [gbar, done ? h('p', { class: 'sub', style: 'margin:0 0 8px' }, `${done} game${done === 1 ? '' : 's'} already started (hidden).`) : '', h('div', { class: 'bgrid' }, ...G.map(g => { const s = g.sim;
       return h('div', { class: 'pcard' + (g.started ? ' dim' : '') }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'bn' }, `${g.away} @ ${g.home}`), h('div', { class: 'k' }, `${kickT(g.kick)}${g.started ? ' · started' : ''}`)),
           h('div', { style: 'text-align:right' }, h('div', { class: 'k' }, `${g.home} ${(-g.spread) > 0 ? '+' : ''}${-g.spread} · O/U ${g.total}`))),
-        h('div', { class: 'pnums' }, h('div', {}, h('b', {}, `${s.away_pts}-${s.home_pts}`), h('span', { class: 'k' }, 'avg score')), h('div', {}, h('b', {}, Math.round(s.home_win) + '%'), h('span', { class: 'k' }, `${g.home} wins`)),
+        h('div', { class: 'pnums' }, h('div', {}, h('b', {}, `${s.away_pts}-${s.home_pts}`), h('span', { class: 'k' }, 'avg score')), h('div', {}, h('b', { class: 'pos' }, Math.round(Math.max(s.home_win, 100 - s.home_win)) + '%'), h('span', { class: 'k' }, `${s.home_win >= 50 ? g.home : g.away} wins`)),
           h('div', {}, h('b', {}, odds(s.fair_home_ml)), h('span', { class: 'k' }, `fair ${g.home} ML`))),
         h('div', { class: 'k' }, `One-score game ${Math.round(s.one_score)}% · blowout (17+) ${Math.round(s.blowout)}%${g.weather ? ` · ${g.weather.temp}°F, wind ${g.weather.wind} mph` : g.roof === 'dome' ? ' · indoors' : ''}`),
         ...g.angles.map(a => h('div', { class: 'k', style: 'color:var(--gold)' }, '📐 ' + a)),
