@@ -186,3 +186,17 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 .av .avpos{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:12px;background:#0b0c26;border:2px solid var(--gold);color:var(--gold);padding:0 7px;border-radius:8px;text-shadow:none}
 .tcard .foot{flex-wrap:wrap}.tcard .foot .btn{white-space:nowrap;margin-left:auto}.tcard .meta{flex:1;min-width:140px}
 .tcard .side .p{flex-wrap:nowrap}
+
+/* trade card layout fix */
+.tcards{grid-template-columns:repeat(auto-fill,minmax(min(100%,370px),1fr))}
+.tcard .swap{grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr)}
+.tcard .side{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:10px}
+.tcard .side .p{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:center;margin:0}
+.tcard .pn{min-width:0;line-height:1.2}
+.tcard .pn a.pl{display:block;font-size:14.5px;overflow-wrap:anywhere}
+.tcard .pn .pp2{font-size:11px;color:var(--mut);font-weight:800}
+.tcard .tier{font-size:9.5px;padding:1px 6px;border-radius:6px}
+.tcard .arrow{text-align:center}
+.tcard .foot{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;border-top:2px dashed #2c3080;padding-top:10px}
+.tcard .meta{text-align:left;font-size:12px;line-height:1.35}
+@media(max-width:600px){.tcard .swap{grid-template-columns:1fr}.tcard .arrow{transform:rotate(90deg)}.tcard .foot{grid-template-columns:1fr auto}.tcard .meta{grid-column:1/-1;order:3}}

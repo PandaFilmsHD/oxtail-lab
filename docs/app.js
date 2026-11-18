@@ -110,7 +110,7 @@ function renderTrades() {
   const hide = $('#hideblocked').checked;
   const rows = D.trades.filter(t => (TK === 'all' || t.kind === TK) && !(hide && t.blocked));
   const names = s => s.split(' + ');
-  const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 26), pl(n), tierEl(VAL(n)))));
+  const side = (cls_, k, list) => h('div', { class: 'side ' + cls_ }, h('div', { class: 'k' }, k), ...names(list).map(n => h('div', { class: 'p' }, avatar(n, NFL(n), POS(n), VAL(n), 34), h('div', { class: 'pn' }, pl(n), h('div', {}, h('span', { class: 'pp2' }, POS(n) + ' · ' + (NFL(n) || '')), ' ', tierEl(VAL(n)))))));
   $('#tcards').replaceChildren(...(rows.length ? rows.slice(0, 12).map((r, i) => { const c = h('div', { class: 'tcard ' + (r.blocked ? 'blocked' : r.kind) },
       h('div', { class: 'who' }, h('span', {}, '🤝 ' + r.partner), h('span', { class: 'tag ' + (r.blocked ? 'no' : r.kind === 'realistic' ? 'real' : 'stretch') }, r.blocked ? 'BLOCKED' : r.kind === 'realistic' ? 'REALISTIC' : 'STRETCH')),
       h('div', { class: 'swap' }, side('give', 'YOU GIVE', r.give), h('div', { class: 'arrow' }, '➜'), side('get', 'YOU GET', r.get)),
