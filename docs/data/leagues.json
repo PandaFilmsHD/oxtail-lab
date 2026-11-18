@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 11,
    "at": "2026-11-18T06:45:24Z",
-   "champ_pct": 32.4,
+   "champ_pct": 32.1,
    "todo": [
     {
      "urgent": false,
@@ -24,9 +24,16 @@
     },
     {
      "urgent": false,
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at FLEX: Seth McGowan or Chimere Dike",
+     "detail": "Seth McGowan 5.4 vs Chimere Dike 4.5. Seth McGowan is safer (floor 2.7 vs -0.3).",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Rhamondre Stevenson for Kyle Monangai (Gomd Naber)",
-     "detail": "Title odds +2.1%. Would you do Rhamondre Stevenson for Kyle Monangai? I think you're getting the best player in the deal, and you're deep at RB so you can cover Monangai's spot.",
+     "title": "Offer Rhamondre Stevenson + Rome Odunze for Kyle Monangai + DK Metcalf (Gomd Naber)",
+     "detail": "Title odds +1.8%. Would you do Rhamondre Stevenson and Rome Odunze for Kyle Monangai and DK Metcalf? I think Odunze slides right into your FLEX spot, and Metcalf is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -43,7 +50,7 @@
      "urgent": true,
      "icon": "\ud83d\udea8",
      "title": "Drake Maye is on bye",
-     "detail": "Add Bo Nix and drop Corey Kiner (+19.6 pts).",
+     "detail": "Add Bo Nix and drop Corey Kiner (+19.4 pts).",
      "tab": "home"
     },
     {
@@ -57,14 +64,14 @@
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Emmett Johnson or Josh Downs",
-     "detail": "Emmett Johnson 10.2 vs Josh Downs 9.4. Josh Downs has the higher ceiling (12.7 vs 9.4). Go with him if you need a big week.",
+     "detail": "Emmett Johnson 10.1 vs Josh Downs 9.3. Josh Downs has the higher ceiling (12.7 vs 9.4). Go with him if you need a big week.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
-     "detail": "Title odds +8.0%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
+     "detail": "Title odds +7.7%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -75,7 +82,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:43Z",
-   "champ_pct": 4.0,
+   "champ_pct": 3.5,
    "todo": [
     {
      "urgent": false,
@@ -88,14 +95,14 @@
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Carnell Tate or David Montgomery",
-     "detail": "Carnell Tate 10.8 vs David Montgomery 11.0. Carnell Tate is 85% to play, so if he's ruled out, David Montgomery is your guy.",
+     "detail": "Carnell Tate 10.8 vs David Montgomery 11.2. Carnell Tate is 85% to play, so if he's ruled out, David Montgomery is your guy.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Kyren Williams + Bijan Robinson for D'Andre Swift + George Pickens (Ryan's Rad Team)",
-     "detail": "Title odds +2.1%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
+     "detail": "Title odds +1.9%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
      "tab": "trades"
     }
    ]
@@ -106,13 +113,13 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:30Z",
-   "champ_pct": 35.5,
+   "champ_pct": 33.6,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Kenneth Walker III might not play (75%)",
-     "detail": "If he's ruled out, start Saquon Barkley (11.2).",
+     "detail": "If he's ruled out, start Saquon Barkley (10.9).",
      "tab": "home"
     },
     {
@@ -126,7 +133,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Denzel Boston + Jaylen Warren for Tony Pollard (Melissa's Magnificent Team)",
-     "detail": "Title odds +3.9%. Would you do Denzel Boston and Jaylen Warren for Tony Pollard? I think Boston slides right into your WR spot over Samuel, and you get depth for injuries and byes down the stretch.",
+     "detail": "Title odds +3.7%. Would you do Denzel Boston and Jaylen Warren for Tony Pollard? I think Boston slides right into your WR spot over Samuel, and you get depth for injuries and byes down the stretch.",
      "tab": "trades"
     }
    ]
