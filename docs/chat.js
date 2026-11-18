@@ -38,6 +38,10 @@
     D.waivers.forEach(w => lines.push(`${w.player} ${w.pos} | drop ${w.drop} | ${w.ros_gain} | ${w.change_pts ?? '-'} | ${w.ros_ppg} | ${w.playoff_pts} | ${w.own_pct}%`));
     lines.push('\nTEAMS TO WORK (team | record | playoff% | weakest starting spot | spare pieces):');
     D.bubble.forEach(b => lines.push(`${b.team} | ${b.record} | ${b.playoffs_pct}% | ${b.needs} (${b.weakest_starter_pts} pts) | ${b.has_extra}`));
+    if (D.todo) { lines.push('\nTHIS WEEK\'S TO-DO (what the site tells me to do; agree with it unless the data clearly says otherwise):'); D.todo.forEach(t => lines.push(`- ${t.title}: ${t.detail}`)); }
+    if (D.tossups && D.tossups.length) { lines.push('\nSTART/SIT TOSS-UPS this week:'); D.tossups.forEach(t => lines.push(`- ${t.slot}: ${t.start} ${t.start_pts} vs ${t.alt} ${t.alt_pts}, ${t.start} wins ${t.p_start_better}% of sims. Call: ${t.call}. ${t.notes.join(' ')}`)); }
+    if (D.waivers && D.waivers.length) { lines.push('\nWAIVER CALLS:'); D.waivers.forEach(w => lines.push(`- ${w.verdict}: add ${w.player} (${w.pos}), drop ${w.drop}. ${w.why}`)); }
+    if (D.summary.trade_deadline) lines.push(`\nTrade deadline: ${new Date(D.summary.trade_deadline).toDateString()}.`);
     if (D.breakouts) { lines.push('\nBREAKOUT RADAR (sim: chance he becomes a weekly starter ROS | owner | action | season avg -> projected | why):'); D.breakouts.slice(0, 15).forEach(b => lines.push(`${b.player} ${b.pos} | ${b.score}% | ${b.owner} | ${b.action} | ${b.season} -> ${b.proj} | ${b.why.join(' ')}`)); }
     if (D.schedule) { lines.push('\nWEEK BY WEEK (my best lineup, opponent, win chance):'); D.schedule.forEach(x => lines.push(`${x.label}: ${x.total}${x.opponent ? ` vs ${x.opponent} ${x.opp_total}, win ${x.win_pct}%` : ''} | ` + x.lineup.map(p => `${p.slot} ${p.player} ${p.pts} vs ${p.opp}`).join(', ') + (x.byes.length ? ' | on bye: ' + x.byes.join(', ') : ''))); }
     const want = new Set();

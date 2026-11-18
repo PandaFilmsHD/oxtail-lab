@@ -327,3 +327,8 @@ tbody tr:nth-child(even) td{background:#ffffff06}
 .tossv{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin:6px 0;font-size:14px}
 .tossv>div:last-child{text-align:right}.tossv .win{color:#3ddc84}
 .tbarw{height:8px;border-radius:6px;background:#ff9f43;overflow:hidden;margin:4px 0}.tbarw i{display:block;height:100%;background:#3ddc84}
+
+.tdone{width:20px;height:20px;accent-color:#3ddc84;flex:0 0 auto;margin-top:2px;cursor:pointer}
+.todoi.done{opacity:.45}.todoi.done b{text-decoration:line-through}
+.tw td span.opp{display:block;font-size:11px;white-space:nowrap}
+@media (max-width:600px){.mbox .tw td{padding:7px 5px}}
