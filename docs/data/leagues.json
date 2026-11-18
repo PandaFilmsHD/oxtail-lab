@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T21:02:43Z",
-   "champ_pct": 31.0,
+   "at": "2026-11-18T21:17:48Z",
+   "champ_pct": 31.1,
    "todo": [
     {
      "urgent": false,
@@ -29,9 +29,16 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T21:03:03Z",
-   "champ_pct": 13.4,
+   "at": "2026-11-18T21:18:05Z",
+   "champ_pct": 12.8,
    "todo": [
+    {
+     "urgent": true,
+     "icon": "\ud83d\udce3",
+     "title": "Status change: Bhayshul Tuten",
+     "detail": "ACTIVE \u2192 QUESTIONABLE. Recheck your lineup.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
@@ -41,17 +48,17 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.5%.",
-     "tab": "waivers"
+     "icon": "\ud83e\ude79",
+     "title": "Bhayshul Tuten might not play (70%)",
+     "detail": "Check his status before kickoff.",
+     "tab": "home"
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.4%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
-     "tab": "trades"
+     "icon": "\ud83d\udce5",
+     "title": "Claim 49ers D/ST, drop Bears D/ST",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.4%.",
+     "tab": "waivers"
     }
    ]
   },
@@ -60,8 +67,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T21:03:10Z",
-   "champ_pct": 3.4,
+   "at": "2026-11-18T21:18:14Z",
+   "champ_pct": 3.7,
    "todo": [
     {
      "urgent": false,
@@ -74,15 +81,8 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Carnell Tate might not play (70%)",
-     "detail": "If he's ruled out, start David Montgomery (9.5).",
+     "detail": "If he's ruled out, start David Montgomery (9.8).",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
-     "tab": "waivers"
     },
     {
      "urgent": false,
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T21:02:53Z",
-   "champ_pct": 30.1,
+   "at": "2026-11-18T21:17:56Z",
+   "champ_pct": 30.2,
    "todo": [
     {
      "urgent": false,
@@ -112,21 +112,21 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Kenneth Walker III might not play (70%)",
-     "detail": "If he's ruled out, start Saquon Barkley (11.7).",
+     "detail": "If he's ruled out, start Saquon Barkley (11.2).",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +2.0%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Saquon Barkley + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
-     "detail": "Title odds +5.1%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Walker slides right into your RB spot.",
+     "detail": "Title odds +5.8%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Walker slides right into your RB spot.",
      "tab": "trades"
     }
    ]
