@@ -394,6 +394,10 @@ def main():
         started = bool(k_) and datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) <= now
         spr, tot = L["spread"], L["total"]   # spread = home expected margin
         wx = weather(h, k_) if k_ and not started else None
+        if wx and h not in ROOF:   # the player model reads wind/temp from the lines: give it the forecast
+            for t_ in (h, a):
+                if t_ in lines:
+                    lines[t_]["wind"] = wx["wind"]; lines[t_]["temp"] = wx["temp"]
         roof = "dome" if h in ROOF else (L.get("roof") or "outdoors")
         shift, angles = total_shift(wx, roof, L.get("wd"), L.get("gt"))   # wind tiers, rain, SNF/MNF (backtested vs closing lines)
         m_shift, s_angles = spread_shift(cur, spr)                            # weeks 1-4 dogs
@@ -426,7 +430,7 @@ def main():
             pm = imp(dflt) / (imp(dflt) + imp(other))   # the market's chance with the vig taken out (what Kalshi/Polymarket trade near)
             edge = p - pm
             if edge >= MIN_EDGE and ((side == "tot" and angles) or (side == "spr" and s_angles)):   # only the angles that held up in the backtest create game plays
-                plays.append({"pick": label, "p": round(100 * p, 1), "p_mkt": round(100 * pm, 1), "edge": round(100 * edge, 1), "max_c": int(100 * p - 2), "kind": side})
+                plays.append({"why": [f"📐 {t}" for t in angles + s_angles] + [f"🎲 With that shift the sims give {label} {round(100 * p)}% vs the market's {round(100 * pm)}%."], "pick": label, "p": round(100 * p, 1), "p_mkt": round(100 * pm, 1), "edge": round(100 * edge, 1), "max_c": int(100 * p - 2), "kind": side})
         auto = []   # every-bet tracker: on each market, the side the sims like more than DraftKings' no-vig number, at DK's own number and price
         dkb = gdk.get(h, {})
         if all(dkb.get(z) for z in (("spr", "home"), ("spr", "away"), ("tot", "over"), ("tot", "under"), ("ml", "home"), ("ml", "away"))):
@@ -476,9 +480,11 @@ def main():
                     LEGS.append({"kindg": "total" if (" Over " in lab or " Under " in lab) else "ml" if "moneyline" in lab else "spread", "lean": (0.004 if (" Under " in lab and angles) else 0.0), "label": lab, "game": gk, "who": (f"{a}@{h} total" if (" Over " in lab or " Under " in lab) else lab.split()[0]), "p": pa, "ind": ind, "type": "game", "kick": k_})
         kg = (KAL.get("games") or {}).get(h) if not started else None
         if kg and kg.get("away") == a:
+            gwhy = [f"📊 Market: {h} {-spr:+g}, total {tot:g}. Our sims start from that line, because over 10 seasons nothing beat the closing line on its own."] + [f"📐 {t}" for t in angles + s_angles] + \
+                   [f"🎲 50,000 sims: {h} wins {round(100 * p_home_win)}%, average score {a} {np.mean(ap):.1f} to {h} {np.mean(hp):.1f}."]
             def kadd(lab, pk_, c_, tick, kind):
                 if c_ and 0.03 <= c_ <= 0.97:
-                    KBUY.append({"label": lab, "side": "Yes", "p": round(100 * pk_, 1), "cost": round(100 * c_), "fee": round(100 * kfee(c_), 1), "ev": round(100 * kbuy(pk_, c_), 1),
+                    KBUY.append({"why": gwhy + [f"💸 Kalshi: this share costs {round(100 * c_)}¢ plus about {round(100 * kfee(c_), 1)}¢ fee. Our sims say {round(100 * pk_)}%." + ("" if (angles or s_angles) else " No weather or schedule angle here, so this edge is Kalshi's price drifting from the sportsbooks' consensus.")], "label": lab, "side": "Yes", "p": round(100 * pk_, 1), "cost": round(100 * c_), "fee": round(100 * kfee(c_), 1), "ev": round(100 * kbuy(pk_, c_), 1),
                                  "edge": round(100 * (pk_ - c_), 1), "kick": k_, "ticker": tick, "type": "game", "kind": kind, "home": h, "away": a, "game": "-".join(sorted((h, a)))})
             for tm_, q_ in kg.get("ml", {}).items():
                 pw = float(np.mean(mar > 0) + 0.5 * np.mean(mar == 0)) if tm_ == h else float(np.mean(mar < 0) + 0.5 * np.mean(mar == 0))
@@ -575,6 +581,53 @@ def main():
                     for k_, v in c_.items():
                         g_ = g_ + v * eta_[k_]
                     LATQ[qk_] = g_.astype(np.float32)
+    FEAT_TXT = {"log_it_rel": "Vegas: his team's expected points", "log_it_lvl": "His team's usual scoring level", "spread_rel": "Game script (spread vs usual)",
+                "log_def": "Opponent defense vs his position", "vac_WR": "WR teammates missing vs his usual (targets)", "vac_TE": "TE teammates missing vs his usual (targets)",
+                "vac_RB": "RB teammates missing vs his usual (targets)", "vacc_RB": "RB teammates missing vs his usual (carries)", "qb_out": "QB situation vs his usual",
+                "wind10": "Wind forecast", "cold40": "Cold forecast"}
+    def why_for(p, st, label, nm, tm, line, p_mkt, mm, ours_raw, ours_m, fin, po, why_news, big_gap, w_):
+        """Plain-English reasons behind a prop's number, biggest effects first."""
+        W_ = []
+        L_ = lines.get(tm, {})
+        unit = {"pass_yds": "yds", "rush_yds": "yds", "rec_yds": "yds", "rec": "catches", "pass_tds": "TDs", "td": "TDs"}[st]
+        if st == "td":
+            W_.append(f"📊 Market: books give him about {round(100 * p_mkt)}% to score (about {mm:.2f} TDs a game).")
+        else:
+            W_.append(f"📊 Market: line {line:g}, books give the over {round(100 * p_mkt)}%, which works out to an average of {mm:.1f} {unit}.")
+        det = None
+        try:
+            det = V2A.our_mean(p, st, detail=True) if V2A else None
+        except Exception:
+            det = None
+        sl_ = sl_mean(nm, st, tm)
+        if det:
+            W_.append(f"🧮 Our model: {det['muA']:.1f} {unit} from his recent usage (targets, carries, snaps, last {det['n']} games), then {round(100 * (det['mult'] - 1)):+d}% for this matchup = {det['mu']:.1f}.")
+            fit_ = DIST2.get(f"{st}|{p['pos']}") or {}
+            eff = []
+            for c_, b_ in zip(fit_.get("colsB", []), fit_.get("bB", [])):
+                if c_ in FEAT_TXT and c_ != "log_it_lvl":
+                    e_ = math.exp(b_ * det["feat"].get(c_, 0)) - 1
+                    if abs(e_) >= 0.02:
+                        eff.append((abs(e_), f"{'⬆️' if e_ > 0 else '⬇️'} {FEAT_TXT[c_]}: {round(100 * e_):+d}%"))
+            for _, t_ in sorted(eff, reverse=True)[:4]:
+                W_.append(t_)
+            if L_.get("it"):
+                W_.append(f"🏈 Vegas has {tm} at {L_['it']:.1f} points ({'favored by ' + format(L_['spread'], 'g') if L_.get('spread', 0) > 0 else 'underdog by ' + format(-L_.get('spread', 0), 'g')}) vs {L_.get('opp')}.")
+        if sl_ is not None:
+            W_.append(f"🗂️ Sleeper projects {sl_:.1f}. We blend ours with theirs ({round(100 * (1 - SLW))}/{round(100 * SLW)}).")
+        wk_ = [w for w in p.get("weeks", []) if w.get("w", 0) < int(cur)][-3:]
+        if wk_ and st != "td":
+            vals = [w.get(USE[st], 0) or 0 for w in wk_]
+            W_.append(f"📈 Last {len(vals)} games: {', '.join(str(round(v)) for v in vals)} {unit}.")
+        elif wk_:
+            W_.append(f"📈 TDs in his last {len(wk_)} games: {', '.join(str((w.get('rutd', 0) or 0) + (w.get('retd', 0) or 0)) for w in wk_)}.")
+        for n_ in why_news:
+            W_.append(f"📰 {n_}, and the line was set before that news.")
+        W_.append(f"⚖️ The market is usually right, so we only trust {round(100 * w_)}% of the gap: {mm:.1f} → {fin:.1f}. Over 50,000 sims that's {round(100 * po)}% for the over vs the market's {round(100 * p_mkt)}%." if st != "td"
+                  else f"⚖️ We trust {round(100 * w_)}% of the gap, so {round(100 * po)}% to score vs the market's {round(100 * p_mkt)}%.")
+        if big_gap:
+            W_.append("⚠️ Our number is far from the market's, which usually means the market knows something (injury, role change). No play.")
+        return W_
     def price_props(CORR, RAT):
         props, legs = [], []
         longs = LONGS if RAT is None else []
@@ -688,6 +741,7 @@ def main():
                     X = count_ppf(st, p["pos"], np.maximum(0, fin * f), u_)
                 else:
                     X = (V2A.sample_count(st, p["pos"], np.maximum(0, fin * f), rng) if V2A else rng.poisson(np.maximum(0, fin * f))) if st in ("pass_tds", "td", "rec") else fin * base
+                whyp = why_for(p, st, label, nm, tm, line, p_mkt, mm, ours_raw, ours_m, fin, po, why_news, big_gap, w_) if RAT is None else []
                 if RAT is None and not big_gap:
                     kp_ = (KAL.get("props") or {}).get(key(nm)) or {}
                     for q_ in kp_.get(label, []):
@@ -703,7 +757,8 @@ def main():
                             KBUY.append({"label": f"{nm} {n_}+ {label.lower()}" if side_k == "Yes" else f"{nm} under {n_} {label.lower()}", "side": side_k, "p": round(100 * pk_, 1),
                                          "cost": round(100 * c_), "fee": round(100 * kfee(c_), 1), "ev": round(100 * ev_k, 1), "edge": round(100 * (pk_ - c_), 1), "kick": k_,
                                          "ticker": q_.get("ticker"), "type": "prop", "player": nm, "team": tm, "market": label, "strike": sk_, "spread": round(100 * ((q_.get("ask") or 0) - (q_.get("bid") or 0))) if q_.get("bid") else None,
-                                         "game": "-".join(sorted((tm, lines[tm]["opp"]))), "news": why_news})
+                                         "game": "-".join(sorted((tm, lines[tm]["opp"]))), "news": why_news,
+                                         "why": whyp + [f"💸 Kalshi: a {side_k} share costs {round(100 * c_)}¢ plus about {round(100 * kfee(c_), 1)}¢ fee. Our sims say it hits {round(100 * pk_)}%, so it's worth about {round(100 * pk_)}¢."]})
                 if not big_gap and st != "td":
                     # alt lines he hits about 75-82% of the time, for parlays
                     for side_, q in (("Over", 0.28), ("Over", 0.22), ("Over", 0.17), ("Under", 0.72), ("Under", 0.78), ("Under", 0.83)):
@@ -763,7 +818,7 @@ def main():
                     dpr = (dko if ov_ else dku) if dk_po is not None else None
                     dps = (dk_po if ov_ else 1 - dk_po) if dpr else None
                     dpm = (dk_nv if ov_ else 1 - dk_nv) if (dpr and dk_nv is not None) else None
-                    props.append({"uname": p["name"], "event": x.get("event"), "dpdl": dpdl, "dk_line": dkl if dpr else None, "dk_price": dpr,
+                    props.append({"why": whyp, "uname": p["name"], "event": x.get("event"), "dpdl": dpdl, "dk_line": dkl if dpr else None, "dk_price": dpr,
                                   "dk_p": round(100 * dps, 1) if dpr else None, "dk_pm": round(100 * dpm, 1) if dpm is not None else None,
                                   "dk_edge": round(100 * (dps - dpm), 1) if dpm is not None else None, "dk_ev": round(100 * (dps * dec(dpr) - 1), 1) if dpr else None,
                                   "news": why_news, "edge": round(100 * (pp - pm_), 1), "max_c": int(100 * pp - 2), "pickem": st != "td" and 100 * pp >= PICKEM and not big_gap, "big_gap": big_gap, "player": nm, "team": tm, "opp": lines[tm]["opp"], "pos": p["pos"], "market": label, "side": side, "line": line if st != "td" else None,
@@ -1272,7 +1327,24 @@ def main():
                             "game": "-".join(L_["game"]), "bits": bits(L_)}
                            for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
     rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games", "auto_games", "auto_props")}
-    out = {"unit": UNIT, "kalshi": kal_out, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
+    WHYS = {}
+    for x in ALLP:
+        if x.get("why"):
+            WHYS.setdefault(f"{x['player']}|{x['market'].lower()}", x["why"])
+    shown = set()
+    def _mark(lbl):
+        for k_ in WHYS:
+            nm_, mk_ = k_.split("|")
+            if lbl.startswith(nm_ + " ") and mk_ in lbl.lower():
+                shown.add(k_)
+    for L_ in legs_out:
+        _mark(L_["label"])
+    for grp in list(parlays.values()) + [longshots.get("parlays", []), longshots.get("singles", [])]:
+        for pl_ in grp:
+            for l_ in pl_.get("legs", [pl_]):
+                _mark(l_.get("label", ""))
+    out_why = {k_: WHYS[k_] for k_ in shown}
+    out = {"unit": UNIT, "kalshi": kal_out, "whys": out_why, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
            "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR_RAW.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),
