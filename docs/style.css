@@ -408,3 +408,5 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .pnums b{font-size:18px}.gold{color:var(--gold)}
 .grade{font-family:var(--game);width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
 .grade.gA{background:var(--green);color:#062b14}.grade.gB{background:var(--blue);color:#05243a}.grade.gC{background:#3a3f9e;color:#fff}
+
+.pstake{display:flex;flex-wrap:wrap;gap:4px;justify-content:space-between;align-items:center;background:#2a2350;border:2px solid #ffc83d66;border-radius:10px;padding:6px 10px;font-weight:800;color:var(--gold);margin-top:4px}

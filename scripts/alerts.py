@@ -34,9 +34,9 @@ def fire(key, title, body, report, player=None, leagues=(), actions=(), priority
     if FIRST_RUN:
         return   # first run: just remember what's already true, don't flood the phone or the feed
     aid = hashlib.sha1(key.encode()).hexdigest()[:10]
-    alerts.append({"id": aid, "at": NOW.isoformat(), "title": title, "body": body, "player": player, "leagues": list(leagues), "report": report, "actions": list(actions)})
-    if True:
-        send(title, body, priority=priority, click=f"{SITE}?alert={aid}", tag=aid)
+    a_ = {"id": aid, "at": NOW.isoformat(), "title": title, "body": body, "player": player, "leagues": list(leagues), "report": report, "actions": list(actions)}
+    alerts.append(a_)
+    send(title, body, priority=priority, click=f"{SITE}?alert={aid}", tag=aid, alert=a_)
 
 
 leagues = json.loads((ROOT / "docs" / "data" / "leagues.json").read_text()).get("leagues", [])
@@ -117,14 +117,14 @@ for n, x in mine.items():
              {"what": news_txt or f"{n} went from {STATUS.get(old, old)} to {STATUS.get(new, new)}.",
               "means": avail or ("He's good to go." if good else ""),
               "todo": ("Keep him in your lineup." if good else f"Have a backup ready in {', '.join(starting)}." if starting else "He's on your bench, no lineup change needed.")},
-             n, lnames, [{"label": "PLAYER CARD", "player": n}], 5 if (not good and starting) else 3)
+             n, lnames, [{"label": "PLAYER CARD", "player": n, "league": x["leagues"][0][0]}], 5 if (not good and starting) else 3)
     STATE["inj"][pid] = new
     d = nw.get("date")
     if d and news_txt and STATE["news"].get(pid) != d:
         if STATE["news"].get(pid) is not None and NEWSY.search(news_txt) and (starting or new != "ACTIVE"):
             fire(f"news|{pid}|{d}", f"📰 {n}", first_sentence(news_txt, 110),
                  {"what": news_txt, "means": avail, "todo": (f"He's in your lineup in {', '.join(starting)}. Check his status before kickoff." if starting else "")},
-                 n, lnames, [{"label": "PLAYER CARD", "player": n}], 4 if starting else 3)
+                 n, lnames, [{"label": "PLAYER CARD", "player": n, "league": x["leagues"][0][0]}], 4 if starting else 3)
         STATE["news"][pid] = d
 
 # ---- Prop Lab: injury news that makes a line stale, plus the weekly digest ----

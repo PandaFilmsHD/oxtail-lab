@@ -654,6 +654,7 @@ seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBo
 let PLD = null, PLV = 'parlay', PLM = 'all', PLPICK = new Set();
 const odds = a => (a > 0 ? '+' : '') + a;
 const fairOf = p => { p = Math.min(Math.max(p, 0.01), 0.99); return p >= 0.5 ? Math.round(-100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); };
+const usd = u => '$' + (Math.round(u * ((PLD && PLD.unit) || 25) * 100) / 100).toFixed(2).replace(/\.00$/, '');
 const kickT = k => k ? new Date(k).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
 function legRow(l) { return h('div', { class: 'leg' }, h('span', { class: 'lp ' + (l.p >= 80 ? 'hi' : '') }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), l.lean >= 2 ? h('span', { class: 'tag real', title: 'Our sims lean this way vs the market' }, '✓ LEAN') : ''); }
 async function renderProps() {
@@ -667,7 +668,7 @@ async function renderProps() {
   if (PLV === 'parlay') {
     const card = pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, Math.round(pl.p) + '%'), h('div', { class: 'k' }, 'hits in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
-      ...pl.legs.map(legRow), h('div', { class: 'k', style: 'margin-top:6px' }, `Worth it if the app pays better than ${odds(pl.fair)}.`));
+      ...pl.legs.map(legRow), h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units || 0.5)}`), h('span', { class: 'k' }, `only if it pays better than ${odds(pl.fair)}`)));
     const P = PLD.parlays || {};
     out = [tip, h('h3', {}, '🎯 2-leg parlays'), h('div', { class: 'bgrid' }, ...((P['2'] || []).map(card))), h('h3', { style: 'margin-top:18px' }, '🎯🎯 3-leg parlays'), h('div', { class: 'bgrid' }, ...((P['3'] || []).map(card)))];
     // build your own
@@ -688,6 +689,8 @@ async function renderProps() {
         h('div', { class: 'pline' }, `${x.side} ${x.line != null ? x.line + ' ' : ''}${x.market.toLowerCase()}`),
         h('div', { class: 'pnums' }, h('div', {}, h('b', { class: 'pos' }, Math.round(x.p) + '%'), h('span', { class: 'k' }, 'our chance')), h('div', {}, h('b', {}, Math.round(x.p_mkt) + '%'), h('span', { class: 'k' }, 'market')),
           h('div', {}, h('b', { class: 'gold' }, x.max_c + '¢'), h('span', { class: 'k' }, 'max to pay'))),
+        x.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(x.units)}`), h('span', { class: 'k' }, `${x.units} unit${x.units === 1 ? '' : 's'}`)) : '',
+        (x.news || []).length ? h('div', { class: 'k', style: 'color:var(--gold)' }, '📰 ' + x.news.join(', ') + '. Line is from before the news.') : '',
         x.market !== 'Anytime TD' ? h('div', { class: 'k' }, `Sims: usually ${x.p10} to ${x.p90}, middle ${x.median}. Our avg ${x.ours} vs market ${x.mkt}.`) : h('div', { class: 'k' }, `Market ${Math.round(x.p_mkt)}%, ours ${Math.round(x.p)}%.`))))];
     if (!L.length) out.push(h('div', { class: 'box mut' }, 'No props clear the bar right now.'));
   } else if (PLV === 'games') {
@@ -698,7 +701,7 @@ async function renderProps() {
           h('div', {}, h('b', {}, odds(s.fair_home_ml)), h('span', { class: 'k' }, `fair ${g.home} ML`))),
         h('div', { class: 'k' }, `One-score game ${Math.round(s.one_score)}% · blowout (17+) ${Math.round(s.blowout)}%${g.weather ? ` · ${g.weather.temp}°F, wind ${g.weather.wind} mph` : g.roof === 'dome' ? ' · indoors' : ''}`),
         ...g.angles.map(a => h('div', { class: 'k', style: 'color:var(--gold)' }, '📐 ' + a)),
-        ...(g.plays.length ? g.plays.map(p => h('div', { class: 'leg' }, h('span', { class: 'tag real' }, 'PLAY'), h('span', { class: 'll' }, `${p.pick}: ${Math.round(p.p)}% vs market ${Math.round(p.p_mkt)}%, pay up to ${p.max_c}¢`))) : [h('div', { class: 'k mut' }, g.angles.length ? `Leans under (${Math.round(100 - s.over)}% in the sims), but not by enough to beat the price.` : 'No edge on the spread or total. The line is the best guess here.')]));
+        ...(g.plays.length ? g.plays.map(p => h('div', { class: 'leg' }, h('span', { class: 'tag real' }, 'PLAY'), h('span', { class: 'll' }, `${p.pick}: ${Math.round(p.p)}% vs market ${Math.round(p.p_mkt)}%, pay up to ${p.max_c}¢. Bet ${usd(p.units || 0.5)}`))) : [h('div', { class: 'k mut' }, g.angles.length ? `Leans under (${Math.round(100 - s.over)}% in the sims), but not by enough to beat the price.` : 'No edge on the spread or total. The line is the best guess here.')]));
     }))];
   } else if (PLV === 'pickem') {
     const L = PLD.pickem_plays || [];
@@ -706,8 +709,8 @@ async function renderProps() {
       h('div', { class: 'leglist' }, ...L.map(x => h('div', { class: 'legpick' }, h('span', { class: 'lp ' + (x.p >= 57.7 ? 'hi' : '') }, Math.round(x.p) + '%'), h('span', { class: 'll' }, `${x.player} ${x.side} ${x.line} ${x.market.toLowerCase()}`), h('span', { class: 'mut', style: 'margin-left:auto' }, `${x.team} vs ${x.opp}`))))];
     if (!L.length) out.push(h('div', { class: 'box mut' }, `Nothing at ${PLD.pickem_cut}%+ right now.`));
   } else {
-    const R = PLD.record || {}; const row = (n, b) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${b[0]}-${b[1]}`), h('b', { class: b[2] >= 0 ? 'pos' : 'neg' }, `${b[2] >= 0 ? '+' : ''}${b[2]}u`));
-    out = [h('div', { class: 'box' }, h('h3', {}, '📊 How the picks have done'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Every graded play, $1 each at the market price. Small samples swing a lot: give it a few weeks before trusting it.'),
+    const R = PLD.record || {}; const row = (n, b) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${b[0]}-${b[1]}`), h('b', { class: b[2] >= 0 ? 'pos' : 'neg' }, `${b[2] >= 0 ? '+' : '-'}${usd(Math.abs(b[2]))}`));
+    out = [h('div', { class: 'box' }, h('h3', {}, '📊 How the picks have done'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Every graded play at 1 unit (${usd(1)}), bought at the market price. Small samples swing a lot: give it a few weeks before trusting it.`),
       row('Player props', R.props || [0, 0, 0]), row('Game lines', R.games || [0, 0, 0]),
       h('div', { class: 'k', style: 'margin-top:10px' }, `Backtest: ${PLD.backtest.ats_model}. The closing line missed by ${PLD.backtest.line_mae} pts on average vs ${PLD.backtest.model_mae} for a ratings model, so game sims start from the line.`)),
       h('div', { class: 'leglist', style: 'margin-top:12px' }, ...(PLD.recent || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'tag ' + (x.void ? 'no' : x.result ? 'real' : 'stretch') }, x.void ? 'VOID' : x.result ? 'WIN' : 'LOSS'),
@@ -746,6 +749,8 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
   $('#upd').textContent = `${D.summary.my_team} · Week ${D.summary.week} · updated ${at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`;
   document.title = `Oxtail Lab · ${D.summary.league}`;
   const start = (location.hash || '#home').slice(1);
+  const card_ = new URLSearchParams(location.search).get('card');
+  if (card_) { history.replaceState(null, '', location.pathname + '?league=' + LID + location.hash); setTimeout(() => openCard(card_), 700); }
   tab(RENDER[start] ? start : 'home');
   setTimeout(() => fetch(BASE + 'players.json?v=' + D.summary.built).then(r => r.json()).then(j => { CARDS = j; }).catch(() => {}), 600);
 })();
@@ -759,7 +764,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) _hidd
 
 // ---------- alert reports: tapping a phone alert opens ?alert=<id> ----------
 let ALERTS = null;
-async function loadAlerts() { if (!ALERTS) ALERTS = await fetch('data/alerts.json?v=' + Date.now()).then(r => r.ok ? r.json() : { alerts: [] }).catch(() => ({ alerts: [] })); return ALERTS.alerts || []; }
+async function loadAlerts() {
+  if (!ALERTS) {
+    ALERTS = await fetch('data/alerts.json?v=' + Date.now()).then(r => r.ok ? r.json() : { alerts: [] }).catch(() => ({ alerts: [] }));
+    try { const c = await caches.open('oxtail-alerts'); const have = new Set((ALERTS.alerts || []).map(a => a.id));   // add ones that came by push but aren't published yet
+      for (const k of await c.keys()) { const a = await (await c.match(k)).json(); if (!have.has(a.id)) (ALERTS.alerts = ALERTS.alerts || []).push(a); }
+      ALERTS.alerts.sort((a, b) => (b.at || '').localeCompare(a.at || '')); } catch (e) {}
+  }
+  return ALERTS.alerts || [];
+}
 function openAlert(a) {
   const ago = m => { const d = (Date.now() - new Date(m)) / 6e4; return d < 60 ? Math.round(d) + ' min ago' : d < 1440 ? Math.round(d / 60) + ' hr ago' : Math.round(d / 1440) + ' days ago'; };
   const sec = (k, t) => t ? h('div', { class: 'arep' }, h('div', { class: 'k' }, k), h('p', {}, t)) : '';
@@ -770,7 +783,7 @@ function openAlert(a) {
     h('div', { class: 'asbody' }, sec('📰 WHAT HAPPENED', a.report.what), sec('📊 WHAT IT MEANS', a.report.means), sec('✅ WHAT TO DO', a.report.todo),
       h('div', { class: 'bar', style: 'margin-top:8px' }, (a.actions || []).map(x => h('button', { class: 'btn small', onclick: () => {
         m.remove();
-        if (x.league && x.league !== LID) { location.href = `?league=${x.league}#${x.tab || 'home'}`; return; }
+        if (x.league && x.league !== LID) { location.href = `?league=${x.league}${x.player ? '&card=' + encodeURIComponent(x.player) : ''}#${x.tab || 'home'}`; return; }
         if (x.player) openCard(x.player); else if (x.tab) tab(x.tab);
       } }, x.label))))));
   document.body.append(m);
@@ -779,7 +792,10 @@ async function showAlertById(id) {
   // the report can land a few seconds after the alert itself: show a loading sheet and keep checking for up to 2 minutes
   const sheet = h('div', { class: 'modal' }, h('div', { class: 'mbox', style: 'max-width:520px;text-align:center' }, h('button', { class: 'x', onclick: () => sheet.remove() }, '×'), h('h2', { style: 'font-size:22px' }, '📣 Loading alert…'), h('p', { class: 'sub' }, 'Grabbing the full report.')));
   let shown = false;
-  for (let i = 0; i < 24; i++) {
+  // 1) the report usually rode in with the push itself: show it right away, whatever league you're on
+  try { const c = await caches.open('oxtail-alerts'); const r = await c.match('alert-' + id); if (r) { const a = await r.json(); $$('.modal').forEach(m => m.remove()); openAlert(a); renderAlertList(); return; } } catch (e) {}
+  // 2) otherwise wait for the site to publish it (up to 5 minutes)
+  for (let i = 0; i < 60; i++) {
     ALERTS = null;
     const a = (await loadAlerts()).find(x => x.id === id);
     if (a) { sheet.remove(); openAlert(a); shown = true; break; }
@@ -798,5 +814,7 @@ async function renderAlertList() {
   const id = new URLSearchParams(location.search).get('alert');
   if (id) { history.replaceState(null, '', location.pathname + (LID ? '?league=' + LID : '') + location.hash); setTimeout(() => showAlertById(id), 400); }
   renderAlertList();
-  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => { if (ev.data && ev.data.type === 'alert' && ev.data.id) { $$('.modal').forEach(m => m.remove()); showAlertById(ev.data.id); } });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', ev => { if (ev.data && ev.data.type === 'alert' && ev.data.id) { $$('.modal').forEach(m => m.remove()); if (ev.data.alert && ev.data.alert.report) openAlert(ev.data.alert); else showAlertById(ev.data.id); } });
+  // if the app was asleep when you tapped, the message can get lost: check again when it comes back to the screen
+  document.addEventListener('visibilitychange', () => { const id = new URLSearchParams(location.search).get('alert'); if (!document.hidden && id && !$$('.asheetwrap').length) showAlertById(id); });
 })();

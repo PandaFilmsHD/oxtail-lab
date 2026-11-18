@@ -38,7 +38,21 @@ def publish_public_key():
             print("notify: published the public push key")
 
 
-def _webpush(title, body, url, tag):
+def _payload(title, body, url, tag, alert):
+    """Carry the whole report inside the push (web push allows ~4 KB) so it opens instantly, from any league, even before the site updates."""
+    d = {"title": title, "body": body, "url": url, "tag": tag}
+    if alert:
+        a = dict(alert); rep = dict(a.get("report") or {})
+        for k in rep:
+            rep[k] = (rep[k] or "")[:700]
+        a["report"] = rep; d["alert"] = a
+        while len(json.dumps(d).encode()) > 3500 and any(len(v or "") > 120 for v in rep.values()):
+            for k in rep:
+                rep[k] = (rep[k] or "")[: max(120, int(len(rep[k] or "") * 0.7))]
+    return json.dumps(d)
+
+
+def _webpush(title, body, url, tag, alert=None):
     raw = os.environ.get("PUSH_SUB", "").strip()
     if not raw:
         return None
@@ -53,7 +67,7 @@ def _webpush(title, body, url, tag):
     ok = False
     for sub in subs:
         try:
-            webpush(subscription_info=sub, data=json.dumps({"title": title, "body": body, "url": url, "tag": tag}),
+            webpush(subscription_info=sub, data=_payload(title, body, url, tag, alert),
                     vapid_private_key=vk, vapid_claims={"sub": "mailto:oxtail-bot@users.noreply.github.com"}, ttl=3600)
             ok = True
         except WebPushException as e:
@@ -61,9 +75,9 @@ def _webpush(title, body, url, tag):
     return ok
 
 
-def send(title, body, tags=None, priority=3, click=None, tag=None):
+def send(title, body, tags=None, priority=3, click=None, tag=None, alert=None):
     url = click or SITE
-    r = _webpush(title, body, url, tag)
+    r = _webpush(title, body, url, tag, alert)
     if r:
         print(f"notify (app): {title}")
         return True

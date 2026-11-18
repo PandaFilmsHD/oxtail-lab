@@ -478,7 +478,18 @@ def main():
     for k in rec["weeks"]:
         rec["weeks"][k][2] = round(rec["weeks"][k][2], 2)
     graded = [dict(x, week=w_) for w_, pk in PK.items() for k, x in pk.items() if x.get("graded")]
-    out = {"week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
+    UNIT = float((load(ROOT / "config.json", {}) or {}).get("unit", 25))
+    STAKE = {"A": 1.0, "B": 0.5, "C": 0.25}
+    for x in props:
+        x["units"] = STAKE.get(x["grade"], 0)
+    for g in games:
+        for pl in g["plays"]:
+            pl["units"] = 0.5
+    for n_ in parlays:
+        for pl in parlays[n_]:
+            pl["units"] = 0.5
+    rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games")}
+    out = {"unit": UNIT, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
            "parlays": parlays, "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),

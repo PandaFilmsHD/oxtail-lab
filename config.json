@@ -1,20 +1,21 @@
 {
-  "season": 2026,
-  "auto_discover": true,
-  "default_league": "787523197",
-  "_leagues_help": "Leagues are found automatically from your ESPN account. Add one here only if it's missing, or to give it overrides like {\"overrides\": {\"pass_td\": 4}}.",
-  "leagues": {
-    "787523197": {
-      "name": "Od from oxtail",
-      "team_id": 6
-    },
-    "1389243593": {
-      "name": "Family Fantasy",
-      "team_id": 1
-    }
+ "season": 2026,
+ "auto_discover": true,
+ "default_league": "787523197",
+ "_leagues_help": "Leagues are found automatically from your ESPN account. Add one here only if it's missing, or to give it overrides like {\"overrides\": {\"pass_td\": 4}}.",
+ "leagues": {
+  "787523197": {
+   "name": "Od from oxtail",
+   "team_id": 6
   },
-  "skip_leagues": [],
-  "league_overrides": {
-    "_help": "Leave empty to use exactly what ESPN reports. Add keys here only to test other settings, e.g. {\"pass_td\": 4, \"ppr\": 0.5} or {\"slots\": {\"QB\":1,\"RB\":2,\"WR\":3,\"TE\":1,\"FLEX\":1,\"D\":1,\"K\":1}}"
+  "1389243593": {
+   "name": "Family Fantasy",
+   "team_id": 1
   }
+ },
+ "skip_leagues": [],
+ "league_overrides": {
+  "_help": "Leave empty to use exactly what ESPN reports. Add keys here only to test other settings, e.g. {\"pass_td\": 4, \"ppr\": 0.5} or {\"slots\": {\"QB\":1,\"RB\":2,\"WR\":3,\"TE\":1,\"FLEX\":1,\"D\":1,\"K\":1}}"
+ },
+ "unit": 25
 }

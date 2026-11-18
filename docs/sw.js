@@ -1,7 +1,8 @@
 // Oxtail Lab service worker: always try the network first (fresh odds), fall back to the last saved copy when offline.
-const CACHE = 'oxtail-v4';
+const CACHE = 'oxtail-v5';
+const ACACHE = 'oxtail-alerts';   // full alert reports that came inside the push
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'style.css', 'app.js', 'chat.js', 'manifest.webmanifest', 'icons/icon-192.png']).catch(() => {}))); });
-self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
+self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== ACACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;   // ESPN / AI calls go straight through
@@ -13,7 +14,8 @@ self.addEventListener('fetch', e => {
 // phone alerts sent straight from GitHub (web push): show it, and open Oxtail when tapped
 self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (x) { d = { title: 'Oxtail', body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Oxtail', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag, data: { url: d.url || './' } }));
+  const save = d.alert ? caches.open(ACACHE).then(c => c.put('alert-' + d.alert.id, new Response(JSON.stringify(d.alert), { headers: { 'Content-Type': 'application/json' } }))) : Promise.resolve();
+  e.waitUntil(save.then(() => self.registration.showNotification(d.title || 'Oxtail', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag, data: { url: d.url || './', alert: d.alert || null } })));
 });
 self.addEventListener('notificationclick', e => {
   e.notification.close();
@@ -21,7 +23,8 @@ self.addEventListener('notificationclick', e => {
   const id = new URL(url).searchParams.get('alert');
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     const c = cs[0];
-    if (c) { c.postMessage({ type: 'alert', id }); return c.focus(); }   // app already open: tell it which alert to show
+    const alert = e.notification.data && e.notification.data.alert;
+    if (c) { c.postMessage({ type: 'alert', id, alert }); return c.focus(); }   // app already open: hand it the whole report
     return self.clients.openWindow(url);
   }));
 });
