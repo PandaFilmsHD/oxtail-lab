@@ -203,6 +203,17 @@ function openTeam(id) {
         h('div', { class: 'mid' }, h('div', { class: 'big ' + (L.win_pct >= 50 ? 'pos' : 'neg') }, Math.round(L.win_pct) + '%'), h('div', { class: 'k' }, 'to win')),
         h('div', { class: 'side', style: 'cursor:pointer', title: 'Open their card', onclick: () => { m.remove(); openTeam(L.opp_id); } }, h('div', { class: 'k' }, L.opponent.toUpperCase() + ' ↗'), h('div', { class: 'v' }, f1(L.opp_expected)), h('div', { class: 'mut', style: 'font-size:12px' }, L.opp_record)))
       : /Final|Semis|Round/.test(L.label) ? h('p', { class: 'sub', style: 'margin:4px 0 0' }, 'Playoff opponent depends on the bracket.') : '';
+    const OL = L.opp_id != null ? (((D.teams || {})[String(L.opp_id)] || {}).weeks_lu || []).find(x => x.w === L.w) : null;
+    if (OL) {   // head-to-head: their lineup | slot | opponent's lineup
+      const cell = (x, right) => x ? h('div', { class: 'mu-p' + (right ? ' r' : '') }, h('div', { class: 'mu-n' }, lastName(x.player) === x.player ? x.player : x.player.split(' ')[0][0] + '. ' + lastName(x.player)),
+        h('div', { class: 'mu-s' }, h('b', {}, f1(x.pts)), ' ', h('span', { class: x.rank >= 22 ? 'pos' : x.rank <= 11 ? 'neg' : 'mut' }, x.opp), x.chance < 1 ? h('span', { class: 'neg' }, ` ${Math.round(x.chance * 100)}%`) : '')) : h('div', { class: 'mu-p' });
+      const rows = L.lineup.map((x, i) => h('div', { class: 'mu-row' }, cell(x, false), h('div', { class: 'mu-slot' }, x.slot), cell(OL.lineup[i], true)));
+      luBox.replaceChildren(vs, h('div', { class: 'mu' }, h('div', { class: 'mu-row mu-h' }, h('div', { class: 'mu-p' }, h('b', {}, t.name)), h('div', { class: 'mu-slot' }, ''), h('div', { class: 'mu-p r' }, h('b', { style: 'cursor:pointer', onclick: () => { m.remove(); openTeam(L.opp_id); } }, L.opponent + ' ↗'))),
+        ...rows, h('div', { class: 'mu-row mu-h' }, h('div', { class: 'mu-p' }, h('b', {}, f1(L.total))), h('div', { class: 'mu-slot' }, 'TOT'), h('div', { class: 'mu-p r' }, h('b', {}, f1(OL.total))))),
+        h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'Points if he plays. Red % = chance to play. Matchup colors: green easy, red tough.'));
+      setTimeout(() => { const on = wkBtns.querySelector('.on'); if (on) wkBtns.scrollLeft = on.offsetLeft - wkBtns.clientWidth / 2 + on.clientWidth / 2; }, 30);
+      return;
+    }
     luBox.replaceChildren(vs,
       h('h3', {}, `${L.label === 'Final' || L.label === 'Semis' ? '🏆 ' : '🗓️ '}${L.label}${/^Week/.test(L.label) ? '' : ` (Wk ${L.w})`} best lineup · ${f1(L.total)}`),
       h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Why ${f1(L.expected)}: their top scorers that week are ${top.map(x => `${x.player} ${f1(x.pts)}`).join(', ')}.` + (easy.length ? ` Easy matchups for ${easy.join(', ')}.` : '') + (risky.length ? ` Might not play: ${risky.join(', ')}.` : '') + (Math.abs(L.total - L.expected) >= 0.5 ? ` The ${f1(L.expected)} on the League page is a bit ${L.expected < L.total ? 'lower' : 'higher'} because it also covers bench guys stepping in if someone sits.` : '')),
