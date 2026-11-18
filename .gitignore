@@ -1,0 +1,4 @@
+data/usage.json
+data/model_prev.json
+__pycache__/
+.DS_Store

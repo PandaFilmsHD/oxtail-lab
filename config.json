@@ -1,0 +1,9 @@
+{
+  "league_id": 787523197,
+  "season": 2026,
+  "my_team_id": 6,
+  "league_name": "Od from oxtail",
+  "league_overrides": {
+    "_help": "Leave empty to use exactly what ESPN reports. Add keys here only to test other settings, e.g. {\"pass_td\": 4, \"ppr\": 0.5} or {\"slots\": {\"QB\":1,\"RB\":2,\"WR\":3,\"TE\":1,\"FLEX\":1,\"D\":1,\"K\":1}}"
+  }
+}

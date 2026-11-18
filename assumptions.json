@@ -1,0 +1,99 @@
+{
+  "_help": "Edit this file to change what the sim assumes. Names must match ESPN exactly.",
+  "avail": {
+    "_help": "Chance a hurt player suits up each week. v = his per-game value when healthy (optional). Players on IR/OUT with no entry here count as out all season.",
+    "Puka Nacua": {
+      "15": 0.3,
+      "16": 0.6,
+      "17": 0.75,
+      "v": 22.3
+    },
+    "Jeremiyah Love": {
+      "15": 0.55,
+      "16": 0.65,
+      "17": 0.7,
+      "v": 10
+    },
+    "Jordan Addison": {
+      "15": 0.6,
+      "16": 0.7,
+      "17": 0.7
+    },
+    "Rhamondre Stevenson": {
+      "12": 0.8,
+      "13": 0.85,
+      "14": 0.9,
+      "15": 0.9,
+      "16": 0.9,
+      "17": 0.9
+    },
+    "Lamar Jackson": {
+      "13": 0.2,
+      "14": 0.35,
+      "15": 0.5,
+      "16": 0.5,
+      "17": 0.5
+    },
+    "Davante Adams": {
+      "14": 0.5,
+      "15": 0.5,
+      "16": 0.55,
+      "17": 0.6
+    },
+    "Josh Jacobs": {
+      "12": 0.7,
+      "13": 0.85,
+      "14": 0.85,
+      "15": 0.85,
+      "16": 0.85,
+      "17": 0.85
+    },
+    "Drake Maye": {
+      "12": 0.85,
+      "13": 0.85,
+      "14": 0.9,
+      "15": 0.9,
+      "16": 0.9,
+      "17": 0.9
+    },
+    "Sam Darnold": {
+      "12": 0.8,
+      "13": 0.8,
+      "14": 0.8,
+      "15": 0.8,
+      "16": 0.8,
+      "17": 0.8
+    },
+    "RJ Harvey": {
+      "14": 0.5,
+      "15": 0.5,
+      "16": 0.5,
+      "17": 0.5
+    }
+  },
+  "override": {
+    "_help": "Force a player's per-game value (before matchup adjustment).",
+    "D'Andre Swift": 14.5
+  },
+  "core": [
+    "Jahmyr Gibbs",
+    "Brock Bowers",
+    "C.J. Stroud",
+    "Puka Nacua"
+  ],
+  "no_trade_teams": [
+    11,
+    12
+  ],
+  "weights": {
+    "recent": 0.4,
+    "matchup_swing": 0.15,
+    "playoff_week_weight": 2,
+    "weekly_sd": 24
+  },
+  "sims": {
+    "base": 200000,
+    "per_trade": 30000,
+    "trades_to_sim": 40
+  }
+}

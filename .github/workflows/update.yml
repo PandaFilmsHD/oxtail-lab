@@ -1,0 +1,46 @@
+name: Update league + sims
+
+on:
+  schedule:
+    # times are UTC. Pacific: ~6am, 11am, 5pm, 10pm every day, plus 3:30am Wednesday right after waivers clear
+    - cron: "7 14 * * *"
+    - cron: "7 19 * * *"
+    - cron: "7 1 * * *"
+    - cron: "7 6 * * *"
+    - cron: "37 11 * * 3"
+  workflow_dispatch: {}   # lets you hit "Run workflow" on the Actions tab any time
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Pull ESPN league
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          SWID: ${{ secrets.SWID }}
+        run: python scripts/pull_espn.py
+      - name: Pull nflverse advanced stats
+        run: python scripts/pull_nflverse.py || echo "nflverse skipped"
+      - name: Run sims
+        run: python scripts/analyze.py
+      - name: Save results
+        run: |
+          git config user.name "oxtail-bot"
+          git config user.email "oxtail-bot@users.noreply.github.com"
+          git add docs/data data/model.json
+          git diff --cached --quiet || git commit -m "Update odds $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git push
