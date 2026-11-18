@@ -556,6 +556,25 @@ if _ap.exists():
         best = min(np.arange(0, 1.01, 0.05), key=lambda w_: float(np.abs(w_ * A_[:, 0] + (1 - w_) * A_[:, 1] - A_[:, 2]).mean()))
         n_ = len(R_); STACK[pos] = round((n_ * float(best) + 20 * 0.5) / (n_ + 20), 2); STACK_N[pos] = n_   # shrink toward 50/50
 print("our weight vs ESPN this week:", STACK or "50/50 (no graded weeks yet)")
+# position bias: if the blended projection keeps running high or low at a position, nudge it (last 6 graded weeks, shrunk hard)
+BIAS = {}
+if _ap.exists():
+    _b = {}
+    for wk_s, sn in _arch.items():
+        W = int(wk_s)
+        if W >= CUR or W < CUR - 6:
+            continue
+        for n, vals in sn["players"].items():
+            m_, e_ = vals[0], vals[1]; s_ = vals[2] if len(vals) > 2 else None
+            act = (P.get(n) or {}).get("wk", {}).get(str(W))
+            if not act or n not in P or e_ is None:
+                continue
+            wm = STACK.get(P[n]["pos"], 0.5); bl = wm * m_ + (1 - wm) * e_
+            if s_ is not None: bl = bl * 2 / 3 + s_ / 3
+            _b.setdefault(P[n]["pos"], []).append(act - bl)
+    for pos, L_ in _b.items():
+        BIAS[pos] = round(sum(L_) / len(L_) * len(L_) / (len(L_) + 60), 2)   # 60 = needs a real sample before it moves much
+print("position bias fix:", BIAS or "none yet (needs graded weeks)")
 
 # ---------------- validated rules from the 1,100-row blind review (each held up across 2022-2024) ----------------
 def _uw(n):
@@ -589,6 +608,24 @@ for n, p in P.items():
         if st_ >= 3 and st_ > TEAM_QB.get(p["nfl"], ("", 0))[1]:
             TEAM_QB[p["nfl"]] = (n, st_)
 print(f"rules: {len(QBSTART)} QBs judged on real starts, {len(HURT_LAST)} left last game early, {len(TEAM_QB)} team QBs known")
+
+# ---------------- D/ST: the opponent's Vegas expected score is what predicts defense points (2022-25: past D/ST average predicts ~nothing) ----------------
+OPP_IT = {}   # each offense's average implied points this season (for weeks without a line yet)
+for w_, d_ in LINES.items():
+    for t_, v_ in d_.items():
+        OPP_IT.setdefault(t_, []).append(v_["it"])
+OPP_IT = {t: sum(v) / len(v) for t, v in OPP_IT.items()}
+_dst = [p["avg"] for p in P.values() if p["pos"] == "D" and p["avg"]]
+DST_SCALE = (sorted(_dst)[len(_dst) // 2] / 5.0) if _dst else 1.0   # this league's D/ST scoring vs the standard the fit used
+def dst_proj(p, w):
+    g = opp(p, w)
+    if not g or g == "?":
+        return None
+    o = g.lstrip("@")
+    it = ((LINES.get(w) or {}).get(o) or {}).get("it") or OPP_IT.get(o)
+    if it is None:
+        return None
+    return max(0.0, DST_SCALE * (5.3 - 0.6 * (it - 22)))
 
 def nxt_game(p):
     return next((w for w in WKS if opp(p, w)), None)
@@ -660,11 +697,17 @@ for n, p in P.items():
         itr = it_ratio(p["nfl"], w)
         vf = itr ** VEGAS_B.get(p["pos"], 0) if itr else 1.0   # Vegas implied team points, only as much as the backtest says it helps
         mine_ = round(base * f * vf, 2)
+        if p["pos"] == "D":
+            dp_ = dst_proj(p, w)
+            if dp_ is not None:
+                mine_ = round(0.8 * dp_ + 0.2 * base, 2)   # mostly the opponent's expected score; a little of his own history
         if w == CUR and p.get("proj") is not None:
             wm = STACK.get(p["pos"], 0.5)   # our weight vs ESPN's for this week, learned from graded weeks
             v[w] = round(wm * mine_ + (1 - wm) * p["proj"], 2) if p["proj"] > 0 else 0.0
             if n in SLP and p["proj"] > 0:
                 v[w] = round(v[w] * 2 / 3 + SLP[n] / 3, 2)   # plain average with Sleeper too: consensus beats any one source
+            if v[w] > 0 and BIAS.get(p["pos"]):
+                v[w] = round(max(0.0, v[w] + BIAS[p["pos"]]), 2)
         elif w == CUR and n in SLP:
             v[w] = round(0.5 * mine_ + 0.5 * SLP[n], 2)
         else:
@@ -1694,7 +1737,7 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
            "playoff_weeks": [PO1, PO2, PO3], "po_view": [R1, SEMI, FINAL], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
            "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy, "ideal_lineups": ideal, "tiers": TIERS,
            "expected_lineup": {w: r1(mine["means"][w]) for w in PLW}, "take": take, "this_week": this_week, "swing": swing,
-           "sims": A["sims"], "stack": STACK, "market_source": MKT_SRC, "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
+           "sims": A["sims"], "stack": STACK, "bias": BIAS, "market_source": MKT_SRC, "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
 tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k, v in RHO.items()], "weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,

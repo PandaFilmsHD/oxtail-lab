@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 11,
    "at": "2026-11-18T06:45:24Z",
-   "champ_pct": 32.0,
+   "champ_pct": 29.0,
    "todo": [
     {
      "urgent": false,
@@ -19,7 +19,7 @@
      "urgent": true,
      "icon": "\ud83d\udea8",
      "title": "Seahawks D/ST is on bye",
-     "detail": "Stream 49ers D/ST this week: add him, drop Seahawks D/ST (+7.3 pts). Grab your guy back after if he's still there.",
+     "detail": "Stream Chargers D/ST this week: add him, drop Seahawks D/ST (+6.5 pts). Grab your guy back after if he's still there.",
      "tab": "home"
     },
     {
@@ -33,7 +33,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Rhamondre Stevenson + Rome Odunze for Kyle Monangai + DK Metcalf (Gomd Naber)",
-     "detail": "Title odds +2.4%. Would you do Rhamondre Stevenson and Rome Odunze for Kyle Monangai and DK Metcalf? I think Odunze slides right into your FLEX spot, and Metcalf is just sitting on your bench.",
+     "detail": "Title odds +2.5%. Would you do Rhamondre Stevenson and Rome Odunze for Kyle Monangai and DK Metcalf? I think Odunze slides right into your FLEX spot, and Metcalf is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -44,7 +44,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:36Z",
-   "champ_pct": 7.5,
+   "champ_pct": 8.5,
    "todo": [
     {
      "urgent": true,
@@ -55,16 +55,9 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.8 pts a week in your lineup the rest of the way.",
-     "tab": "waivers"
-    },
-    {
-     "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
-     "detail": "Title odds +8.0%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
+     "detail": "Title odds +8.4%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -75,13 +68,13 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:43Z",
-   "champ_pct": 4.0,
+   "champ_pct": 4.1,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
-     "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.9%.",
+     "title": "Claim Steelers D/ST, drop Ravens D/ST",
+     "detail": "Fills a hole this week (+3.9 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
@@ -102,7 +95,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Kyren Williams + Bijan Robinson for D'Andre Swift + George Pickens (Ryan's Rad Team)",
-     "detail": "Title odds +2.2%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
+     "detail": "Title odds +2.3%. Would you do Kyren Williams and Bijan Robinson for D'Andre Swift and George Pickens? I think Williams slides right into your RB spot, and you're deep at RB so you can cover Swift's spot.",
      "tab": "trades"
     }
    ]
@@ -113,7 +106,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:45:30Z",
-   "champ_pct": 34.8,
+   "champ_pct": 31.6,
    "todo": [
     {
      "urgent": false,
@@ -126,14 +119,14 @@
      "urgent": true,
      "icon": "\ud83d\udea8",
      "title": "Seahawks D/ST is on bye",
-     "detail": "Stream 49ers D/ST this week: add him, drop Seahawks D/ST (+7.3 pts). Grab your guy back after if he's still there.",
+     "detail": "Stream Bills D/ST this week: add him, drop Seahawks D/ST (+8.9 pts). Grab your guy back after if he's still there.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Saquon Barkley + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
-     "detail": "Title odds +5.7%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
+     "detail": "Title odds +5.5%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
      "tab": "trades"
     }
    ]
