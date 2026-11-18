@@ -725,6 +725,18 @@ async function renderProps() {
         ...g.angles.map(a => h('div', { class: 'k', style: 'color:var(--gold)' }, '📐 ' + a)),
         ...(g.plays.length ? g.plays.map(p => h('div', { class: 'leg' }, h('span', { class: 'tag real' }, 'PLAY'), h('span', { class: 'll' }, `${p.pick}: ${Math.round(p.p)}% vs market ${Math.round(p.p_mkt)}%, pay up to ${p.max_c}¢. Bet ${usd(p.units || 0.5)}`))) : [h('div', { class: 'k mut' }, g.angles.length && s.over < 50 ? `Leans under (${Math.round(100 - s.over)}% in the sims), but not by enough to beat the price.` : g.angles.length ? 'Leans with the angle, but not by enough to beat the price.' : 'No edge on the spread or total. The line is the best guess here.')]));
     }))];
+  } else if (PLV === 'kalshi') {
+    const K = PLD.kalshi || {};
+    const mins = K.at ? Math.round((Date.now() - new Date(K.at)) / 6e4) : null;
+    const row = x => h('div', { class: 'legpick', style: 'cursor:default' }, h('span', { class: 'lp ' + (x.edge >= 5 ? 'hi' : '') }, Math.round(x.p) + '%'),
+      h('span', { class: 'll' }, x.label, h('div', { class: 'k' }, `${kickT(x.kick)} · edge +${x.edge} pts · fee ${x.fee}¢`)),
+      h('span', { style: 'margin-left:auto;text-align:right' }, h('b', { class: 'gold' }, x.cost + '¢'), h('div', { class: 'k' }, `+${x.ev}% EV`)));
+    const sec = (t, sub, L, bet) => L && L.length ? [h('h3', { style: 'margin-top:16px' }, t, h('small', {}, sub)), h('div', { class: 'leglist' }, ...L.map(row)), bet ? h('div', { class: 'k', style: 'margin-top:6px' }, bet) : ''] : [];
+    out = [h('div', { class: 'box ptip' }, h('b', {}, '💸 Real Kalshi prices. '), `Every rung of every Kalshi NFL ladder (${K.n || 0} prices${mins != null ? `, updated ${mins} min ago` : ''}) checked against our 50,000 sims. The gold number is what a YES share costs now. Buy only at or under it; prices move.`),
+      ...sec('✅ Best buys', 'Our chance beats the share price by 3+ points, after the fee', K.buys, `Bet size: ${usd(0.5)} each, ${usd(1)} if the edge is 6+ points.`),
+      ...sec('🛡️ Safe buys', '80%+ chance and still under fair', K.safe),
+      ...sec('🎰 Kalshi longshots', 'Cheap shares the sims like. Tails are the least certain part of any model, so keep these small.', K.longs, `Keep these to ${usd(0.2)} or less.`)];
+    if (!(K.buys || []).length && !(K.safe || []).length) out.push(h('div', { class: 'box mut' }, 'No Kalshi prices beat our sims right now.'));
   } else if (PLV === 'long') {
     const L = PLD.longshots || { singles: [], parlays: [] };
     out = [h('div', { class: 'box ptip' }, '🎰 For fun. These hit 1 to 35% of the time, so most of them lose. Every leg here is one the sims like more than the market does. Keep it to a small bet: ', h('b', {}, usd(0.2)), ' or so.'),
@@ -746,6 +758,7 @@ async function renderProps() {
       row('Player props', R.props || [0, 0, 0]), row('Game lines', R.games || [0, 0, 0]),
       h('h3', { style: 'margin-top:14px' }, '🧾 Every-bet tracker'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Pretend 1 unit (${usd(1)}) on every bet the sims like more than the market, at what a share would cost on DraftKings Predictions or Kalshi (the market's chance plus about 1¢ and the fee), 60¢ or less. Only bets that still come out ahead after that price count.${R.auto_open ? ` Open this week: ${R.auto_open.games} game bets, ${R.auto_open.props} props.` : ''}`),
       row('All game lines', R.auto_games || [0, 0, 0]), row('All props', R.auto_props || [0, 0, 0]),
+      row(`💸 Kalshi buys (real prices${R.kalshi_open ? `, ${R.kalshi_open} open` : ''})`, R.kalshi || [0, 0, 0]),
       ...Object.entries(R.tracker || {}).map(([n, s]) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${s.w}-${s.l}${s.push ? '-' + s.push : ''}${s.open ? ` (${s.open} open)` : ''}`),
         h('span', { class: 'k' }, s.roi != null ? `ROI ${s.roi}% ±${s.roi_se}` : ''), h('b', { class: (s.clv_ev || 0) >= 0 ? 'pos' : 'neg' }, s.clv_n ? `CLV ${s.clv_ev}% ±${s.clv_se} (${s.clv_n})` : ''))),
       h('div', { class: 'k', style: 'margin-top:10px' }, `Backtest: ${PLD.backtest.ats_model}. The closing line missed by ${PLD.backtest.line_mae} pts on average vs ${PLD.backtest.model_mae} for a ratings model, so game sims start from the line.`)),

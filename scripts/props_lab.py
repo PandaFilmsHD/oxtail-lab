@@ -222,6 +222,16 @@ def ex_price(pm):
     return amer(c_)
 
 
+def kfee(c):
+    """Kalshi taker fee per $1 contract: 7% x price x (1 - price), rounded up to the cent on real orders."""
+    return 0.07 * c * (1 - c)
+
+
+def kbuy(p, c):
+    """EV of buying one share at c cents (0-1) when it wins with chance p, after the fee."""
+    return p / (c + kfee(c)) - 1 if c else None
+
+
 def weather(team, kick):
     """Forecast wind (mph) and temp at kickoff from Open-Meteo. None if indoors or unavailable."""
     if team in ROOF or team not in LOC:
@@ -242,6 +252,8 @@ def weather(team, kick):
 
 def main():
     U = load(D / "usage.json", {}); DIST = load(D / "prop_dists.json", {}); RAW = load(D / "props_raw.json", {}) or {}
+    KAL = load(D / "kalshi.json", {}) or {}   # real Kalshi share prices (pull_kalshi.py)
+    KBUY = []                                 # every Kalshi rung where our chance beats what a share costs
     SL = load(D / "sleeper_proj.json", {}) or {}; GO = load(D / "game_odds.json", {}) or {}
     M = next((load(p) for p in sorted(D.glob("*/model.json"))), {}) or {}
     cur = str(M.get("cur") or RAW.get("week") or "")
@@ -458,6 +470,30 @@ def main():
                     SAFE.append({"lean": 0.0, "label": lab, "game": gk, "who": lab.split()[0], "p": pa, "ind": ind, "type": "game", "kick": k_})
                 if 0.70 <= pa <= (0.93 if "moneyline" in lab else 0.90):
                     LEGS.append({"kindg": "total" if (" Over " in lab or " Under " in lab) else "ml" if "moneyline" in lab else "spread", "lean": (0.004 if (" Under " in lab and angles) else 0.0), "label": lab, "game": gk, "who": (f"{a}@{h} total" if (" Over " in lab or " Under " in lab) else lab.split()[0]), "p": pa, "ind": ind, "type": "game", "kick": k_})
+        kg = (KAL.get("games") or {}).get(h) if not started else None
+        if kg and kg.get("away") == a:
+            def kadd(lab, pk_, c_, tick, kind):
+                if c_ and 0.03 <= c_ <= 0.97:
+                    KBUY.append({"label": lab, "side": "Yes", "p": round(100 * pk_, 1), "cost": round(100 * c_), "fee": round(100 * kfee(c_), 1), "ev": round(100 * kbuy(pk_, c_), 1),
+                                 "edge": round(100 * (pk_ - c_), 1), "kick": k_, "ticker": tick, "type": "game", "kind": kind, "home": h, "away": a, "game": "-".join(sorted((h, a)))})
+            for tm_, q_ in kg.get("ml", {}).items():
+                pw = float(np.mean(mar > 0) + 0.5 * np.mean(mar == 0)) if tm_ == h else float(np.mean(mar < 0) + 0.5 * np.mean(mar == 0))
+                kadd(f"{tm_} to win", pw, q_.get("ask"), q_.get("ticker"), "ml")
+            for q_ in kg.get("spread", []):
+                tm_, sk_ = q_.get("team"), q_.get("strike")
+                if sk_ is None:
+                    continue
+                m_ = mar if tm_ == h else -mar
+                ps_ = float(np.mean(m_ > sk_))
+                kadd(f"{tm_} by {int(sk_ + 0.5)}+", ps_, q_.get("ask"), q_.get("ticker"), "spread")
+                kadd(f"{tm_} doesn't win by {int(sk_ + 0.5)}+", 1 - ps_, q_.get("no_ask"), q_.get("ticker"), "spread_no")
+            for q_ in kg.get("total", []):
+                sk_ = q_.get("strike")
+                if sk_ is None:
+                    continue
+                po_ = float(np.mean(totl > sk_))
+                kadd(f"{a} @ {h} over {sk_:g}", po_, q_.get("ask"), q_.get("ticker"), "total")
+                kadd(f"{a} @ {h} under {sk_:g}", 1 - po_, q_.get("no_ask"), q_.get("ticker"), "total_no")
         games.append({"home": h, "away": a, "kick": k_, "started": started, "spread": spr, "total": tot, "roof": roof, "weather": wx, "angles": angles + s_angles,
                       "sim": {"home_win": round(100 * p_home_win, 1), "home_cover": round(100 * p_home_cover, 1), "over": round(100 * p_over, 1),
                               "home_pts": round(float(np.mean(hp)), 1), "away_pts": round(float(np.mean(ap)), 1), "fair_total": round(float(np.median(totl)), 1),
@@ -632,6 +668,22 @@ def main():
                     X = nbinom.ppf(np.clip(u_, 1e-9, 1 - 1e-9), r_nb, r_nb / (r_nb + lam_))
                 else:
                     X = (V2A.sample_count(st, p["pos"], np.maximum(0, fin * f), rng) if V2A else rng.poisson(np.maximum(0, fin * f))) if st in ("pass_tds", "td", "rec") else fin * base
+                if RAT is None and not big_gap:
+                    kp_ = (KAL.get("props") or {}).get(key(nm)) or {}
+                    for q_ in kp_.get(label, []):
+                        sk_ = q_.get("strike")
+                        if sk_ is None:
+                            continue
+                        py_ = float(np.mean(X > sk_))
+                        for side_k, pk_, c_ in (("Yes", py_, q_.get("ask")), ("No", 1 - py_, q_.get("no_ask"))):
+                            if not c_ or not 0.03 <= c_ <= 0.97:
+                                continue
+                            ev_k = kbuy(pk_, c_)
+                            n_ = int(round(sk_ + 0.5))
+                            KBUY.append({"label": f"{nm} {n_}+ {label.lower()}" if side_k == "Yes" else f"{nm} under {n_} {label.lower()}", "side": side_k, "p": round(100 * pk_, 1),
+                                         "cost": round(100 * c_), "fee": round(100 * kfee(c_), 1), "ev": round(100 * ev_k, 1), "edge": round(100 * (pk_ - c_), 1), "kick": k_,
+                                         "ticker": q_.get("ticker"), "type": "prop", "player": nm, "team": tm, "market": label, "strike": sk_, "spread": round(100 * ((q_.get("ask") or 0) - (q_.get("bid") or 0))) if q_.get("bid") else None,
+                                         "game": "-".join(sorted((tm, lines[tm]["opp"])))})
                 if not big_gap and st != "td":
                     # alt lines he hits about 75-82% of the time, for parlays
                     for side_, q in (("Over", 0.28), ("Over", 0.22), ("Over", 0.17), ("Under", 0.72), ("Under", 0.78), ("Under", 0.83)):
@@ -993,12 +1045,28 @@ def main():
             kp = f"PA|{x['player']}|{x['market']}"
             if not locked(kp, t_["tier"]):
                 wk[kp] = {k: x[k] for k in ("player", "uname", "team", "market", "side", "kick", "event", "dpdl")} | t_ | {"v": 2, "news": bool(x["news"]), "auto": True, "at": nowi}
+    liq = lambda x: x.get("spread") is None or x["spread"] <= 6                # skip rungs with a wide bid/ask gap (thin market)
+    def best_per(L, k=2):   # at most k rungs per player/game so one guy's ladder doesn't fill the list
+        out_, c_ = [], {}
+        for x in L:
+            g_ = x.get("player") or x["label"].split()[0] + x.get("kind", "")
+            if c_.get(g_, 0) < k:
+                out_.append(x); c_[g_] = c_.get(g_, 0) + 1
+        return out_
+    kal_out = {"at": KAL.get("at"), "n": len(KBUY),
+               "buys": best_per(sorted([x for x in KBUY if 20 <= x["p"] <= 80 and x["edge"] >= 3 and x["ev"] >= 4 and liq(x)], key=lambda x: -x["edge"]))[:40],
+               "safe": best_per(sorted([x for x in KBUY if x["p"] > 80 and x["edge"] >= 2.5 and x["ev"] >= 2 and liq(x)], key=lambda x: -x["edge"]))[:20],
+               "longs": best_per(sorted([x for x in KBUY if 5 <= x["p"] < 20 and x["ev"] >= 20 and x["edge"] >= 2 and liq(x)], key=lambda x: -x["ev"]), 1)[:15]}
+    for x in kal_out["buys"] + kal_out["safe"]:   # Kalshi tracker: 1 unit at the real share price + fee, locked the first time it shows
+        kk = f"KA|{x['ticker']}|{x['side']}"
+        if kk not in wk and x.get("kick") and x["kick"] > now.isoformat():
+            wk[kk] = {k: x.get(k) for k in ("label", "side", "p", "cost", "fee", "ev", "edge", "kick", "type", "kind", "player", "team", "market", "strike", "home", "away")} | {"kal": True, "at": now.isoformat()}
     stat_by = {}
     for v in (U.get("players") or {}).values():
         for w in v.get("weeks", []):
             stat_by[(key(v["name"]), str(w["w"]))] = w
     box_in = {(v.get("team"), str(w["w"])) for v in (U.get("players") or {}).values() for w in v.get("weeks", []) if "pts" in w}
-    rec = {"props": [0, 0, 0.0], "games": [0, 0, 0.0], "auto_games": [0, 0, 0.0], "auto_props": [0, 0, 0.0], "weeks": {}}
+    rec = {"props": [0, 0, 0.0], "games": [0, 0, 0.0], "auto_games": [0, 0, 0.0], "auto_props": [0, 0, 0.0], "kalshi": [0, 0, 0.0], "weeks": {}}
     PC = load(D / "props_close.json", {}) or {}
     MKR = {"Pass yds": "player_pass_yds", "Pass TDs": "player_pass_tds", "Rush yds": "player_rush_yds", "Rec yds": "player_reception_yds", "Catches": "player_receptions", "Anytime TD": "td"}
     def game_clv(x, Lh, La):
@@ -1051,6 +1119,38 @@ def main():
                 s["cn"] += 1; s["cs"] += x["clv"]["ev"] / 100; s["cq"] += (x["clv"]["ev"] / 100) ** 2
     for w_, picks in PK.items():
         for k, x in picks.items():
+            if k.startswith("KA|"):   # Kalshi buys: grade from final scores / box scores, profit at the real share price
+                if x.get("result") is None:
+                    if x["type"] == "game":
+                        Lh = (U.get("lines") or {}).get(w_, {}).get(x["home"], {}); La = (U.get("lines") or {}).get(w_, {}).get(x["away"], {})
+                        if Lh.get("pts") is None or La.get("pts") is None:
+                            continue
+                        hm, tt = Lh["pts"] - La["pts"], Lh["pts"] + La["pts"]
+                        lab = x["label"]; tm0 = lab.split()[0]
+                        mm_ = hm if tm0 == x["home"] else -hm
+                        if x["kind"] == "ml":
+                            x["result"] = None if hm == 0 else mm_ > 0
+                        elif x["kind"] in ("spread", "spread_no"):
+                            sk = float(lab.split(" by ")[-1].replace("+", "")) - 0.5 if "by" in lab else None
+                            sk = sk if sk is not None else 0
+                            x["result"] = (mm_ > sk) if x["kind"] == "spread" else not (mm_ > sk)
+                        else:
+                            sk = float(lab.split()[-1])
+                            x["result"] = (tt > sk) if x["kind"] == "total" else not (tt > sk)
+                        x["graded"] = True
+                    else:
+                        if (x["team"], w_) not in box_in:
+                            continue
+                        s_ = stat_by.get((key(x["player"]), w_))
+                        if not s_:
+                            continue
+                        stv = {"Pass yds": s_.get("passyd", 0), "Pass TDs": s_.get("ptd", 0), "Rush yds": s_.get("rushyd", 0), "Rec yds": s_.get("recyd", 0),
+                               "Catches": s_.get("rec", 0), "Anytime TD": (s_.get("rutd", 0) or 0) + (s_.get("retd", 0) or 0)}[x["market"]]
+                        x["actual"] = stv; x["result"] = (stv > x["strike"]) == (x["side"] == "Yes"); x["graded"] = True
+                if x.get("graded") and x.get("result") is not None:
+                    c_ = (x["cost"] + x["fee"]) / 100
+                    rec["kalshi"][0 if x["result"] else 1] += 1; rec["kalshi"][2] += (1 / c_ - 1) if x["result"] else -1
+                continue
             if x.get("result") is None:
                 if k.startswith(("G|", "GA|")):
                     Lh = (U.get("lines") or {}).get(w_, {}).get(x["home"], {})
@@ -1108,7 +1208,8 @@ def main():
             if x.get("auto") and x.get("v") == 2:
                 tally(k, x)
     (D / "props_picks.json").write_text(json.dumps(PK, separators=(",", ":"), sort_keys=True))
-    for b_ in (rec["props"], rec["games"], rec["auto_games"], rec["auto_props"]):
+    rec["kalshi_open"] = sum(1 for k, x in wk.items() if k.startswith("KA|") and not x.get("graded"))
+    for b_ in (rec["props"], rec["games"], rec["auto_games"], rec["auto_props"], rec["kalshi"]):
         b_[2] = round(b_[2], 2)
     for k in rec["weeks"]:
         rec["weeks"][k][2] = round(rec["weeks"][k][2], 2)
@@ -1143,7 +1244,7 @@ def main():
                             "game": "-".join(L_["game"]), "bits": bits(L_)}
                            for L_ in sorted(gpool, key=lambda z: -z["p"]) if L_["label"] not in {l["label"] for l in legs_out}]
     rec["dollars"] = {k: round(rec[k][2] * UNIT, 2) for k in ("props", "games", "auto_games", "auto_props")}
-    out = {"unit": UNIT, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
+    out = {"unit": UNIT, "kalshi": kal_out, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
            "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),
