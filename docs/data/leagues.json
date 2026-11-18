@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T07:36:31Z",
+   "at": "2026-11-18T08:14:00Z",
    "champ_pct": 28.8,
    "todo": [
     {
@@ -43,21 +43,21 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T07:36:41Z",
-   "champ_pct": 8.3,
+   "at": "2026-11-18T08:14:23Z",
+   "champ_pct": 14.4,
    "todo": [
     {
-     "urgent": true,
-     "icon": "\ud83d\udea8",
-     "title": "Drake Maye is on bye",
-     "detail": "Add Bo Nix and drop Corey Kiner (+18.0 pts).",
-     "tab": "home"
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim 49ers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +1.4 pts a week in your lineup the rest of the way, title odds +1.8%.",
+     "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
-     "detail": "Title odds +8.7%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
+     "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
+     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T07:36:45Z",
+   "at": "2026-11-18T08:14:36Z",
    "champ_pct": 4.2,
    "todo": [
     {
@@ -105,7 +105,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T07:36:36Z",
+   "at": "2026-11-18T08:14:10Z",
    "champ_pct": 31.0,
    "todo": [
     {
@@ -116,17 +116,17 @@
      "tab": "home"
     },
     {
-     "urgent": true,
-     "icon": "\ud83d\udea8",
-     "title": "Seahawks D/ST is on bye",
-     "detail": "Stream Bills D/ST this week: add him, drop Seahawks D/ST (+8.9 pts). Grab your guy back after if he's still there.",
-     "tab": "home"
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Chargers D/ST, drop Jaguars D/ST",
+     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way, title odds +1.1%.",
+     "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Saquon Barkley + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
-     "detail": "Title odds +5.3%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
+     "detail": "Title odds +5.5%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.1 pts a week for the playoff push, and Walker slides right into your RB spot.",
      "tab": "trades"
     }
    ]
