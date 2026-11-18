@@ -197,12 +197,16 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         except Exception:
             pass
         try:
-            r2 = requests.get("https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players", params={"playerId": x["id"], "limit": 3}, timeout=20)
+            r2 = requests.get("https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players", params={"playerId": x["id"], "limit": 6}, timeout=20)
             feed = (r2.json() or {}).get("feed") or [] if r2.ok else []
+            last = [w for w in x["n"].split() if w.rstrip(".") not in ("Jr", "Sr", "II", "III", "IV")][-1]
+            def _txt(f):
+                return __import__("re").sub(r"<[^>]+>", " ", (f.get("headline") or "") + ". " + (f.get("story") or f.get("description") or ""))
+            # only notes that are actually about him (his name up front), not general articles that mention him
+            feed = [f for f in feed if last.lower() in _txt(f)[:160].lower() and len(_txt(f)) < 2500]
             if feed:
                 f0 = feed[0]
-                txt = (f0.get("headline") or "") + ". " + (f0.get("story") or f0.get("description") or "")
-                txt = __import__("re").sub(r"<[^>]+>", " ", txt)
+                txt = _txt(f0)
                 if not nw["date"] or (f0.get("published") or "") > (nw["date"] or ""):
                     nw["text"] = (txt + " " + nw["text"]).strip()
                     nw["date"] = f0.get("published") or nw["date"]

@@ -254,7 +254,10 @@ def auto_avail(n):
     played = [int(w) for w, v in p["wk"].items() if v and int(w) < CUR]
     last = max(played) if played else CUR - 1
     q, why = {}, ""
-    if SEASON_END.search(txt) and inj in ("OUT", "INJURY_RESERVE"):
+    last_ = [w for w in n.split() if w.rstrip(".") not in ("Jr", "Sr", "II", "III", "IV")][-1].lower()
+    se = SEASON_END.search(txt)
+    near = se and any(last_ in txt.lower()[max(0, i - 220): i + 40] or "he " in txt.lower()[max(0, i - 120): i] for i in [se.start()])
+    if se and near and inj in ("OUT", "INJURY_RESERVE"):
         return {str(w): 0.0 for w in WKS}, "Out for the season (ESPN news)."
     m_ = RET_WK.search(txt); ret = None
     if m_:
