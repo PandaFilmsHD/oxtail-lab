@@ -1,5 +1,7 @@
 name: Test phone alert
 on: workflow_dispatch
+permissions:
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -7,14 +9,20 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install requests
+      - run: pip install requests pywebpush
       - name: Which secrets exist (true/false only, never the values)
         run: |
           echo "NTFY_TOPIC repo secret: ${{ secrets.NTFY_TOPIC != '' }}"
-          echo "NTFY_TOPIC variable: ${{ vars.NTFY_TOPIC != '' }}"
-          echo "NTFY secret: ${{ secrets.NTFY != '' }}"
+          echo "PUSH_SUB secret: ${{ secrets.PUSH_SUB != '' }}"
           echo "ODDS_API_KEY secret: ${{ secrets.ODDS_API_KEY != '' }}"
           echo "ESPN_S2 secret: ${{ secrets.ESPN_S2 != '' }}"
       - run: python3 scripts/notify.py test
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || vars.NTFY_TOPIC || secrets.NTFY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          PUSH_SUB: ${{ secrets.PUSH_SUB }}
+      - name: Publish the public push key for the app
+        run: |
+          git config user.name "oxtail-bot"
+          git config user.email "oxtail-bot@users.noreply.github.com"
+          git add docs/push_key.txt 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "Public push key" && git push)

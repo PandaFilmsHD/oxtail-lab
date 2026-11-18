@@ -403,7 +403,34 @@ function rcTable(rc) {
     h('td', {}, r.team_mae != null ? f1(r.team_mae) + ' pts' : '—'), h('td', {}, r.games ? `${r.picked_right}/${r.games}` : '—'), h('td', {}, r.startsit_pct != null ? r.startsit_pct + '%' : '—')));
   return h('div', { class: 'tw' }, h('table', {}, head, h('tbody', {}, rows)));
 }
+let VAPID_PUB = null;
+function alertsBox() {
+  const box = h('div', { class: 'box', id: 'alertsbox', style: 'margin-bottom:16px;border-color:#ffc83d' }, h('h3', {}, '🔔 Phone alerts'));
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const out = h('div', {});
+  const b64 = s => { const p = '='.repeat((4 - s.length % 4) % 4), r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from([...r].map(c => c.charCodeAt(0))); };
+  const go = async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) { out.replaceChildren(h('p', { class: 'neg' }, standalone ? 'This phone doesn\'t support app alerts (iPhone needs iOS 16.4 or newer).' : 'Open Oxtail from your home screen app first, then tap this again.')); return; }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { out.replaceChildren(h('p', { class: 'neg' }, 'Alerts are blocked. Turn them on in Settings → Notifications → Oxtail, then try again.')); return; }
+      if (!VAPID_PUB) VAPID_PUB = (await fetch('push_key.txt?v=' + Date.now()).then(r => r.ok ? r.text() : '')).trim();
+      if (!VAPID_PUB) { out.replaceChildren(h('p', { class: 'neg' }, 'Alerts aren\'t set up on GitHub yet (missing NTFY_TOPIC secret).')); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(VAPID_PUB) });
+      const code = JSON.stringify(sub);
+      out.replaceChildren(h('p', {}, '✅ Alerts are on for this phone. One last step: copy this code and save it as a GitHub secret named ', h('b', {}, 'PUSH_SUB'), '. That\'s what lets GitHub send alerts straight to this app.'),
+        h('textarea', { readonly: '', style: 'width:100%;height:70px;font-size:11px;background:#0f1138;color:#fff;border:2px solid #2c3080;border-radius:10px' }, code),
+        h('div', { class: 'bar' }, h('button', { class: 'btn small', onclick: e => navigator.clipboard.writeText(code).then(() => e.target.textContent = 'COPIED ✓') }, 'COPY CODE'),
+          h('a', { class: 'btn small blue', href: 'https://github.com/PandaFilmsHD/oxtail-lab/settings/secrets/actions/new', target: '_blank', rel: 'noopener' }, 'OPEN GITHUB SECRETS')));
+    } catch (er) { out.replaceChildren(h('p', { class: 'neg' }, 'Couldn\'t turn on alerts: ' + er.message)); }
+  };
+  box.append(h('p', { class: 'sub', style: 'margin:0 0 8px' }, standalone ? 'Get injury news, lineup warnings and in-game updates for your players. Tapping an alert opens Oxtail.' : 'Open Oxtail from your home screen icon (not the browser), then tap the button.'),
+    h('button', { class: 'btn small', onclick: go }, '🔔 TURN ON ALERTS'), out);
+  return box;
+}
 function renderHow() {
+  if (!$('#alertsbox')) $('#how').prepend(alertsBox());
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]
