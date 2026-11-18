@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0a0b1e">
 <title>Oxtail Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="style.css?v=1794975195">
+<link rel="stylesheet" href="style.css?v=1794975297">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>">
 </head>
 <body>
@@ -116,13 +116,15 @@
     <div class="box"><ul>
       <li>A GitHub job pulls every league on your ESPN account a few times a day, grabs NFL advanced stats from nflverse, reruns everything and updates this page.</li>
       <li>Player value blends season average, last 4 games, expected points from usage and ESPN's rest-of-season projection, then adjusts for usage trend and each week's matchup.</li>
+      <li>Matchups use schedule-adjusted fantasy points allowed, the same idea 4for4 and FantasyPros use: each defense is judged by how much more or less players score against it than they normally do, so a defense doesn't look good just because it played bad offenses.</li>
+      <li>Trade value works like a trade value chart: add up both sides, and the side sending more players takes a 25% tax, since 2 okay players are rarely worth 1 great one.</li>
       <li>Every team starts its best lineup each week, scores swing about 24 points a week, and the bracket follows your league's playoff setup.</li>
       <li>Injury guesses live in <code>assumptions.json</code> in the repo. Edit it on GitHub and the next update uses it.</li>
     </ul><div id="assume"></div></div>
   </section>
 </div>
 <div class="tip" id="tip" hidden></div>
-<script src="app.js?v=1794975195"></script>
-<script src="chat.js?v=1794975195"></script>
+<script src="app.js?v=1794975297"></script>
+<script src="chat.js?v=1794975297"></script>
 </body>
 </html>

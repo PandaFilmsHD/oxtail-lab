@@ -128,6 +128,64 @@ def mean(xs):
     return round(sum(xs) / len(xs), 1) if xs else None
 
 
+# ---------------- schedule-adjusted fantasy points allowed (the 4for4 / FantasyPros SOS idea) ----------------
+# For every defense: how many more (or fewer) points did each position score against them than those same players normally score?
+TEAMFIX = {"LA": "LAR", "WAS": "WSH", "JAC": "JAX", "LVR": "LV", "OAK": "LV", "SD": "LAC", "STL": "LAR"}
+AFPA, AFPA_N, POS_GROUP_AVG, AFPA_RANK = {}, {}, {}, {}
+_acc, _games, _grp = {}, {}, {}
+for e in USAGE.values():
+    pos_ = e.get("pos")
+    if pos_ not in SKILL:
+        continue
+    wks = [x for x in e.get("weeks", []) if x["w"] < CUR]
+    if len(wks) < 4:
+        continue
+    pts_ = [league_pts(x) for x in wks]
+    avg_ = sum(pts_) / len(pts_)
+    for x, pt in zip(wks, pts_):
+        d = TEAMFIX.get(x.get("opp"), x.get("opp"))
+        if not d:
+            continue
+        k = (d, pos_)
+        _acc[k] = _acc.get(k, 0) + (pt - avg_)
+        _games.setdefault(k, set()).add(x["w"])
+        _grp[(d, pos_, x["w"])] = _grp.get((d, pos_, x["w"]), 0) + pt
+for pos_ in SKILL:
+    vals = [v for (d, ps, w), v in _grp.items() if ps == pos_]
+    POS_GROUP_AVG[pos_] = sum(vals) / len(vals) if vals else 1
+for (d, pos_), tot in _acc.items():
+    n_ = len(_games[(d, pos_)])
+    AFPA[(d, pos_)] = tot / n_          # extra points per game this defense gives the position, vs those players' norms
+    AFPA_N[(d, pos_)] = n_
+for pos_ in SKILL:
+    L = sorted([d for (d, ps) in AFPA if ps == pos_], key=lambda d: AFPA[(d, pos_)])
+    for i, d in enumerate(L):
+        AFPA_RANK[(d, pos_)] = i + 1    # 1 = toughest, 32 = easiest (same direction as before)
+print(f"schedule-adjusted points allowed: {len(AFPA)} defense/position pairs")
+
+
+def opp_factor(p, w):
+    """Matchup multiplier for player p in week w."""
+    g = opp(p, w)
+    if not g or g == "?":
+        return 1.0
+    d = g.lstrip("@")
+    k = (d, p["pos"])
+    if k in AFPA:
+        shrink = AFPA_N[k] / (AFPA_N[k] + 4)            # small samples get pulled toward average
+        return max(0.8, min(1.2, 1 + shrink * AFPA[k] / max(1.0, POS_GROUP_AVG[p["pos"]])))
+    rk = opp_rank(p, w)
+    return 1 + ((rk or 16.5) - 16.5) / 16.5 * WGT["matchup_swing"]
+
+
+_espn_rank = opp_rank
+def opp_rank(p, w):
+    g = opp(p, w)
+    if g and g != "?" and (g.lstrip("@"), p["pos"]) in AFPA_RANK:
+        return AFPA_RANK[(g.lstrip("@"), p["pos"])]
+    return _espn_rank(p, w)
+
+
 PROF = {}
 for n, p in P.items():
     if p["pos"] not in SKILL:
@@ -196,7 +254,7 @@ for n, p in P.items():
             v[w], q[w] = 0.0, 0.0
             continue
         rk = opp_rank(p, w)
-        f = 1 + (rk - 16.5) / 16.5 * WGT["matchup_swing"]
+        f = opp_factor(p, w)
         v[w] = p["proj"] if (w == CUR and p.get("proj") is not None) else round(base * f, 2)
         inj = p.get("inj") or "ACTIVE"
         if av:
