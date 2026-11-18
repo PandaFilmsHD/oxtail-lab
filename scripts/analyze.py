@@ -974,6 +974,42 @@ def team_sd(names, w):
     return SD_K * team_sd_raw(names, w)
 print(f"weekly swing: league actual {EMP_SD:.1f}, player-level model avg {sum(_raw) / len(_raw):.1f} -> scale {SD_K:.2f}")
 
+# ---------------- each manager's lineup habits: points lost to avoidable mistakes (bye/inactive starters, empty slots) ----------------
+# Only counts mistakes anyone could have avoided with a playable bench guy. Normal hindsight misses don't count.
+# Applied the same way to every team, mine included, from that team's own history.
+LEAK, HABIT = {}, {}
+try:
+    _lp = ROOT / "data" / LID / "lineups.json"
+    LU_ = json.loads(_lp.read_text()) if _lp.exists() else {}
+    _need = {int(k): v for k, v in (LU_.get("_slots") or {}).items()}
+    _tot = {}
+    for wk_, wkd in LU_.items():
+        if wk_ == "_slots" or int(wk_) >= CUR:
+            continue
+        for tid, rows in wkd.items():
+            start = [r for r in rows if r[1] not in (20, 21)]
+            bench = sorted([r for r in rows if r[1] == 20 and r[3]], key=lambda r: -r[2])
+            holes = [r[1] for r in start if not r[3]]   # started a guy with no game (bye, inactive, out)
+            filled = {}
+            for r in start: filled[r[1]] = filled.get(r[1], 0) + 1
+            for sid, c in _need.items():
+                holes += [sid] * max(0, c - filled.get(sid, 0))   # empty slot
+            lost, used = 0.0, set()
+            for sid in holes:
+                b = next((r for r in bench if r[0] not in used and sid in r[4]), None)
+                if b:
+                    used.add(b[0]); lost += max(0.0, b[2])
+            d_ = _tot.setdefault(int(tid), [0.0, 0, 0])
+            d_[0] += lost; d_[1] += 1; d_[2] += sum(1 for _ in holes) if lost > 0 else 0
+    if _tot:
+        lg_mean = sum(v[0] for v in _tot.values()) / max(1, sum(v[1] for v in _tot.values()))
+        for t, (lost, n_, holes) in _tot.items():
+            LEAK[t] = (lost + 4 * lg_mean) / (n_ + 4)   # shrink toward the league average until we have a few weeks
+            HABIT[t] = {"lost_per_wk": round(lost / n_, 1), "weeks": n_, "mistakes": holes, "used": round(LEAK[t], 1)}
+        print("lineup habits (pts lost per week):", {TNAME.get(t, t) if "TNAME" in globals() else t: v["lost_per_wk"] for t, v in HABIT.items()})
+except Exception as ex_:
+    print("lineup habits skipped", ex_)
+
 IDS = sorted(TEAMS)
 IX = {t: i for i, t in enumerate(IDS)}
 W0 = np.array([TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0) for t in IDS], float)
@@ -991,7 +1027,8 @@ def run(rost, N):
             L = sc[t][w]
             pr = np.array([x[0] for x in L]); pr = pr / pr.sum()
             mu = np.array([x[1] for x in L])
-            arr[:, IX[t]] = mu[rng.choice(len(L), N, p=pr)] if len(L) > 1 else mu[0]
+            arr[:, IX[t]] = mu[rng.choice(len(L), N, p=pr)] if len(L) > 1 else mu[0] 
+            arr[:, IX[t]] -= LEAK.get(t, 0.0)   # this manager's usual lineup mistakes
         sdv = np.array([team_sd(rost[t], w) for t in IDS])
         S[w] = arr + sdv[None, :] * rng.standard_normal((N, T))
     wins = np.tile(W0, (N, 1)); pf = np.tile(PF0, (N, 1))
@@ -1037,7 +1074,7 @@ def run(rost, N):
         i = IX[t]
         out[t] = {"po": po[i], "bye": bye[i], "s1": s1[i], "ch": cnt(ch)[i], "fi": cnt(ch)[i] + cnt(ru)[i],
                   "p3": cnt(t3)[i], "wk": wkwin[i] * 100,
-                  "means": {w: float(sum(p_ * m_ for p_, m_ in sc[t][w]) / sum(p_ for p_, _ in sc[t][w])) for w in WKS}}
+                  "means": {w: float(sum(p_ * m_ for p_, m_ in sc[t][w]) / sum(p_ for p_, _ in sc[t][w])) - LEAK.get(t, 0.0) for w in WKS}}
     out["_bracket"] = {k: {IDS[o]: {"pct": 100 * c_[0] / N, "win": 100 * c_[1] / max(1, c_[0])} for o, c_ in v.items()} for k, v in BR.items()}
     return out
 
@@ -1638,7 +1675,7 @@ for t in IDS:
     starters = {x["player"] for x in po_lu}
     team_cards[str(t)] = {"id": t, "name": TNAME[t], "me": t == ME, "record": f'{TEAMS[t]["w"]}-{TEAMS[t]["l"]}', "pf": TEAMS[t]["pf"],
         "odds": {"po": r1(base[t]["po"]), "bye": r1(base[t]["bye"]), "ch": r1(base[t]["ch"]), "fi": r1(base[t]["fi"])}, "status": status[t],
-        "weekly": [r1(base[t]["means"][w]) for w in WKS], "weeks": WKS,
+        "weekly": [r1(base[t]["means"][w]) for w in WKS], "weeks": WKS, "habit": HABIT.get(t),
         "this_week": {"total": r1(tw_tot), "lineup": tw_lu}, "semis": {"week": SEMI, "total": r1(po_tot), "lineup": po_lu},
         "roster": sorted([{"player": n, "pos": P[n]["pos"], "nfl": P[n]["nfl"], "status": P[n].get("inj"), "value": (PROF.get(n) or {}).get("value"),
                            "ros_pg": r1(ros_pg(n)), "playoff_pts": r1(po_pts(n)), "this_week": r1(ev(n, CUR)), "starter": n in starters} for n in rost],

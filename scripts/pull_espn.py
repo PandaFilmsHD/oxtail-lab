@@ -249,6 +249,39 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         print(f"  transactions: {len(txu)} ({dict(Counter((t_['type'], t_['status']) for t_ in txu).most_common(8))})")
     except Exception as e:
         print(f"  transactions: skipped ({e})")
+    # Past lineups: who each manager started and benched every week, so the sim can learn their lineup habits
+    try:
+        lp = ROOT / "data" / str(LEAGUE) / "lineups.json"
+        LU = json.loads(lp.read_text()) if lp.exists() else {}
+        for wk_ in range(1, min(cur, reg_end + 1)):
+            if str(wk_) in LU and wk_ < cur - 1:
+                continue   # old weeks don't change; re-pull last week once for stat fixes
+            bx = get(BASE, {"view": "mBoxscore", "scoringPeriodId": wk_})
+            wkd = {}
+            for m in bx.get("schedule") or []:
+                if m.get("matchupPeriodId") != wk_:
+                    continue
+                for side in ("home", "away"):
+                    sd_ = m.get(side) or {}
+                    ents = ((sd_.get("rosterForCurrentScoringPeriod") or {}).get("entries")) or []
+                    if not ents:
+                        continue
+                    rows = []
+                    for e in ents:
+                        pe = e.get("playerPoolEntry") or {}; pl = pe.get("player") or {}
+                        played = any(z.get("scoringPeriodId") == wk_ and z.get("statSourceId") == 0 and (z.get("stats") or {}) for z in pl.get("stats") or [])
+                        rows.append([e.get("playerId"), e.get("lineupSlotId"), round(pe.get("appliedStatTotal") or 0, 2), 1 if played else 0,
+                                     [x for x in (pl.get("eligibleSlots") or []) if x not in (20, 21)]])
+                    wkd[str(sd_.get("teamId"))] = rows
+            if wkd:
+                LU[str(wk_)] = wkd
+            time.sleep(0.15)
+        LU["_slots"] = {str(k): v for k, v in (st_.get("rosterSettings") or {}).get("lineupSlotCounts", {}).items() if v and int(k) not in (20, 21)}
+        lp.parent.mkdir(parents=True, exist_ok=True)
+        lp.write_text(json.dumps(LU, separators=(",", ":")))
+        print(f"  past lineups: {sum(1 for k in LU if k != '_slots')} weeks")
+    except Exception as e:
+        print(f"  past lineups: skipped ({e})")
     # Sleeper's weekly projections (a 3rd opinion to average with ours and ESPN's)
     if cur not in SLEEPER:
         try:

@@ -243,6 +243,9 @@ function openTeam(id) {
     h('div', { class: 'sub', style: 'margin:6px 0 14px;font-size:14px' }, `${t.record} · ${f1(t.pf)} points for · ${t.status}`),
     h('div', { class: 'tiles', style: 'grid-template-columns:repeat(auto-fit,minmax(150px,1fr))' },
       [['t2', '✅ Playoffs', t.odds.po], ['t3', '😴 Bye', t.odds.bye], ['t1', '🏁 Final', t.odds.fi], ['t4', '🏆 Title', t.odds.ch]].map(([c, k, v]) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, pct(v))))),
+    t.habit ? h('p', { class: 'sub', style: 'margin:0 0 12px' }, t.habit.lost_per_wk >= 0.5
+      ? `🧠 Lineup habits: loses about ${f1(t.habit.lost_per_wk)} pts a week starting guys who don't play when a bench guy could (${t.habit.weeks} weeks). The sim takes ${f1(t.habit.used)} a week off their projection.`
+      : `🧠 Lineup habits: sets a clean lineup almost every week (${t.habit.weeks} weeks checked).`) : '',
     wkBtns, luBox,
     h('h3', {}, '🪑 Bench'), h('div', { class: 'chips2' }, bench.map(x => h('span', { class: 'chip2' }, pl(x.player), h('small', {}, ` ${x.pos} · ${f1(x.ros_pg)}/g`), x.status && x.status !== 'ACTIVE' ? h('small', { class: 'neg' }, ' ' + x.status.replace('_', ' ')) : ''))),
     t.schedule.length ? [h('h3', {}, '📅 Their remaining games'), h('div', { class: 'chips2' }, t.schedule.map(g => h('span', { class: 'chip2' }, `Wk ${g.w}: ${g.opp}`)))] : '',
@@ -465,7 +468,7 @@ function alertsBox() {
 function renderHow() {
   if (!$('#alertsbox')) $('#how').prepend(alertsBox());
   if (!$('#appver')) { const v = h('p', { class: 'k', id: 'appver', style: 'text-align:center;margin:8px 0' }, 'App version: checking…'); $('#how').prepend(v);
-    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · what changed 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
+    caches.keys().then(k => { v.textContent = 'App version: ' + (k.filter(x => /^oxtail-v/.test(x)).join(', ') || 'none') + ' · lineup habits 1'; }).catch(() => { v.textContent = 'App version: unknown'; }); }
   const rc = D.summary.report_card || [], vr = D.summary.variance;
   if (!$('#rcbox')) $('#how').append(h('div', { class: 'box', id: 'rcbox', style: 'margin-top:16px' }, h('h3', {}, '📝 Weekly report card'),
     rc.length ? [h('p', { class: 'sub' }, 'Every week we save our projections before kickoff, then grade them once the games are done. Lower "off by" is better.'), rcTable(rc)]
