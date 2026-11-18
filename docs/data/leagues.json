@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T18:46:44Z",
+   "at": "2026-11-18T19:17:47Z",
    "champ_pct": 31.0,
    "todo": [
     {
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T18:47:07Z",
+   "at": "2026-11-18T19:18:07Z",
    "champ_pct": 13.4,
    "todo": [
     {
@@ -43,7 +43,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.4%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.5%.",
      "tab": "waivers"
     },
     {
@@ -60,7 +60,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T18:47:18Z",
+   "at": "2026-11-18T19:18:15Z",
    "champ_pct": 3.4,
    "todo": [
     {
@@ -80,6 +80,13 @@
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
+     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
+     "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
      "title": "Claim Chig Okonkwo, drop Darren Waller",
      "detail": "Breakout radar gives him 44% to become a weekly starter. Cheap lottery ticket for Darren Waller.",
      "tab": "waivers"
@@ -91,7 +98,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T18:46:56Z",
+   "at": "2026-11-18T19:17:57Z",
    "champ_pct": 30.1,
    "todo": [
     {
@@ -112,14 +119,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.7%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +2.0%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Saquon Barkley + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
-     "detail": "Title odds +5.8%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Walker slides right into your RB spot.",
+     "detail": "Title odds +5.1%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Walker slides right into your RB spot.",
      "tab": "trades"
     }
    ]
