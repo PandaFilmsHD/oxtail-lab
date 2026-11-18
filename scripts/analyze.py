@@ -247,7 +247,8 @@ def auto_avail(n):
     p = P[n]; inj = p.get("inj") or "ACTIVE"
     if inj == "ACTIVE":
         return None
-    txt = p.get("outlook") or ""
+    nw = p.get("news") or {}
+    txt = ((nw.get("text") or "") + " " + (nw.get("type") or "") + " " + (nw.get("fstatus") or "") + " " + (p.get("outlook") or "")).strip()   # freshest news first
     rep = ((USAGE.get(norm(n)) or {}).get("injury") or {})
     prac = (rep.get("practice") or "") if (rep.get("week") or 0) >= CUR else ""   # only this week's practice reports count
     played = [int(w) for w, v in p["wk"].items() if v and int(w) < CUR]
@@ -260,6 +261,17 @@ def auto_avail(n):
         ret = int(m_.group(1) or m_.group(2))
         if ret < CUR:
             ret = None   # old news about a week that already passed
+    if nw.get("ret"):   # ESPN's own expected return date -> NFL week
+        try:
+            import datetime as _d
+            rd = _d.datetime.fromisoformat(nw["ret"].replace("Z", "+00:00")[:25])
+            days = (rd - _d.datetime.now(_d.timezone.utc)).total_seconds() / 86400
+            rw = CUR + max(0, int(-(-(days - 3) // 7)))   # games are Thu-Mon, so round up past the weekend
+            if rw > PO3 + 1:
+                return {str(w): 0.0 for w in WKS}, f"ESPN's expected return is after the fantasy season ({nw['ret'][:10]})."
+            ret = max(ret or 0, rw)
+        except Exception:
+            pass
     if inj == "INJURY_RESERVE":
         start = max(CUR, last + 5)   # NFL IR: at least 4 games missed
         if ret: start = max(start, ret)

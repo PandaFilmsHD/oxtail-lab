@@ -21,6 +21,7 @@ s2, swid = os.environ.get("ESPN_S2", "").strip(), os.environ.get("SWID", "").str
 if not s2 or not swid:
     sys.exit("Missing ESPN_S2 or SWID. Add them as repo secrets (see README).")
 S = requests.Session()
+NEWS = {}   # player id -> latest ESPN injury/news note, shared across leagues in one run
 S.cookies.set("espn_s2", s2, domain=".espn.com")
 S.cookies.set("SWID", swid, domain=".espn.com")
 S.headers["User-Agent"] = "Mozilla/5.0 oxtail-lab"
@@ -178,6 +179,44 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
                             "start_pct": round(own.get("percentStarted", 0) or 0), "espn_ros": round(season_proj, 1) if season_proj else None,  # ESPN keeps this as a rest-of-season projection
                             "outlook": (outlook or "")[:600], "wk": wk})
         time.sleep(0.3)
+
+    # Latest injury news straight from ESPN's injury + news feeds (the outlook text above can be weeks old)
+    hurt = [x for x in players if x["inj"] not in ("ACTIVE", None) and (x["t"] or x["own"] >= 3) and x["pos"] != "D"]
+    for x in hurt:
+        if x["id"] in NEWS:
+            x["news"] = NEWS[x["id"]]; continue
+        nw = {"text": "", "date": None, "ret": None, "type": None}
+        try:
+            r_ = requests.get(f"https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/athletes/{x['id']}/injuries", params={"limit": 2}, timeout=20)
+            items = (r_.json() or {}).get("items") or [] if r_.ok else []
+            if items and items[0].get("$ref"):
+                it = requests.get(items[0]["$ref"].replace("http://", "https://"), timeout=20).json()
+                det = it.get("details") or {}
+                nw.update(text=(it.get("longComment") or it.get("shortComment") or ""), date=it.get("date"), ret=det.get("returnDate"),
+                          type=" ".join(str(det.get(k) or "") for k in ("type", "detail", "location")).strip() or None, fstatus=((det.get("fantasyStatus") or {}).get("description")))
+        except Exception:
+            pass
+        try:
+            r2 = requests.get("https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players", params={"playerId": x["id"], "limit": 3}, timeout=20)
+            feed = (r2.json() or {}).get("feed") or [] if r2.ok else []
+            if feed:
+                f0 = feed[0]
+                txt = (f0.get("headline") or "") + ". " + (f0.get("story") or f0.get("description") or "")
+                txt = __import__("re").sub(r"<[^>]+>", " ", txt)
+                if not nw["date"] or (f0.get("published") or "") > (nw["date"] or ""):
+                    nw["text"] = (txt + " " + nw["text"]).strip()
+                    nw["date"] = f0.get("published") or nw["date"]
+                else:
+                    nw["text"] = (nw["text"] + " " + txt).strip()
+        except Exception:
+            pass
+        nw["text"] = nw["text"][:700]
+        NEWS[x["id"]] = nw; x["news"] = nw
+        time.sleep(0.05)
+    dbg = [x for x in hurt if x["n"] in ("Michael Wilson", "Puka Nacua")]
+    for x in dbg:
+        print(f"  news {x['n']}: {json.dumps(x.get('news'))[:400]}")
+    print(f"  injury news: {sum(1 for x in hurt if (x.get('news') or {}).get('text'))}/{len(hurt)} hurt players have fresh notes")
 
     # FantasyCalc market values (built from millions of real trades), for this league's size / PPR / superflex
     try:
