@@ -71,8 +71,7 @@
     }
   },
   "override": {
-    "_help": "Force a player's per-game value (before matchup adjustment).",
-    "D'Andre Swift": 14.5
+    "_help": "Force a player's per-game value (before matchup adjustment)."
   },
   "weights": {
     "recent": 0.4,

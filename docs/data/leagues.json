@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 11,
    "at": "2026-11-18T06:16:16Z",
-   "champ_pct": 24.7,
+   "champ_pct": 28.6,
    "todo": [
     {
      "urgent": false,
@@ -25,8 +25,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Jeremiyah Love for DeVonta Smith (Sussy Nutcrackers)",
-     "detail": "Title odds +7.0%. Would you do Jeremiyah Love for DeVonta Smith? I think you're getting the best player in the deal.",
+     "title": "Offer D'Andre Swift for Jonah Coleman + Harold Fannin Jr. (BO liever)",
+     "detail": "Title odds +2.9%. Would you do D'Andre Swift for Jonah Coleman and Harold Fannin Jr.? I think Swift slides right into your RB spot, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
      "tab": "trades"
     }
    ]
@@ -37,7 +37,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:16:26Z",
-   "champ_pct": 11.6,
+   "champ_pct": 10.6,
    "todo": [
     {
      "urgent": true,
@@ -56,8 +56,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
-     "detail": "Title odds +10.9%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
+     "title": "Offer Josh Downs for Kirk Cousins + T.J. Hockenson (braylon's Best Team)",
+     "detail": "Title odds +10.5%. Would you do Josh Downs for Kirk Cousins and T.J. Hockenson? I think you turn two guys into the best player in the deal and open a roster spot for a waiver pickup, and Cousins is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -68,27 +68,20 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:16:31Z",
-   "champ_pct": 4.8,
+   "champ_pct": 3.4,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.8%.",
+     "detail": "Real upgrade: about +3.6 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Carnell Tate or Darren Waller",
-     "detail": "Carnell Tate 11.1 vs Darren Waller 10.4. Carnell Tate is 85% to play, so if he's ruled out, Darren Waller is your guy.",
-     "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Kyren Williams + Darren Waller for Dak Prescott + DeVonta Smith (Warrent Acquired )",
-     "detail": "Title odds +1.8%. Would you do Kyren Williams and Darren Waller for Dak Prescott and DeVonta Smith? I think Williams slides right into your FLEX spot over Corum, and Prescott is just sitting on your bench.",
+     "detail": "Title odds +1.7%. Would you do Kyren Williams and Darren Waller for Dak Prescott and DeVonta Smith? I think Williams slides right into your FLEX spot over Corum, and Prescott is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -99,7 +92,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-18T06:16:21Z",
-   "champ_pct": 32.6,
+   "champ_pct": 35.7,
    "todo": [
     {
      "urgent": false,
@@ -118,8 +111,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Dalton Kincaid + Zay Flowers for DeVonta Smith + Ollie Gordon II (Tyler's Talented Team)",
-     "detail": "Title odds +8.6%. Would you do Dalton Kincaid and Zay Flowers for DeVonta Smith and Ollie Gordon II? I think Flowers slides right into your WR spot, and you're deep at WR so you can cover Smith's spot.",
+     "title": "Offer Rhamondre Stevenson + Zay Flowers for Puka Nacua (Ethan)",
+     "detail": "Title odds +6.3%. Would you do Rhamondre Stevenson and Zay Flowers for Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Flowers slides right into your WR spot over Odunze.",
      "tab": "trades"
     }
    ]

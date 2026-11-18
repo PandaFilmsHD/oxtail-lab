@@ -382,7 +382,10 @@ for n, p in P.items():
     pts = [v for w_, v in p["wk"].items() if int(w_) >= since and int(w_) < CUR and v]
     if len(pts) < 3:
         continue
-    ROLE[n] = {"since": since, "avg": round(sum(pts) / len(pts), 1), "games": len(pts), "dir": "up" if d > 0 else "down",
+    xs_ = [league_xpts(x["xs"]) for x in u[k:] if x.get("xs")]
+    pavg = sum(pts) / len(pts)
+    ravg = 0.5 * pavg + 0.5 * (sum(xs_) / len(xs_)) if len(xs_) >= 2 else pavg   # half what he scored, half what his usage was worth: one TD-fest can't carry it
+    ROLE[n] = {"since": since, "avg": round(ravg, 1), "pts_avg": round(pavg, 1), "xfp_avg": round(sum(xs_) / len(xs_), 1) if xs_ else None, "games": len(pts), "dir": "up" if d > 0 else "down",
                "snap_before": round(sum(x["snap"] for x in u[:k]) / k), "snap_after": round(sum(x["snap"] for x in u[k:]) / (len(u) - k))}
 AVG = {n: (ROLE[n]["avg"] if n in ROLE and n not in FILLIN else p["avg"]) for n, p in P.items()}   # "his average" = average in his current role
 print(f"role changes: {len(ROLE)} (e.g. " + ", ".join(f"{k} since Wk{v['since']} {v['avg']} vs {P[k]['avg']}" for k, v in list(ROLE.items())[:5]) + ")")
@@ -488,7 +491,7 @@ for n, p in P.items():
             er = None
         parts = [(0.45, med), (0.15, p["avg"])] + ([(0.4, er)] if er is not None else [])
     blend = sum(w_ * x for w_, x in parts) / sum(w_ for w_, _ in parts)
-    if pr.get("trend"):  # usage going up or down lately moves value up to 10%
+    if pr.get("trend") and n not in ROLE:  # usage going up or down lately moves value up to 10% (a role change already covers it)
         blend *= max(0.9, min(1.1, 1 + 0.4 * (pr["trend"] - 1)))
     fi = FILLIN.get(n)
     if fi:   # his points came with the starter out; the starter's back, so value him as the backup he is now
@@ -1501,7 +1504,7 @@ def verdict(n, p, pr):
     if n in AUTO_WHY and n not in MANUAL:
         a_ = AVAIL[n]; R.append(("🩺", AUTO_WHY[n] + " Chance to play: " + ", ".join(f"Wk {w} {round(100 * float(a_[str(w)]))}%" for w in WKS if w >= CUR and float(a_.get(str(w), 0)) > 0)[:120] + "."))
     if n in ROLE and n not in FILLIN and abs(ROLE[n]["avg"] - p["avg"]) >= 1.5:
-        ro = ROLE[n]; R.append(("📈" if ro["dir"] == "up" else "📉", f"His role changed in Wk {ro['since']} (snaps {ro['snap_before']}% → {ro['snap_after']}%). He's averaged {ro['avg']} since then vs {p['avg']} on the season, so we judge him on the new role."))
+        ro = ROLE[n]; R.append(("📈" if ro["dir"] == "up" else "📉", f"His role changed in Wk {ro['since']} (snaps {ro['snap_before']}% → {ro['snap_after']}%). Since then: {ro['pts_avg']} pts a game, usage worth {ro['xfp_avg']}. We judge him on the new role ({ro['avg']}) instead of his season average ({p['avg']})."))
     if n in FILLIN:
         fi = FILLIN[n]
         R.append(("🔁", f"Most of his points came in Weeks {', '.join(map(str, fi['out_weeks']))} while {fi['starter']} was out. {fi['starter']} is back, so he's valued as a backup now" + (f" ({fi['with_pg']:.1f} pts a game when they both played)." if fi["with_pg"] is not None else " (he's barely played with him back).")))
