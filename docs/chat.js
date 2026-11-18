@@ -1,7 +1,7 @@
 // Ask Coach: a chatbot that reads this league's data. Uses YOUR Anthropic API key, stored only in this browser.
 (() => {
   const MODEL = 'claude-sonnet-5-5';
-  const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash'];   // free tier; tries the newest Flash first
+  const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'];   // if one is busy, try the next   // free tier; tries the newest Flash first
   const store = { get: k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} } };
   const provider = () => store.get('oxtail_gemini_key') ? 'gemini' : store.get('oxtail_anthropic_key') ? 'anthropic' : '';
   const getKey = () => store.get(provider() === 'gemini' ? 'oxtail_gemini_key' : 'oxtail_anthropic_key');
@@ -58,7 +58,7 @@
 - REALISTIC trade = the value I send is at least equal to what I get (2-player sides get a 25% discount), their weekly lineup doesn't drop more than 1 point (unless they're eliminated), and if I get 2 players for 1, my player has to be clearly the best piece. STRETCH = helps me more but they'd probably say no.
 - Luck = actual minus usage-expected points per game; big plus means likely to cool off. Floor/ceiling = 25th/75th percentile games.`;
   const SYS = `You are "Coach", the assistant inside Oxtail Lab, a fantasy football analysis site for one manager (the user). Talk like a sharp friend who knows fantasy football: casual, direct, no fluff, no dashes, short paragraphs or tight bullets. Use specific numbers from the data. Answer the question first, then the why.
-Only use the data below for facts about players, odds, trades and the league. If something isn't in the data (like news from today or a player not listed), say so plainly instead of guessing. When explaining a trade, cover: what it does for my lineup in the regular season and in my playoff weeks, why the other team might say yes or no (their lineup change, their playoff odds, value ratio), and the risks. You can use general fantasy knowledge for reasoning, but numbers come from the data.
+MY ROSTER RULES (always follow): I never roster a backup TE, a backup D/ST or a backup K. Never suggest adding or trading for one unless it directly replaces the one I have. Only use the data below for facts about players, odds, trades and the league. If something isn't in the data (like news from today or a player not listed), say so plainly instead of guessing. When explaining a trade, cover: what it does for my lineup in the regular season and in my playoff weeks, why the other team might say yes or no (their lineup change, their playoff odds, value ratio), and the risks. You can use general fantasy knowledge for reasoning, but numbers come from the data.
 
 ${METHOD}`;
 
@@ -108,7 +108,9 @@ ${METHOD}`;
     busy = true; await ensureCards();
     history.push({ role: 'user', content: q }); history.push({ role: 'assistant', content: '' });
     render();
-    const out = panel.querySelectorAll('.msg.assistant'); const bubble = out[out.length - 1]; bubble.classList.add('typing');
+    const out = panel.querySelectorAll('.msg.assistant'); const bubble = out[out.length - 1];
+    const t0 = Date.now(), think = el('span', { class: 'thinking' }, 'Coach is thinking'), dots = el('span', { class: 'dots' }, '…');
+    bubble.replaceChildren(think, dots); const tick = setInterval(() => { if (bubble.contains(dots)) dots.textContent = '… ' + Math.round((Date.now() - t0) / 1000) + 's'; else clearInterval(tick); }, 1000);
     const onText = txt => { bubble.replaceChildren(md(txt)); const lg = $c('#chatlog'); lg.scrollTop = lg.scrollHeight; };
     try {
       if (provider() === 'gemini') { history[history.length - 1].content = (await askGemini(onText)) || '(no answer)'; return; }
@@ -133,35 +135,40 @@ ${METHOD}`;
       history[history.length - 1].content = txt || '(no answer)';
     } catch (e) {
       history[history.length - 1].content = '⚠️ ' + e.message;
-    } finally { busy = false; render(); }
+    } finally { clearInterval(tick); busy = false; render(); }
   }
   async function askGemini(onText) {
-    const body = { systemInstruction: { parts: [{ text: SYS + '\n\n===== LEAGUE DATA =====\n' + context() }] },
-      contents: history.slice(0, -1).slice(-12).map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-      generationConfig: { maxOutputTokens: 2000, temperature: 0.6 } };
-    let last;
+    const base = { systemInstruction: { parts: [{ text: SYS + '\n\n===== LEAGUE DATA =====\n' + context() }] },
+      contents: history.slice(0, -1).slice(-12).map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })) };
+    // fast settings first (no slow "thinking" step); if a model doesn't accept them, retry plain
+    const configs = [{ maxOutputTokens: 2048, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } }, { maxOutputTokens: 2048, temperature: 0.6 }];
+    let last = '';
     for (const model of GEMINI_MODELS) {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': getKey() }, body: JSON.stringify(body) });
-      if (!r.ok) {
-        const e = await r.json().catch(() => ({})); const msg = (e.error && e.error.message) || ('Request failed (' + r.status + ')');
-        if (r.status === 404) { last = msg; continue; }   // model name not available, try the next one
-        if (r.status === 400 && /API key/i.test(msg)) throw new Error('That Gemini key didn\'t work. Tap 🔑 to remove it and paste a new one.');
-        if (r.status === 429) throw new Error('Gemini\'s free limit hit for now. Wait a minute and try again.');
-        throw new Error(msg);
-      }
-      const rd = r.body.getReader(), dec = new TextDecoder(); let buf = '', txt = '';
-      for (;;) {
-        const { done, value } = await rd.read(); if (done) break;
-        buf += dec.decode(value, { stream: true });
-        let i; while ((i = buf.indexOf('\n')) >= 0) {
-          const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
-          if (!line.startsWith('data:')) continue;
-          try { const ev = JSON.parse(line.slice(5)); const t = (((ev.candidates || [])[0] || {}).content || {}).parts; if (t) { txt += t.map(p => p.text || '').join(''); onText(txt); } } catch (e) {}
+      for (const gc of configs) {
+        const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
+        let r;
+        try {
+          r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', signal: ctl.signal,
+            headers: { 'content-type': 'application/json', 'x-goog-api-key': getKey() }, body: JSON.stringify({ ...base, generationConfig: gc }) });
+        } catch (e) { clearTimeout(timer); throw new Error(e.name === 'AbortError' ? 'Gemini took over 2 minutes. Try again or ask something shorter.' : 'Couldn\'t reach Google: ' + e.message); }
+        clearTimeout(timer);
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          const msg = (j.error && j.error.message) || ('Request failed (' + r.status + ')');
+          if (r.status === 400 && /API key/i.test(msg)) throw new Error('Google says that key isn\'t valid. Tap 🔑, remove it, and paste the key again (it starts with AIza).');
+          if (r.status === 429) throw new Error('You hit Gemini\'s free limit for the moment. Wait a minute and try again.');
+          if (r.status === 403) throw new Error('Google blocked the request: ' + msg);
+          if (r.status === 503 || r.status === 500) { last = 'Google\'s free models are all busy right now. Give it a minute and try again.'; await new Promise(z => setTimeout(z, 1200)); break; }   // busy: next model
+          last = `${model}: ${msg}`; continue;   // unsupported setting: retry this model without it
         }
+        const c = (j.candidates || [])[0] || {};
+        const txt = ((c.content || {}).parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+        if (txt) { onText(txt); return txt; }
+        if (j.promptFeedback && j.promptFeedback.blockReason) throw new Error('Gemini refused that one (' + j.promptFeedback.blockReason + '). Try rewording.');
+        last = `${model}: empty answer (${c.finishReason || 'no reason given'})`;
       }
-      return txt;
     }
-    throw new Error(last || 'No Gemini model available');
+    throw new Error(last.startsWith('Google') ? last : 'Gemini didn\'t answer. ' + last);
   }
   function toggle(open) { panel.hidden = !open; fab.hidden = open; if (open) { render(); setTimeout(() => { const i = $c('#chatq'); if (i) i.focus(); }, 50); } }
   window.askCoach = q => { toggle(true); ask(q); };

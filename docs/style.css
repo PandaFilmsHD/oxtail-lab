@@ -245,3 +245,7 @@ code{background:#0f1138;border:1px solid #2c3080;padding:1px 6px;border-radius:6
 .tcard .foot .tbtns{grid-column:1/-1;display:flex;gap:10px}
 .tcard .foot .tbtns .btn{flex:1;margin:0;padding:9px 10px;text-align:center}
 .tcard .meta{grid-column:auto;order:0}
+
+.msg .thinking{color:var(--gold);font-weight:900}
+.msg .dots{color:var(--mut);margin-left:4px}
+.msg .thinking:before{content:"🧠 ";display:inline-block;animation:bob 1.2s ease-in-out infinite}

@@ -438,6 +438,9 @@ for pos, cuts in TIER_CUTS.items():
 for n in PROF:
     PROF[n]["tier"] = TIERS.get(n)
 
+# positions where you only ever roster one (no backup TE / D / K), from assumptions.json
+ONE_ONLY = set((A.get("waiver_rules") or {}).get("one_only", ["TE", "D", "K"]))
+
 # ---------------- trade search ----------------
 cands = []
 mine_pool = [n for n in ROSTER[ME] if n not in CORE and P[n]["pos"] in SKILL and ros(n) > 6]
@@ -455,6 +458,8 @@ for t in IDS:
             r = clone(ROSTER)
             for n in G: r[ME].remove(n); r[t].append(n)
             for n in T_: r[t].remove(n); r[ME].append(n)
+            if any(sum(1 for x in r[ME] if P[x]["pos"] == pos_ and x not in AVAIL) > 1 for pos_ in ONE_ONLY if any(P[x]["pos"] == pos_ for x in T_)):
+                continue   # would leave me holding a backup TE / D / K
             gain = my_score(r) - MY_BASE
             if gain < (3 if len(G) + len(T_) == 4 else 1.5):
                 continue
@@ -501,7 +506,6 @@ print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0
 fa = [n for n, p in P.items() if p["t"] == 0 and p["pos"] in SKILL + ("D", "K")]
 bench = sorted([n for n in ROSTER[ME] if n not in CORE and n not in AVAIL], key=lambda n: ros(n) + po_pts(n))   # don't drop hurt guys we expect back
 waivers = []
-ONE_ONLY = set((A.get("waiver_rules") or {}).get("one_only", ["TE", "D", "K"]))
 for n in fa:
     pos = P[n]["pos"]
     if pos in ONE_ONLY:   # never roster a backup TE/D/K: only a straight swap for the one you have
