@@ -494,7 +494,10 @@ def backtest():
                 best = (mae, a, b, c)
     mae_avg = float(np.abs(X[:, 0] - X[:, 3]).mean())
     OLD = np.array([0.375, 0.3125, 0.3125]); fit = np.array(best[1:])
-    use = 0.5 * OLD + 0.5 * fit   # lean toward what the backtest says, but don't let one season of data swing everything
+    HP = ROOT / "data" / "history_fit.json"
+    HIST = json.loads(HP.read_text()) if HP.exists() else None
+    prior_w = np.array([HIST["w_avg"], HIST["w_recent"], HIST["w_xfp"]]) if HIST else OLD
+    use = 0.7 * prior_w + 0.3 * fit   # 4 past seasons (~15,000 player-weeks) set the base; this season nudges it
     mae_use = float(np.abs(X[:, :3] @ use - X[:, 3]).mean())
     # matchup: how strong should the defense adjustment be? (only games before each week, so no peeking)
     global MATCH_S, MATCH_CAP
@@ -507,7 +510,7 @@ def backtest():
             e_ = float(np.abs(pr_ - X[:, 3]).mean())
             if e_ < bestm[0] - 1e-9:
                 bestm = (e_, float(s_), cap)
-    MATCH_S, MATCH_CAP = max(0.25, round(bestm[1], 2)), max(0.15, bestm[2])   # published studies: defenses carry over ~0.2-0.27, so keep a small effect even if this season's data says ~0
+    MATCH_S = round(0.7 * (HIST["match_s"] if HIST else 0.3) + 0.3 * bestm[1], 2); MATCH_CAP = 0.15   # 4-season fit sets the base
     mt.update(mae_best=round(bestm[0], 3), strength=MATCH_S, cap=MATCH_CAP)
     # Vegas: does a high implied team total predict beating the projection, beyond the defense matchup?
     vg = {}
@@ -522,12 +525,13 @@ def backtest():
         before_ = float(np.abs(pred[m_] - X[m_, 3]).mean()); after_ = float(np.abs(pred[m_] * X[m_, 5] ** b - X[m_, 3]).mean())
         if after_ > before_:
             b = 0.0; after_ = before_
-        VEGAS_B[pos] = round(b, 2)
+        hb = ((HIST or {}).get("vegas") or {}).get(pos, {}).get("b")
+        VEGAS_B[pos] = round(0.7 * hb + 0.3 * b, 2) if hb is not None else round(b, 2)
         vg[pos] = {"n": int(m_.sum()), "elasticity": round(b, 2), "mae_without": round(before_, 2), "mae_with": round(after_, 2)}
     old = 0.375 * X[:, 0] + 0.3125 * X[:, 1] + 0.3125 * X[:, 2]
     return {"n": len(rows), "mae_season_avg": round(mae_avg, 2), "mae_old_mix": round(float(np.abs(old - X[:, 3]).mean()), 2),
             "mae_best": round(best[0], 2), "mae_used": round(mae_use, 2), "w_avg": round(float(use[0]), 2), "w_recent": round(float(use[1]), 2), "w_xfp": round(float(use[2]), 2),
-            "fit_avg": round(float(best[1]), 2), "fit_recent": round(float(best[2]), 2), "fit_xfp": round(float(best[3]), 2), "vegas": vg, "matchup": mt}
+            "fit_avg": round(float(best[1]), 2), "fit_recent": round(float(best[2]), 2), "fit_xfp": round(float(best[3]), 2), "vegas": vg, "matchup": mt, "history": {k: HIST[k] for k in ("n", "seasons", "w_avg", "w_recent", "w_xfp", "match_s", "mae_season_avg", "mae_with_matchup")} if HIST else None}
 BT = backtest()
 BW = (0.3, 0.25, 0.25) if not BT else tuple(0.8 * BT[k] for k in ("w_avg", "w_recent", "w_xfp"))   # ESPN's rest-of-season number keeps the other 0.2
 print("backtest:", BT)

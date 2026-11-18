@@ -1,0 +1,64 @@
+{
+ "seasons": [
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "n": 15679,
+ "w_avg": 0.45,
+ "w_recent": 0.1,
+ "w_xfp": 0.45,
+ "mae_season_avg": 5.043,
+ "mae_blend": 4.997,
+ "match_s": 0.45,
+ "mae_with_matchup": 4.986,
+ "vegas": {
+  "QB": {
+   "b": 0.05,
+   "mae_without": 7.797,
+   "mae_with": 7.796,
+   "n": 1751
+  },
+  "RB": {
+   "b": 0.2,
+   "mae_without": 4.82,
+   "mae_with": 4.812,
+   "n": 4133
+  },
+  "WR": {
+   "b": 0.05,
+   "mae_without": 4.863,
+   "mae_with": 4.862,
+   "n": 6565
+  },
+  "TE": {
+   "b": 0.1,
+   "mae_without": 3.924,
+   "mae_with": 3.923,
+   "n": 3230
+  }
+ },
+ "per_season": {
+  "2022": {
+   "n": 3896,
+   "mae_season_avg": 5.082,
+   "mae_model": 5.04
+  },
+  "2023": {
+   "n": 3969,
+   "mae_season_avg": 4.893,
+   "mae_model": 4.835
+  },
+  "2024": {
+   "n": 3915,
+   "mae_season_avg": 5.067,
+   "mae_model": 5.021
+  },
+  "2025": {
+   "n": 3899,
+   "mae_season_avg": 5.13,
+   "mae_model": 5.05
+  }
+ }
+}
