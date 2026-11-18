@@ -112,13 +112,14 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         owners = [o.lower() for o in (t.get("owners") or [])] + [str(t.get("primaryOwner", "")).lower()]
         if sw in owners:
             me = t["id"]
-    sched = []
+    sched, sched_past = [], []
     for m in d.get("schedule", []):
         wk = m["matchupPeriodId"]
         if wk > reg_end or "away" not in m:
             continue
         h, a = m["home"]["teamId"], m["away"]["teamId"]
         if wk < cur:
+            sched_past.append([wk, h, a])
             tmap[h]["scores"][str(wk)] = round(m["home"].get("totalPoints", 0), 1)
             tmap[a]["scores"][str(wk)] = round(m["away"].get("totalPoints", 0), 1)
         else:
@@ -283,6 +284,25 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
         print(f"  past lineups: {sum(1 for k in LU if k != '_slots')} weeks")
     except Exception as e:
         print(f"  past lineups: skipped ({e})")
+    # This week's live box score: every team's starters and the points they have so far
+    live = {}
+    try:
+        bx = get(BASE, {"view": "mBoxscore", "scoringPeriodId": cur})
+        for m in bx.get("schedule") or []:
+            if m.get("matchupPeriodId") != cur:
+                continue
+            for side in ("home", "away"):
+                sd_ = m.get(side) or {}
+                ents = ((sd_.get("rosterForCurrentScoringPeriod") or {}).get("entries")) or []
+                rows = []
+                for e in ents:
+                    pe = e.get("playerPoolEntry") or {}; pl = pe.get("player") or {}
+                    played = any(z.get("scoringPeriodId") == cur and z.get("statSourceId") == 0 and (z.get("stats") or {}) for z in pl.get("stats") or [])
+                    rows.append([e.get("playerId"), e.get("lineupSlotId"), round(pe.get("appliedStatTotal") or 0, 2), 1 if played else 0])
+                live[str(sd_.get("teamId"))] = {"pts": round(sd_.get("totalPointsLive") or sd_.get("totalPoints") or 0, 2), "rows": rows}
+        print(f"  live box score: {len(live)} teams")
+    except Exception as e:
+        print(f"  live box score: skipped ({e})")
     # Sleeper's weekly projections (a 3rd opinion to average with ours and ESPN's)
     if cur not in SLEEPER:
         try:
@@ -319,7 +339,7 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
     except Exception as e:
         print(f"  fantasycalc: skipped ({e})")
     model = {"my_team": me, "league_name": settings.get("name"), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "season": SEASON, "league_id": LEAGUE, "cur": cur,
-             "reg_end": reg_end, "po_teams": po_teams, "settings": settings, "teams": teams, "sched": sched, "games": games, "rank": rank, "players": players}
+             "reg_end": reg_end, "po_teams": po_teams, "settings": settings, "teams": teams, "sched": sched, "sched_past": sched_past, "live": live, "games": games, "rank": rank, "players": players}
     out = ROOT / "data" / str(LEAGUE) / "model.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists():
