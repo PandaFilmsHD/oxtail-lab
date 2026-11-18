@@ -657,6 +657,7 @@ let PLD = null, PLV = 'parlay', PLM = 'all', PLPICK = new Set(), PGS = 'bets', P
 const odds = a => (a > 0 ? '+' : '') + a;
 const fairOf = p => { p = Math.min(Math.max(p, 0.01), 0.99); return p >= 0.5 ? Math.round(-100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); };
 const usd = u => '$' + (Math.round(u * ((PLD && PLD.unit) || 25) * 100) / 100).toFixed(2).replace(/\.00$/, '');
+const cents = p => Math.max(1, Math.min(99, Math.floor(p))) + '¢';
 const kickT = k => k ? new Date(k).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
 function legRow(l) { return h('div', { class: 'leg' }, h('span', { class: 'lp ' + (l.p >= 80 ? 'hi' : '') }, Math.round(l.p) + '%'), h('span', { class: 'll' }, l.label), l.lean >= 2 ? h('span', { class: 'tag real', title: 'Our sims lean this way vs the market' }, '✓ LEAN') : ''); }
 async function renderProps() {
@@ -665,13 +666,13 @@ async function renderProps() {
   if (!PLD) { body.replaceChildren(h('div', { class: 'box mut' }, 'Prop Lab data isn\'t built yet. It runs with the next update.')); return; }
   const ago = PLD.lines_at ? Math.round((Date.now() - new Date(PLD.lines_at)) / 36e5) : null;
   $('#psub').textContent = `Week ${PLD.week}: every game simulated ${PLD.sims.toLocaleString()} times${ago != null ? `, prop lines from ${ago < 1 ? 'under an hour' : ago + 'h'} ago` : ''}. Fair odds = what the sims say the bet is really worth.`;
-  const tip = h('div', { class: 'box ptip' }, h('b', {}, '💡 How to use it: '), 'Only take a bet when the app pays MORE than our fair odds (or on Kalshi/Polymarket, when it costs LESS than our max price). The sims start from the betting market and only move for things that held up over 10 seasons, so most edges are small.');
+  const tip = h('div', { class: 'box ptip' }, h('b', {}, '💡 How to use it: '), 'On DraftKings Predictions or Kalshi, only buy when a share costs LESS than our chance (shown in cents). A 40% parlay is worth up to 40¢ a share. The sims start from the betting market and only move for things that held up over 10 seasons, so most edges are small.');
   let out = [];
   if (PLV === 'parlay') {
     const card = pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, Math.round(pl.p) + '%'), h('div', { class: 'k' }, 'hits in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
-      ...pl.legs.map(legRow), ...(pl.why || []).map(w => h('div', { class: 'k', style: 'color:var(--blue)' }, '🧮 ' + w)), pl.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units)}`), h('span', { class: 'k' }, `only if DraftKings pays better than ${odds(pl.fair)}`))
-        : h('div', { class: 'pstake', style: 'color:var(--mut);border-color:#3a3f9e' }, h('span', {}, 'No model edge'), h('span', { class: 'k' }, `fair is ${odds(pl.fair)}: only worth it if DraftKings pays more`)));
+      ...pl.legs.map(legRow), ...(pl.why || []).map(w => h('div', { class: 'k', style: 'color:var(--blue)' }, '🧮 ' + w)), pl.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units)}`), h('span', { class: 'k' }, `only if a share costs under ${cents(pl.p)} (fair ${odds(pl.fair)})`))
+        : h('div', { class: 'pstake', style: 'color:var(--mut);border-color:#3a3f9e' }, h('span', {}, 'No model edge'), h('span', { class: 'k' }, `worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)})`)));
     const P = PLD.parlays || {};
     const srt = L => PPS === 'likely' ? [...(L || [])].sort((a, b) => b.p - a.p) : L;
     const sect = (t, L, sub) => L && L.length ? [h('h3', { style: 'margin-top:18px' }, t, sub ? h('small', {}, sub) : ''), h('div', { class: 'bgrid' }, ...srt(L).map(card))] : [];
@@ -701,7 +702,7 @@ async function renderProps() {
         h('div', { class: 'phead' }, h('div', { style: 'min-width:0' }, h('div', { class: 'bn' }, x.player), h('div', { class: 'k' }, `${x.pos} · ${x.team} vs ${x.opp} · ${kickT(x.kick)}`)), h('span', { class: 'grade g' + x.grade }, x.grade)),
         h('div', { class: 'pline' }, `${x.side} ${x.line != null ? x.line + ' ' : ''}${x.market.toLowerCase()}`),
         h('div', { class: 'pnums' }, h('div', {}, h('b', { class: 'pos' }, Math.round(x.p) + '%'), h('span', { class: 'k' }, 'our chance')), h('div', {}, h('b', {}, Math.round(x.p_mkt) + '%'), h('span', { class: 'k' }, 'market')),
-          h('div', {}, h('b', { class: 'gold' }, x.max_c + '¢'), h('span', { class: 'k' }, 'max to pay'))),
+          h('div', {}, h('b', { class: 'gold' }, x.max_c + '¢'), h('span', { class: 'k' }, 'max ¢ a share'))),
         x.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(x.units)}`), h('span', { class: 'k' }, `${x.units} unit${x.units === 1 ? '' : 's'}`)) : '',
         (x.news || []).length ? h('div', { class: 'k', style: 'color:var(--gold)' }, '📰 ' + x.news.join(', ') + '. Line is from before the news.') : '',
         x.market !== 'Anytime TD' ? h('div', { class: 'k' }, `Sims: usually ${x.p10} to ${x.p90}, middle ${x.median}. Our avg ${x.ours} vs market ${x.mkt}.`) : h('div', { class: 'k' }, `Market ${Math.round(x.p_mkt)}%, ours ${Math.round(x.p)}%.`))))];
@@ -728,11 +729,11 @@ async function renderProps() {
     const L = PLD.longshots || { singles: [], parlays: [] };
     out = [h('div', { class: 'box ptip' }, '🎰 For fun. These hit 1 to 35% of the time, so most of them lose. Every leg here is one the sims like more than the market does. Keep it to a small bet: ', h('b', {}, usd(0.2)), ' or so.'),
       ...((L.ml_long || []).length ? [h('h3', {}, '🎰 Moneyline longshots', h('small', {}, 'Every favorite this week (and the safest 8 and 6) on one ticket')), h('div', { class: 'bgrid' }, ...L.ml_long.map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig', style: 'color:var(--gold)' }, pl.p + '%'), h('div', { class: 'k' }, `all ${pl.n} win in the sims`)),
-        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth it only if DraftKings pays more than ${odds(pl.fair)}.`))))] : []),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`))))] : []),
       ...((L.fav_stacks || []).length ? [h('h3', {}, '💪 Favorite stacks', h('small', {}, 'Heavy favorites stacked to about +250 to +400')), h('div', { class: 'bgrid' }, ...L.fav_stacks.map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, pl.p + '%'), h('div', { class: 'k' }, 'all hit in the sims')),
-        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth it only if DraftKings pays more than ${odds(pl.fair)}.`))))] : []),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`))))] : []),
       h('h3', { style: 'margin-top:18px' }, '🎰 Longshot parlays'), h('div', { class: 'bgrid' }, ...(L.parlays || []).map(pl => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig', style: 'color:var(--gold)' }, pl.p + '%'), h('div', { class: 'k' }, 'hits in the sims')),
-        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth it only if DraftKings pays more than ${odds(pl.fair)}.`)))),
+        h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'))), ...pl.legs.map(legRow), h('div', { class: 'k' }, `Worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)}).`)))),
       h('h3', { style: 'margin-top:18px' }, '🎯 Longshot singles'), h('div', { class: 'leglist' }, ...(L.singles || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'lp' }, Math.round(x.p) + '%'), h('span', { class: 'll' }, x.label), h('span', { class: 'mut', style: 'margin-left:auto;text-align:right' }, `fair ${odds(x.fair)}`, x.price ? h('div', { class: 'k' }, `best ${odds(x.price)}`) : ''))))];
   } else if (PLV === 'pickem') {
     const L = PLD.pickem_plays || [];
@@ -743,7 +744,7 @@ async function renderProps() {
     const R = PLD.record || {}; const row = (n, b) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${b[0]}-${b[1]}`), h('b', { class: b[2] >= 0 ? 'pos' : 'neg' }, `${b[2] >= 0 ? '+' : '-'}${usd(Math.abs(b[2]))}`));
     out = [h('div', { class: 'box' }, h('h3', {}, '📊 How the picks have done'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Every graded play at 1 unit (${usd(1)}), bought at the market price. Small samples swing a lot: give it a few weeks before trusting it.`),
       row('Player props', R.props || [0, 0, 0]), row('Game lines', R.games || [0, 0, 0]),
-      h('h3', { style: 'margin-top:14px' }, '🧾 Every-bet tracker'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Pretend 1 unit (${usd(1)}) at DraftKings' own line and price on every spread, total, moneyline and prop at -150 or better where our chance beats the price (the sims say it makes money). Locked the first time it shows up. Closing line value (CLV) = what the bet was worth at kickoff prices: it tells you about the edge in weeks, the win-loss record needs seasons.${R.auto_open ? ` Open this week: ${R.auto_open.games} game bets, ${R.auto_open.props} props.` : ''}`),
+      h('h3', { style: 'margin-top:14px' }, '🧾 Every-bet tracker'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Pretend 1 unit (${usd(1)}) on every bet the sims like more than the market, at what a share would cost on DraftKings Predictions or Kalshi (the market's chance plus about 1¢ and the fee), 60¢ or less. Only bets that still come out ahead after that price count.${R.auto_open ? ` Open this week: ${R.auto_open.games} game bets, ${R.auto_open.props} props.` : ''}`),
       row('All game lines', R.auto_games || [0, 0, 0]), row('All props', R.auto_props || [0, 0, 0]),
       ...Object.entries(R.tracker || {}).map(([n, s]) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${s.w}-${s.l}${s.push ? '-' + s.push : ''}${s.open ? ` (${s.open} open)` : ''}`),
         h('span', { class: 'k' }, s.roi != null ? `ROI ${s.roi}% ±${s.roi_se}` : ''), h('b', { class: (s.clv_ev || 0) >= 0 ? 'pos' : 'neg' }, s.clv_n ? `CLV ${s.clv_ev}% ±${s.clv_se} (${s.clv_n})` : ''))),

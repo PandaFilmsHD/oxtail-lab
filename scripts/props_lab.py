@@ -211,6 +211,17 @@ def half(x):
     return x if x % 1 else x - 0.5
 
 
+_CFG = json.loads((ROOT / "config.json").read_text()) if (ROOT / "config.json").exists() else {}
+EXCHANGE = _CFG.get("venue") == "exchange"   # Alex bets on DraftKings Predictions: buy shares in cents, a share pays $1
+
+
+def ex_price(pm):
+    """What a share of a side costs on the exchange, as American odds: the market's no-vig chance + about 1 cent of spread
+    + a fee (Kalshi-style 0.07*p*(1-p); DraftKings Predictions' exact fee may differ)."""
+    c_ = min(0.99, pm + _CFG.get("ex_spread", 0.01) + _CFG.get("ex_fee", 0.07) * pm * (1 - pm))
+    return amer(c_)
+
+
 def weather(team, kick):
     """Forecast wind (mph) and temp at kickoff from Open-Meteo. None if indoors or unavailable."""
     if team in ROOF or team not in LOC:
@@ -423,6 +434,8 @@ def main():
             ims = [imp_p(z[1]) for z in q_]
             sides = [(p_at(side, t, z[0]) - im / sum(ims), t, z[0], int(z[1]), p_at(side, t, z[0]), im / sum(ims)) for t, z, im in zip(tags, q_, ims)]
             e_, t, pt, pr_, p_, pm_ = max(sides)
+            if EXCHANGE:
+                pr_ = ex_price(pm_)   # the share price he'd actually pay
             team = h if t == "home" else a
             ev_ = p_ * dec(pr_) - 1
             if pr_ >= -150 and e_ > 0.006:   # no angle = edge 0 at the market's own price (+-0.2 pts of sim noise): nothing to test there
@@ -972,6 +985,10 @@ def main():
             t_["tier"] = "bet" if t_["ev"] >= 0 else "lean"
         else:   # no DraftKings line in the pull: best price of the consensus books, kept OUT of the headline (no one gets the best of 5 every time)
             t_ = dict(src="best", line=x["line"], price=int(x["price"]), p=x["p"], p_mkt=x["p_mkt"], edge=x["edge"], ev=x["ev"], tier="best")
+        if EXCHANGE and t_.get("p_mkt") is not None:   # price it as an exchange share at the market's chance
+            t_["price"] = ex_price(t_["p_mkt"] / 100); t_["ev"] = round(100 * (t_["p"] / 100 * dec(t_["price"]) - 1), 1)
+            t_["src"] = t_["src"] + "_ex"
+            t_["tier"] = "bet" if t_["ev"] >= 0 else "lean"   # on an exchange the market's no-vig chance IS the price, so every line counts
         if t_["price"] >= -150 and t_["edge"] >= 1.0:
             kp = f"PA|{x['player']}|{x['market']}"
             if not locked(kp, t_["tier"]):
