@@ -1049,6 +1049,37 @@ for n in PROF:
 ONE_ONLY = set((A.get("waiver_rules") or {}).get("one_only", ["TE", "D", "K"]))
 
 # ---------------- trade search ----------------
+# ---------------- each manager's habits from this season's transactions (offers, accepts, declines, pickups) ----------------
+MGR = {}
+_tp = ROOT / "data" / LID / "transactions.json"
+if _tp.exists():
+    _tx = json.loads(_tp.read_text())
+    for t in IDS:
+        MGR[t] = {"acc": 0, "dec": 0, "offers": 0, "moves": 0, "last": 0}
+    for x in _tx:
+        tm, ty, st, dt = x.get("team"), x.get("type"), x.get("status"), x.get("date") or 0
+        if tm not in MGR:
+            continue
+        g = MGR[tm]
+        if ty == "TRADE_ACCEPT":
+            g["acc"] += 1
+        elif ty == "TRADE_DECLINE":
+            g["dec"] += 1
+        elif ty == "TRADE_PROPOSAL":
+            g["offers"] += 1
+        elif ty in ("FREEAGENT", "WAIVER") and st == "EXECUTED":
+            g["moves"] += 1
+        if ty in ("FREEAGENT", "WAIVER", "TRADE_PROPOSAL", "TRADE_ACCEPT", "TRADE_DECLINE") and st not in ("FAILED_INVALIDPLAYERSOURCE",):
+            g["last"] = max(g["last"], dt)
+    _la, _ld = sum(g["acc"] for g in MGR.values()), sum(g["dec"] for g in MGR.values())
+    LG_ACC = (_la + 1) / (_la + _ld + 2)
+    for t, g in MGR.items():
+        g["acc_rate"] = (g["acc"] + 6 * LG_ACC) / (g["acc"] + g["dec"] + 6)   # shrunk toward the league's overall yes-rate
+        g["days_idle"] = round((time.time() * 1000 - g["last"]) / 864e5, 1) if g["last"] else 99
+        lo = lambda p_: math.log(p_ / (1 - p_))
+        g["adj"] = lo(g["acc_rate"]) - lo(LG_ACC) - (1.5 if g["days_idle"] > 21 else 0.7 if g["days_idle"] > 10 else 0)
+    print("manager habits:", {TNAME[t][:12]: (g["acc"], g["dec"], g["days_idle"]) for t, g in list(MGR.items())[:6]})
+
 THEIR_START = {t: {x["player"] for x in lineup(ROSTER[t], next(iter(REGW), SEMI), detail=True)[1]} for t in IDS}
 cands = []
 mine_pool = [n for n in ROSTER[ME] if n not in CORE and P[n]["pos"] in SKILL and ros(n) > 6]
@@ -1097,11 +1128,13 @@ for t in IDS:
             if not real and not stretch:
                 continue
             # rough chance they say yes: how much market value they gain, and (if they're still alive) whether their lineup gets better
-            if status[t] == "out":
-                lg_ = 5 * (ratio - 1.1) + (0 if healthy_now else -3.0)
-            else:
-                lg_ = 4 * (ratio - 1.0) + 0.35 * max(-6, min(4, need)) + (0 if start_ok else -1.0) + (0 if healthy_now else -2.0)
-            acc = 100 / (1 + math.exp(-lg_))
+            # start from how often offers in THIS league get accepted, then: value they gain, their lineup, their own history
+            base_lo = math.log(LG_ACC / (1 - LG_ACC)) if MGR else math.log(0.3 / 0.7)
+            lg_ = base_lo + 2.5 * max(-1, min(1, math.log(max(ratio, 0.05)))) + (0 if healthy_now else -2.0) + (0 if start_ok else -0.8)
+            if status[t] != "out":
+                lg_ += 0.3 * max(-6, min(4, need))
+            lg_ += (MGR.get(t) or {}).get("adj", 0)   # this manager's own yes-rate and how active he is
+            acc = max(3, min(90, 100 / (1 + math.exp(-lg_))))
             cands.append({"t": t, "G": G, "T": T_, "gain": gain, "ratio": ratio, "need": need, "real": real, "r": r, "acc": acc})
 cands.sort(key=lambda c: -c["gain"])
 seen, top, nr, ns = set(), [], 0, 0
@@ -1222,6 +1255,9 @@ def trade_story(c):
     if c["ratio"] >= 1.35:
         why_me.append(f"You're overpaying in trade value ({c['ratio']:.2f}x what you get back). It still helps your title odds, but try asking for a little more first.")
     pitch = f"Would you do {gnames} for {tnames}? " + (("I think " + reasons[0] + (", and " + reasons[1] if len(reasons) > 1 else "") + ".") if reasons else "Let me know if you'd want to tweak it.")
+    mg = MGR.get(t)
+    if mg:
+        why_them.append(f"They've accepted {mg['acc']} of {mg['acc'] + mg['dec']} trade offers this season" + (f" and haven't made a move in {round(mg['days_idle'])} days" if mg["days_idle"] > 10 else f" and were active {round(mg['days_idle'])} days ago") + ".")
     if d < -0.5 and not c["real"]:
         why_them.append("Heads up: on paper this makes their lineup worse, so expect them to counter or say no.")
     elif d < -0.5:
@@ -1233,7 +1269,7 @@ for c in top:
     res_full = run(c["r"], A["sims"]["per_trade"]); res = res_full[ME]
     trades.append({"partner": TNAME[c["t"]], "partner_id": c["t"], "partner_status": status[c["t"]], "give": " + ".join(c["G"]),
                    "get": " + ".join(c["T"]), "title_pct": r1(res["ch"]), "change_pts": r1(res["ch"] - mine["ch"]), "final_pct": r1(res["fi"]),
-                   "value_ratio": round(c["ratio"], 2), "partner_weekly_gain": r1(c["need"]), "accept_pct": round(c["acc"]), "kind": "realistic" if c["real"] else "stretch",
+                   "value_ratio": round(c["ratio"], 2), "partner_weekly_gain": r1(c["need"]), "accept_pct": round(c["acc"]), "mgr": ({"acc": MGR[c["t"]]["acc"], "dec": MGR[c["t"]]["dec"], "idle": MGR[c["t"]]["days_idle"], "offers": MGR[c["t"]]["offers"]} if c["t"] in MGR else None), "kind": "realistic" if c["real"] else "stretch",
                    "blocked": c["t"] in NO_TRADE, "wk16": r1(res["means"][SEMI]), "wk17": r1(res["means"][FINAL]), "wk16_before": r1(mine["means"][SEMI]), "wk17_before": r1(mine["means"][FINAL]),
                    # the "why" breakdown
                    "weeks": [{"w": w, "before": r1(mine["means"][w]), "after": r1(res["means"][w]), "po": w in PW} for w in REGW + [w for w in PLW if w not in REGW]],
