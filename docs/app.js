@@ -324,6 +324,12 @@ $('#clear').addEventListener('click', () => { LAB.give.clear(); LAB.get.clear();
 
 // ---------- waivers ----------
 function renderWaivers() {
+  const B = D.blocks || [];
+  const bb = h('div', { class: 'box', id: 'blockbox', style: 'margin-bottom:14px' }, h('h3', {}, '🛡️ Block your playoff opponents'),
+    B.length ? [h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'Free agents your likely semis/final opponents would start in the playoffs. Points = how much they\'d add, weighted by how likely you face that team.'),
+      h('div', { class: 'leglist' }, ...B.map(b => h('div', { class: 'legpick', onclick: () => openCard(b.player) }, h('span', { class: 'lp hi' }, '+' + b.block_pts), h('span', { class: 'll' }, pl(b.player), h('div', { class: 'k' }, `${b.pos} · ${b.nfl} · helps ${b.teams.map(t => t[0]).join(', ')}${b.my_gain > 0 ? ` · +${b.my_gain} for you too` : ''}`)))))]
+      : h('p', { class: 'sub', style: 'margin:0' }, 'Nobody on waivers would crack your likely playoff opponents\' lineups right now. This updates if one of their starters gets hurt.'));
+  const ob = $('#blockbox'); if (ob) ob.replaceWith(bb); else $('#wtable').before(bb);
   table($('#wtable'), [
     { k: 'verdict', h: 'Call', l: 1, f: r => h('span', { class: 'tag ' + (r.verdict === 'CLAIM' ? 'real' : 'no'), title: r.why }, r.verdict === 'CLAIM' ? '✅ CLAIM' : 'SKIP') },
     { k: 'player', h: 'Add', l: 1, f: r => h('span', {}, pl(r.player), h('div', { class: 'mut', style: 'font-size:12px;max-width:260px;white-space:normal' }, r.why)) }, { k: 'drop', h: 'Drop', l: 1 },

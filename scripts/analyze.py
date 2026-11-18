@@ -1340,6 +1340,34 @@ for n in fa:
 waivers = [x for x in waivers if x["ros_gain"] > 0 or (x["this_week_gain"] > 0 and x["ros_gain"] > -3)]
 waivers.sort(key=lambda x: -(x["ros_gain"] + 2 * x["this_week_gain"]))
 waivers = waivers[:12]
+# ---------------- waiver blocks: free agents your likely playoff opponents need most ----------------
+blocks = []
+try:
+    _br = base.get("_bracket") or {}
+    opp_w = {}   # opponent -> (chance I face them in the semis or final, their playoff week)
+    for rnd, wk_ in (("semis", SEMI), ("final", FINAL)):
+        for o_, v_ in (_br.get(rnd) or {}).items():
+            if o_ != ME and wk_ is not None:
+                opp_w.setdefault(o_, []).append((v_["pct"] / 100, wk_))
+    top_opp = sorted(opp_w, key=lambda o_: -sum(c for c, _ in opp_w[o_]))[:4]
+    for n in fa:
+        if P[n]["pos"] not in SKILL or P[n]["pos"] in ONE_ONLY:   # no D/K/TE blocks: that would mean a backup at a one-only spot
+            continue
+        need, who = 0.0, []
+        for o_ in top_opp:
+            g_ = 0.0
+            for c_, w_ in opp_w[o_]:
+                g_ += c_ * (lineup(ROSTER[o_] + [n], w_) - lineup(ROSTER[o_], w_))
+            if g_ > 0.05:
+                need += g_; who.append((TNAME[o_], round(g_, 2)))
+        if need >= 0.25:
+            mine_g = sum(lineup(ROSTER[ME] + [n], w_) - lineup(ROSTER[ME], w_) for w_ in PLW)
+            blocks.append({"player": n, "pos": P[n]["pos"], "nfl": P[n]["nfl"], "block_pts": r1(need), "teams": sorted(who, key=lambda z: -z[1])[:3],
+                           "my_gain": r1(mine_g), "own_pct": P[n]["own"]})
+    blocks.sort(key=lambda x: -(x["block_pts"] + 0.5 * max(0, x["my_gain"])))
+    blocks = blocks[:6]
+except Exception as ex_:
+    print("blocks failed", ex_); blocks = []
 for x in waivers[:6]:
     if x["ros_gain"] > 0:
         x["change_pts"] = r1(run(x["_r"], A["sims"]["per_trade"])[ME]["ch"] - mine["ch"])
@@ -1857,7 +1885,7 @@ tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k,
           "teams": [{"id": t, "name": TNAME[t], "wins": TEAMS[t]["w"] + 0.5 * TEAMS[t].get("t", 0), "pf": TEAMS[t]["pf"]} for t in IDS],
           "sched": REM, "players": [{"n": n, "pos": p["pos"], "t": p["t"], "nfl": p["nfl"], "e": [r1(ev(n, w)) for w in WKS], "v": [r1(V[n]["v"][w]) for w in WKS], "q": [round(V[n]["q"][w], 2) for w in WKS], "s": [r1(p_sd(n, ev(n, w))) for w in WKS]}
                                     for n, p in P.items() if ros(n) + ev(n, CUR) > 3 or p["t"] == ME]}
-latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
+latest = {"summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (SEMI, FINAL) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 
