@@ -363,6 +363,13 @@ function renderTeam() {
   const lt = (c, k, a, b) => h('div', { class: 'tile ' + c }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(a)), h('div', { style: 'font-size:13px;font-weight:800' }, `${f1(b)} expected after injury odds (what League shows)`));
   $('#lusum').replaceChildren(lt('t1', `Wk ${po[1]} semis · full strength`, hl[po[1]], ex[po[1]]), lt('t3', `Wk ${po[2]} final · full strength`, hl[po[2]], ex[po[2]]));
   const IL = sm.ideal_lineups || {};
+  if (sm.bracket) {   // who you're likely to face, and how often you win
+    const col = (k, label, w) => h('div', {}, h('div', { class: 'k', style: 'font-family:var(--game);color:var(--gold);font-size:13px;margin-bottom:6px' }, `${label} (Wk ${w})`),
+      ...(sm.bracket[k] || []).map(o => h('div', { class: 'pathrow', onclick: () => openTeam(o.id) }, h('span', { class: 'pn' }, o.team), h('span', { class: 'mut' }, `${Math.round(o.pct)}% you face them`), h('b', { class: o.win >= 50 ? 'pos' : 'neg' }, `${Math.round(o.win)}% win`))));
+    const box = h('div', { class: 'box', id: 'pathbox', style: 'margin-bottom:16px' }, h('h3', {}, '🏆 Your playoff path'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, 'From the sims: who you meet most often, and how often you beat them. Tap a team to scout them.'),
+      h('div', { class: 'grid2', style: 'gap:12px' }, col('semis', '⚔️ Semis', po[1]), col('final', '🏆 Final', po[2])));
+    const o_ = $('#pathbox'); if (o_) o_.replaceWith(box); else $('#lusum').before(box);
+  }
   { const w = po[1], nums = [['💪 Full strength', hl[w], 'Everyone who can play plays. Best case.'], ['🎯 Expected', ex[w], 'Injury odds built in, and if a hurt guy sits your bench steps in. This is the number used everywhere on the site.']];
     const box = h('div', { class: 'box', style: 'margin-bottom:16px' }, h('h3', {}, `🤔 Your Wk ${w} lineup: best case vs expected`), h('div', { class: 'three' }, nums.filter(x => x[1] != null).map(([k, v, t]) => h('div', { class: 'st' }, h('div', { class: 'k' }, k), h('div', { class: 'v' }, f1(v)), h('div', { class: 'gn' }, t)))),
       h('p', { class: 'sub', style: 'margin:8px 0 0' }, 'They only differ because of injured or questionable guys. Each player in a lineup shows what he scores if he plays.'));

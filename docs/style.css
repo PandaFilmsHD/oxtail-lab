@@ -380,3 +380,6 @@ nav.tabs button,.seg button,.btn.small,.asx,.chatx{min-height:44px}
 body.loading #home .hero,body.loading #home .grid2{opacity:.25}
 body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .chatp{height:100dvh;max-height:100dvh}
+
+.pathrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:#0f1138;border:2px solid #2c3080;border-radius:12px;padding:8px 10px;margin:6px 0;font-size:13px;cursor:pointer;min-height:44px}
+.pathrow .pn{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

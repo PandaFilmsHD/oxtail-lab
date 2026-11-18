@@ -954,6 +954,20 @@ def run(rost, N):
     else:         # 4 teams: semis then final
         f1, l1 = pick(PO1, s[0], s[3]); f2, l2 = pick(PO1, s[1], s[2])
         ch, ru = pick(PO2, f1, f2); t3, t4 = pick(PO2, l1, l2)
+    # who I meet in the semis and final, and how often I win those games
+    me_i = IX[ME]
+    semis = [(s[0], w45 if NP == 6 else s[3], SEMI), (s[1], w36 if NP == 6 else s[2], SEMI)]
+    BR = {"semis": {}, "final": {}}
+    def _tally(key, a, b, w):
+        for x_, y_ in ((a, b), (b, a)):
+            m_ = x_ == me_i
+            if m_.any():
+                opp_ = y_[m_]; won = g(w, x_)[m_] > g(w, y_)[m_]
+                for o in np.unique(opp_):
+                    k_ = opp_ == o; d_ = BR[key].setdefault(int(o), [0, 0]); d_[0] += int(k_.sum()); d_[1] += int(won[k_].sum())
+    for a, b, w in semis:
+        _tally("semis", a, b, w)
+    _tally("final", f1, f2, FINAL)
     cnt = lambda x: np.bincount(x.ravel(), minlength=T) / N * 100
     po = cnt(seeds[:, :NP]); bye = cnt(seeds[:, :2]) if NP == 6 else np.zeros(T); s1 = cnt(seeds[:, 0])
     out = {}
@@ -962,6 +976,7 @@ def run(rost, N):
         out[t] = {"po": po[i], "bye": bye[i], "s1": s1[i], "ch": cnt(ch)[i], "fi": cnt(ch)[i] + cnt(ru)[i],
                   "p3": cnt(t3)[i], "wk": wkwin[i] * 100,
                   "means": {w: float(sum(p_ * m_ for p_, m_ in sc[t][w]) / sum(p_ for p_, _ in sc[t][w])) for w in WKS}}
+    out["_bracket"] = {k: {IDS[o]: {"pct": 100 * c_[0] / N, "win": 100 * c_[1] / max(1, c_[0])} for o, c_ in v.items()} for k, v in BR.items()}
     return out
 
 
@@ -1835,7 +1850,7 @@ summary = {"at": M["at"], "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmti
            "playoff_weeks": [PO1, PO2, PO3], "po_view": [R1, SEMI, FINAL], "weighted_weeks": PW, "me": ME, "my_team": TNAME[ME],
            "kpis": {k: r1(mine[k]) for k in ("ch", "fi", "po", "bye", "s1")}, "healthy_lineup": healthy, "ideal_lineups": ideal, "tiers": TIERS,
            "expected_lineup": {w: r1(mine["means"][w]) for w in PLW}, "take": take, "this_week": this_week, "swing": swing,
-           "sims": A["sims"], "stack": STACK, "bias": BIAS, "market_source": MKT_SRC, "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
+           "sims": A["sims"], "bracket": {k: sorted([{"team": TNAME[t], "id": t, "pct": r1(v["pct"]), "win": r1(v["win"])} for t, v in d.items()], key=lambda x: -x["pct"])[:5] for k, d in base["_bracket"].items()}, "stack": STACK, "bias": BIAS, "market_source": MKT_SRC, "lock": lock, "trade_deadline": SET.get("trade_deadline"), "backtest": BT, "report_card": report, "variance": {"league_actual_sd": r1(EMP_SD), "scale": round(SD_K, 2)}, "assumptions": {"avail": AVAIL, "override": OVR},
            "settings": {k: v for k, v in SET.items() if k != "scoring"}, "scoring": SC, "overrides": OVR_SET}
 tester = {"sdk": round(SD_K, 3), "rho": [[sorted(k)[0], sorted(k)[-1], v] for k, v in RHO.items()], "weeks": WKS, "cur": CUR, "reg": REG, "po": [PO1, PO2, PO3], "np": 4 if SET.get("playoff_teams") == 4 else 6, "me": ME, "sd": SD,
           "slots": SLOTS, "elig": ELIG,
