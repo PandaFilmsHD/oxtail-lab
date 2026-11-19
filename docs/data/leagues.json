@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-19T08:34:58Z",
+   "at": "2026-11-19T10:59:39Z",
    "champ_pct": 31.3,
    "todo": [
     {
@@ -17,10 +17,10 @@
     },
     {
      "urgent": false,
-     "icon": "\u2705",
-     "title": "You're all set this week",
-     "detail": "Lineup is full, no must-have waiver claims, no trade worth forcing.",
-     "tab": "home"
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Xavier Hutchinson + Seth McGowan for Caleb Douglas (Faiz's Fantastic Team)",
+     "detail": "Title odds +1.6%. Would you do Xavier Hutchinson and Seth McGowan for Caleb Douglas? I think Hutchinson slides right into your FLEX spot, and you get depth for injuries and byes down the stretch.",
+     "tab": "trades"
     }
    ]
   },
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T08:35:21Z",
+   "at": "2026-11-19T11:00:07Z",
    "champ_pct": 12.9,
    "todo": [
     {
@@ -50,14 +50,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.0%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.3%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +1.9%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
+     "detail": "Title odds +2.5%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -67,8 +67,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T08:35:31Z",
-   "champ_pct": 3.2,
+   "at": "2026-11-19T11:00:20Z",
+   "champ_pct": 3.1,
    "todo": [
     {
      "urgent": false,
@@ -91,7 +91,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T08:35:08Z",
+   "at": "2026-11-19T10:59:53Z",
    "champ_pct": 33.2,
    "todo": [
     {
@@ -112,7 +112,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.4%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
     },
     {
