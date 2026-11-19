@@ -285,10 +285,10 @@ KICK = {int(w): {TEAMFIX.get(t, t): v for t, v in d.items()} for w, d in _KR.ite
 SEASON = int(M.get("season") or 2026)
 # ---------------- automatic availability: who plays which week, from ESPN status + practice reports + ESPN news ----------------
 import re as _re
-SEASON_END = _re.compile(r"(remainder of the (?:20\d\d )?season|season-ending|(?:out|sidelined|done|miss|lost) for the (?:rest of the |remainder of the )?(?:20\d\d )?season|rest of the (?:20\d\d )?(?:regular )?season|won't return this season|will not return this season|season is over|torn (?:his )?acl|tearing his acl|ruptured (?:his )?achilles|torn achilles)", _re.I)
+SEASON_END = _re.compile(r"(remainder of the (?:20\d\d )?season|season-ending|(?:out|sidelined|done|miss|lost) for (?:the )?(?:rest of the |remainder of the )?(?:20\d\d )?(?:regular )?season|rest of (?:the )?(?:20\d\d )?(?:regular )?season|remainder of the (?:20\d\d )?regular season|won't return this season|will not return this season|season is over|torn (?:his )?acl|tearing his acl|ruptured (?:his )?achilles|torn achilles)", _re.I)
 RET_WK = _re.compile(r"(?:return|back|activated|debut)\D{0,40}?week (\d{1,2})|week (\d{1,2})\D{0,25}?(?:return|comeback)", _re.I)
-LONG = _re.compile(r"(several weeks|multiple weeks|extended (?:period|absence)|four to six weeks|4-6 weeks|six to eight weeks|long-term)", _re.I)
-DATE_RE = _re.compile(r"(?:return|back|activated|eligible)[^.]{0,60}?\b(Jan|Feb|Mar|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2})\b", _re.I)
+LONG = _re.compile(r"(several weeks|multiple weeks|extended (?:period|absence)|four to six weeks|4-6 weeks|six to eight weeks|long-term|underwent (?:\w+ )?surgery|(?:will|to) miss (?:some )?time|fractured|broken (?:ankle|leg|fibula|foot))", _re.I)
+DATE_RE = _re.compile(r"(?:return|back|activated|eligible|chance for game action|next chance)[^.]{0,60}?\b(Jan|Feb|Mar|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2})\b", _re.I)
 SHORT = _re.compile(r"(day-to-day|week-to-week|considered questionable|optimistic|expected to play|should be fine)", _re.I)
 def auto_avail(n):
     p = P[n]; inj = p.get("inj") or "ACTIVE"
@@ -339,6 +339,8 @@ def auto_avail(n):
         if ret: start = max(start, ret)
         if "Limited" in prac or "Full" in prac: start = max(CUR, start - 1)   # practicing = return window opened
         ramp = [0.4, 0.65, 0.8, 0.85]
+        if CUR - last >= 6 and not ("Limited" in prac or "Full" in prac) and not ret:
+            ramp = [0.25, 0.45, 0.6, 0.65]   # out 6+ weeks with no practice or return news: plenty never come back this season
         if _re.search(r"minimum (?:number|amount)|only the minimum|expected to return|on track to return|designated (?:him |\w+ )?(?:for|to) return", txt, _re.I):
             ramp = [0.65, 0.8, 0.85, 0.88]   # news says he should be back as soon as he's eligible
         for w in WKS:
@@ -352,9 +354,11 @@ def auto_avail(n):
             q[str(w)] = steps[min(i, len(steps) - 1)]
         why = "Ruled out this week" + (", news says it's a multi-week injury" if lg else "") + (f", ESPN says return around Wk {ret}" if ret else "") + "."
     elif inj == "DOUBTFUL":
+        lg = LONG.search(txt)
+        steps = [0.0, 0.15, 0.35, 0.55, 0.7] if lg else [0.03, 0.7, 0.9]
         for i, w in enumerate(WKS):
-            q[str(w)] = [0.03, 0.7, 0.9][min(i, 2)]   # 2022-25: regular starters listed Doubtful played 1% of the time
-        why = "Doubtful this week (starters listed Doubtful almost never play)."
+            q[str(w)] = steps[min(i, len(steps) - 1)]   # 2022-25: regular starters listed Doubtful played 1% of the time
+        why = "Doubtful this week" + (", and the news says he'll miss real time." if lg else " (starters listed Doubtful almost never play).")
     else:   # QUESTIONABLE
         # 2022-25 injury reports, regular starters listed Questionable: played 87% after a full practice, 69% limited, 56% no practice, 70% overall
         c0 = 0.87 if "Full" in prac else 0.56 if "Did Not" in prac else 0.69 if "Limited" in prac else 0.70
@@ -629,6 +633,13 @@ for n, p in P.items():
         st_ = sum(1 for x in _uw(n) if (x.get("att") or 0) >= 15)
         if st_ >= 3 and st_ > TEAM_QB.get(p["nfl"], ("", 0))[1]:
             TEAM_QB[p["nfl"]] = (n, st_)
+QB_WK = {}   # team -> {week: QB who started (15+ attempts)}
+for n, p in P.items():
+    if p["pos"] == "QB":
+        for x in _uw(n):
+            if (x.get("att") or 0) >= 15 and x.get("w"):
+                QB_WK.setdefault(p["nfl"], {})[int(x["w"])] = n
+NOW_QB = {t: d_[max(d_)] for t, d_ in QB_WK.items() if d_}   # whoever started their most recent game
 print(f"rules: {len(QBSTART)} QBs judged on real starts, {len(HURT_LAST)} left last game early, {len(TEAM_QB)} team QBs known")
 
 # ---------------- D/ST: the opponent's Vegas expected score is what predicts defense points (2022-25: past D/ST average predicts ~nothing) ----------------
@@ -891,10 +902,12 @@ for n, p in P.items():
     tq = TEAM_QB.get(p["nfl"])
     if not tq or tq[0] not in V or tq[0] == n:
         continue
+    gw = [int(w) for w, v in p["wk"].items() if v and int(w) < CUR]
+    share = (sum(1 for w in gw if QB_WK.get(p["nfl"], {}).get(w) == tq[0]) / len(gw)) if gw and QB_WK.get(p["nfl"]) else 1.0   # how much of his history came with the regular QB
     for w in WKS:
         sit = 1 - V[tq[0]]["q"][w]
         if sit > 0.25 and V[n]["v"][w] > 0:
-            V[n]["v"][w] = round(V[n]["v"][w] * (1 - 0.14 * sit), 2)
+            V[n]["v"][w] = round(V[n]["v"][w] * (1 - 0.14 * sit * share), 2)
 
 # ---------------- backup bump: when a regular starter at his position sits, the backup scores more ----------------
 # 10 past seasons: backups (projected under 7) averaged about +2.5 (WR), +4.7 (RB), +2.6 (TE) when a 12+ ppg teammate at the position sat.
@@ -2277,7 +2290,9 @@ def verdict(n, p, pr):
         R.append(("🔄", f"Judged only on games he actually started at QB ({QBSTART[n]} pts a game), not his backup snaps."))
     tq_ = TEAM_QB.get(p["nfl"])
     if p["pos"] in ("WR", "TE") and tq_ and tq_[0] in V and V[tq_[0]]["q"].get(CUR, 1) < 0.75:
-        R.append(("🧢", f"{tq_[0]} might not start at QB, and WR/TEs score about 14% less with a backup throwing to them."))
+        _gone = max(V[tq_[0]]["q"].values() or [0]) == 0
+        _bk = NOW_QB.get(p["nfl"]) if NOW_QB.get(p["nfl"]) != tq_[0] else None
+        R.append(("🧢", (f"{tq_[0]} is out for the season" if _gone else f"{tq_[0]} might not start at QB") + (f", so {_bk} is throwing to him" if _bk else "") + ". WR/TEs score about 14% less with a backup, and most of his numbers came with the starter, so we knock his projection down."))
     if n in FILLIN:
         fi = FILLIN[n]
         R.append(("🔁", f"Most of his points came in Weeks {', '.join(map(str, fi['out_weeks']))} while {fi['starter']} was out. {fi['starter']} is back, so he's valued as a backup now" + (f" ({fi['with_pg']:.1f} pts a game when they both played)." if fi["with_pg"] is not None else " (he's barely played with him back).")))
