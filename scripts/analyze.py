@@ -1440,11 +1440,41 @@ print(f"trades: {len(cands)} candidates, {len(trades)} simmed, {time.time() - t0
 fa = [n for n, p in P.items() if p["t"] == 0 and p["pos"] in SKILL + ("D", "K")]
 BACK = {n for n, a in AVAIL.items() if sum(float(a.get(str(w), 0)) for w in PLW) / max(1, len(PLW)) >= 0.4}   # hurt but expected back for the playoffs
 bench = sorted([n for n in ROSTER[ME] if n not in CORE and n not in BACK and (P[n].get("own") or 0) < 60], key=lambda n: ros(n) + po_pts(n))   # don't drop hurt guys we expect back, or names the league still values (trade those instead)
+# ---------------- fill-ins: a backup QB/TE/D/K is OK only while the main guy is on bye or hurt ----------------
+# The one on bye or out is the main guy (protected, never suggested as a drop). The other is a fill-in to cut once he's back.
+FILL_POS = set(ONE_ONLY) | {"QB"}
+def sits_now(x):
+    return opp(P[x], CUR) is None or (P[x].get("inj") or "ACTIVE") in ("OUT", "INJURY_RESERVE", "DOUBTFUL", "SUSPENSION")
+PROTECT, FILL_TODO = set(), []
+try:
+    _fp = ROOT / "data" / LID / "fillins.json"
+    FI_ = json.loads(_fp.read_text()) if _fp.exists() else {}
+    for pos_ in FILL_POS:
+        mine_ = [x for x in ROSTER[ME] if P[x]["pos"] == pos_]
+        if len(mine_) < 2:
+            FI_.pop(pos_, None)
+            continue
+        out_ = [x for x in mine_ if sits_now(x)]; in_ = [x for x in mine_ if not sits_now(x)]
+        if out_ and in_:
+            main_ = max(out_, key=lambda x: ros(x) + po_pts(x)); fill_ = max(in_, key=lambda x: ev(x, CUR))
+            PROTECT.add(main_)
+            if pos_ not in FI_ or FI_[pos_].get("main") != main_:
+                FI_[pos_] = {"main": main_, "fill": fill_, "wk": CUR}
+        elif not out_ and pos_ in FI_ and FI_[pos_]["main"] in mine_ and FI_[pos_]["fill"] in mine_ and FI_[pos_]["wk"] < CUR:
+            m_, f_ = FI_[pos_]["main"], FI_[pos_]["fill"]
+            PROTECT.add(m_)
+            FILL_TODO.append({"urgent": False, "icon": "✂️", "title": f"{m_} is back: drop {f_}", "detail": f"{f_} was your fill-in while {m_} sat. You only need one {('D/ST' if pos_ == 'D' else pos_)}, so free up the spot.", "tab": "waivers"})
+    _fp.write_text(json.dumps(FI_, separators=(",", ":")))
+    if PROTECT:
+        print("fill-in rule protects:", sorted(PROTECT))
+except Exception as ex_:
+    print("fill-ins skipped", ex_)
+bench = [x for x in bench if x not in PROTECT]
 waivers = []
 for n in fa:
     pos = P[n]["pos"]
     if pos in ONE_ONLY:   # never roster a backup TE/D/K: only a straight swap for the one you have
-        same = sorted([x for x in ROSTER[ME] if P[x]["pos"] == pos and x not in CORE], key=ros)
+        same = sorted([x for x in ROSTER[ME] if P[x]["pos"] == pos and x not in CORE and x not in PROTECT], key=ros)
         if not same:
             continue
         drop = same[0]
@@ -1911,7 +1941,7 @@ for b in breakouts:   # the breakout tab and the waiver tab should never disagre
     if b["action"] == "ADD" and b["player"] not in {x["player"] for x in waivers if x["verdict"] == "CLAIM"}:
         b["action"] = "WATCH"
 # ---------------- this week's to-do list ----------------
-todo = []
+todo = list(FILL_TODO)
 if sw0:
     for x in sw0["lineup"]:
         if x["opp"] != "BYE" and x["chance"] >= 0.8:
