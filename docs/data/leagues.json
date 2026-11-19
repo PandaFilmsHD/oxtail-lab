@@ -5,11 +5,11 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-18T23:05:41Z",
-   "champ_pct": 31.1,
+   "at": "2026-11-19T02:43:35Z",
+   "champ_pct": 31.3,
    "todo": [
     {
-     "urgent": false,
+     "urgent": true,
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Thu 5:15 PM PT",
      "detail": "C.J. Stroud, Ka'imi Fairbairn, Xavier Hutchinson play first. Players lock when their game starts.",
@@ -17,10 +17,10 @@
     },
     {
      "urgent": false,
-     "icon": "\u2705",
-     "title": "You're all set this week",
-     "detail": "Lineup is full, no must-have waiver claims, no trade worth forcing.",
-     "tab": "home"
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Rome Odunze + Seth McGowan for Harold Fannin Jr. (BO liever)",
+     "detail": "Title odds +1.5%. Would you do Rome Odunze and Seth McGowan for Harold Fannin Jr.? I think you get depth for injuries and byes down the stretch, and Fannin is just sitting on your bench.",
+     "tab": "trades"
     }
    ]
   },
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T23:05:57Z",
+   "at": "2026-11-19T02:43:57Z",
    "champ_pct": 12.9,
    "todo": [
     {
@@ -50,14 +50,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.2%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.6%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.3%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.1%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -67,8 +67,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T23:06:05Z",
-   "champ_pct": 3.0,
+   "at": "2026-11-19T02:44:07Z",
+   "champ_pct": 3.2,
    "todo": [
     {
      "urgent": false,
@@ -83,20 +83,6 @@
      "title": "Carnell Tate might not play (70%)",
      "detail": "If he's ruled out, start David Montgomery (9.7).",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
-     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
-     "tab": "waivers"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Chig Okonkwo, drop Darren Waller",
-     "detail": "Breakout radar gives him 48% to become a weekly starter. Cheap lottery ticket for Darren Waller.",
-     "tab": "waivers"
     }
    ]
   },
@@ -105,8 +91,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-18T23:05:49Z",
-   "champ_pct": 33.4,
+   "at": "2026-11-19T02:43:46Z",
+   "champ_pct": 33.3,
    "todo": [
     {
      "urgent": false,
@@ -126,7 +112,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.4%.",
      "tab": "waivers"
     },
     {
