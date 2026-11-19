@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-19T10:59:39Z",
-   "champ_pct": 31.3,
+   "at": "2026-11-19T19:25:03Z",
+   "champ_pct": 31.6,
    "todo": [
     {
      "urgent": true,
@@ -17,9 +17,16 @@
     },
     {
      "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Brock Bowers might not play (56%)",
+     "detail": "Check his status before kickoff.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Xavier Hutchinson + Seth McGowan for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +1.6%. Would you do Xavier Hutchinson and Seth McGowan for Caleb Douglas? I think Hutchinson slides right into your FLEX spot, and you get depth for injuries and byes down the stretch.",
+     "title": "Offer Xavier Hutchinson + D'Andre Swift for Ollie Gordon II + DeVonta Smith (Sussy Nutcrackers)",
+     "detail": "Title odds +1.6%. Would you do Xavier Hutchinson and D'Andre Swift for Ollie Gordon II and DeVonta Smith? I think Hutchinson slides right into your WR spot, and you're deep at WR so you can cover Smith's spot.",
      "tab": "trades"
     }
    ]
@@ -29,8 +36,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T11:00:07Z",
-   "champ_pct": 12.9,
+   "at": "2026-11-19T19:25:26Z",
+   "champ_pct": 13.2,
    "todo": [
     {
      "urgent": false,
@@ -50,14 +57,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.3%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.7%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Josh Downs for Kirk Cousins (braylon's Best Team)",
-     "detail": "Title odds +2.5%. Would you do Josh Downs for Kirk Cousins? I think Cousins is just sitting on your bench.",
+     "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
+     "detail": "Title odds +1.5%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -67,8 +74,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T11:00:20Z",
-   "champ_pct": 3.1,
+   "at": "2026-11-19T19:25:36Z",
+   "champ_pct": 3.4,
    "todo": [
     {
      "urgent": false,
@@ -81,7 +88,7 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Carnell Tate might not play (69%)",
-     "detail": "If he's ruled out, start David Montgomery (9.7).",
+     "detail": "If he's ruled out, start David Montgomery (9.8).",
      "tab": "home"
     }
    ]
@@ -91,36 +98,29 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T10:59:53Z",
-   "champ_pct": 33.2,
+   "at": "2026-11-19T19:25:15Z",
+   "champ_pct": 31.9,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Sun 10:00 AM PT",
-     "detail": "Cam Little, Colston Loveland, Jaguars D/ST, Kenneth Walker III, Luther Burden III, Trevor Lawrence, Zay Flowers play first. Players lock when their game starts.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Kenneth Walker III might not play (56%)",
-     "detail": "If he's ruled out, start Saquon Barkley (11.2).",
+     "detail": "Cam Little, Colston Loveland, Emmett Johnson, Jaguars D/ST, Luther Burden III, Trevor Lawrence, Zay Flowers play first. Players lock when their game starts.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.4%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd14",
-     "title": "Toss-up at RB: Kenneth Walker III or Saquon Barkley",
-     "detail": "Kenneth Walker III 12.2 vs Saquon Barkley 11.2. Keeping Kenneth Walker III gives you a 67% chance to win vs 66% with Saquon Barkley.",
-     "tab": "home"
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Saquon Barkley for Dak Prescott (Tyler's Talented Team)",
+     "detail": "Title odds +2.5%. Would you do Saquon Barkley for Dak Prescott? I think you're getting the best player in the deal, and you're deep at QB so you can cover Prescott's spot.",
+     "tab": "trades"
     }
    ]
   }
