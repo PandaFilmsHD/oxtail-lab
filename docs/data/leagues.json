@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-19T02:43:35Z",
+   "at": "2026-11-19T08:34:58Z",
    "champ_pct": 31.3,
    "todo": [
     {
@@ -17,10 +17,10 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Rome Odunze + Seth McGowan for Harold Fannin Jr. (BO liever)",
-     "detail": "Title odds +1.5%. Would you do Rome Odunze and Seth McGowan for Harold Fannin Jr.? I think you get depth for injuries and byes down the stretch, and Fannin is just sitting on your bench.",
-     "tab": "trades"
+     "icon": "\u2705",
+     "title": "You're all set this week",
+     "detail": "Lineup is full, no must-have waiver claims, no trade worth forcing.",
+     "tab": "home"
     }
    ]
   },
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T02:43:57Z",
+   "at": "2026-11-19T08:35:21Z",
    "champ_pct": 12.9,
    "todo": [
     {
@@ -42,7 +42,7 @@
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
-     "title": "Bhayshul Tuten might not play (70%)",
+     "title": "Bhayshul Tuten might not play (69%)",
      "detail": "Check his status before kickoff.",
      "tab": "home"
     },
@@ -50,14 +50,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.6%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.0%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.1%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +1.9%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T02:44:07Z",
+   "at": "2026-11-19T08:35:31Z",
    "champ_pct": 3.2,
    "todo": [
     {
@@ -80,7 +80,7 @@
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
-     "title": "Carnell Tate might not play (70%)",
+     "title": "Carnell Tate might not play (69%)",
      "detail": "If he's ruled out, start David Montgomery (9.7).",
      "tab": "home"
     }
@@ -91,8 +91,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-19T02:43:46Z",
-   "champ_pct": 33.3,
+   "at": "2026-11-19T08:35:08Z",
+   "champ_pct": 33.2,
    "todo": [
     {
      "urgent": false,
@@ -104,7 +104,7 @@
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
-     "title": "Kenneth Walker III might not play (70%)",
+     "title": "Kenneth Walker III might not play (56%)",
      "detail": "If he's ruled out, start Saquon Barkley (11.2).",
      "tab": "home"
     },
@@ -117,10 +117,10 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Saquon Barkley + Kenneth Walker III for Bucky Irving + Puka Nacua (Ethan)",
-     "detail": "Title odds +6.1%. Would you do Saquon Barkley and Kenneth Walker III for Bucky Irving and Puka Nacua? I think it bumps your lineup about 2.0 pts a week for the playoff push, and Walker slides right into your RB spot.",
-     "tab": "trades"
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at RB: Kenneth Walker III or Saquon Barkley",
+     "detail": "Kenneth Walker III 12.2 vs Saquon Barkley 11.2. Keeping Kenneth Walker III gives you a 67% chance to win vs 66% with Saquon Barkley.",
+     "tab": "home"
     }
    ]
   }
