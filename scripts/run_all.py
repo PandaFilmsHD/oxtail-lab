@@ -45,6 +45,7 @@ for lid in leagues:
         print(f"{lid}: no changes, skipping sims")
     elif run(["scripts/analyze.py"], {"LEAGUE": lid}) != 0:
         print(f"analysis failed for {lid}")
+        status.setdefault("stale", []).append(lid)   # the site keeps showing the last good run: say so instead of hiding it
     else:
         hp.write_text(hsh)
     lp = ROOT / "docs" / "data" / lid / "latest.json"

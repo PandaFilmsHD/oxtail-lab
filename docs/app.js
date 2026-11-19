@@ -289,7 +289,7 @@ function renderTrades() {
         h('div', { class: 'meta' }, `Their lineup ${sgn(r.partner_weekly_gain)}/wk`, h('br'), r.wk16_before != null ? `Your Wk${PV()[1]}: ${f1(r.wk16_before)} → ${f1(r.wk16)}` : `Your Wk${PV()[1]}: ${f1(r.wk16)}`, h('br'), r.wk17_before != null ? `Your Wk${PV()[2]}: ${f1(r.wk17_before)} → ${f1(r.wk17)}` : `Your Wk${PV()[2]}: ${f1(r.wk17)}`),
         h('div', { class: 'tbtns' }, h('button', { class: 'btn small blue', onclick: () => { why.hidden = !why.hidden; if (!why.hidden && !why.childNodes.length) why.append(...whyTrade(r)); } }, 'WHY?'),
           h('button', { class: 'btn small', onclick: () => { LAB.give = new Set(names(r.give)); LAB.partner = r.partner_id; LAB.get = new Set(names(r.get)); tab('lab'); setTimeout(() => { $('#run').click(); $('#run').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120); } }, 'TEST IT'))), why); c.style.animationDelay = Math.min(i, 12) * 40 + 'ms'; return c; })
-    : [h('div', { class: 'box mut' }, 'No trades in this group right now.')]), moreBtn('trades', rows.length, renderTrades));
+    : [h('div', { class: 'box mut' }, 'No trades in this group right now.' + (TK !== 'all' && D.trades.length ? ` ${D.trades.length} ${TK === 'realistic' ? 'long shot' : 'realistic'} idea${D.trades.length === 1 ? '' : 's'} under All.` : ''))]), moreBtn('trades', rows.length, renderTrades));
   table($('#ttable'), [
     { k: 'give', h: 'You give', l: 1, f: r => h('span', {}, ...names(r.give).flatMap((n, i) => [i ? ' + ' : '', pl(n)])) },
     { k: 'get', h: 'You get', l: 1, f: r => h('span', {}, ...names(r.get).flatMap((n, i) => [i ? ' + ' : '', pl(n)])) },
@@ -807,6 +807,8 @@ const odds = a => (a > 0 ? '+' : '') + a;
 const fairOf = p => { p = Math.min(Math.max(p, 0.01), 0.99); return p >= 0.5 ? Math.round(-100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); };
 const usd = u => '$' + (Math.round(u * ((PLD && PLD.unit) || 25) * 100) / 100).toFixed(2).replace(/\.00$/, '');
 const cents = p => Math.max(1, Math.min(99, Math.floor(p))) + '¢';
+// most you can pay and still come out ahead after the exchange fee (about 7% x price x (1 - price), same as the sims assume)
+const buyMax = p => { let c = Math.min(99, Math.floor(p)); while (c > 1 && c / 100 + 0.07 * (c / 100) * (1 - c / 100) >= p / 100) c--; return c + '¢'; };
 const kickT = k => k ? new Date(k).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
 function gameWhy(g) {
   const s = g.sim;
@@ -945,7 +947,7 @@ async function renderProps() {
   if (PLV === 'parlay') {
     const card = (pl, ttl) => h('div', { class: 'pcard' }, h('div', { class: 'phead' }, h('div', {}, h('div', { class: 'pbig' }, Math.round(pl.p) + '%'), h('div', { class: 'k' }, 'hits in the sims')),
         h('div', { style: 'text-align:right' }, h('div', { class: 'pfair' }, odds(pl.fair)), h('div', { class: 'k' }, 'fair odds'), pl.same_game ? h('span', { class: 'tag stretch', style: 'margin-top:4px' }, 'SAME GAME') : '')),
-      ...pl.legs.map(legRow), ...(pl.why || []).map(w => h('div', { class: 'k', style: 'color:var(--blue)' }, '🧮 ' + w)), pl.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units)}`), h('span', { class: 'k' }, `only if a share costs under ${cents(pl.p)} (fair ${odds(pl.fair)})`))
+      ...pl.legs.map(legRow), ...(pl.why || []).map(w => h('div', { class: 'k', style: 'color:var(--blue)' }, '🧮 ' + w)), pl.units ? h('div', { class: 'pstake' }, h('span', {}, `Bet ${usd(pl.units)}`), h('span', { class: 'k' }, `only at ${buyMax(pl.p)} a share or less, after the fee (fair ${odds(pl.fair)})`))
         : h('div', { class: 'pstake', style: 'color:var(--mut);border-color:#3a3f9e' }, h('span', {}, 'No model edge'), h('span', { class: 'k' }, `worth up to ${cents(pl.p)} a share (fair ${odds(pl.fair)})`)), shareBtns(pl, ttl || `${pl.legs.length}-leg parlay`));
     const P = PLD.parlays || {};
     const srt = L => PPS === 'likely' ? [...(L || [])].sort((a, b) => b.p - a.p) : L;
@@ -1091,6 +1093,7 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
   sel.value = LID || ''; sel.parentElement.hidden = leagues.length < 2;
   sel.addEventListener('change', () => { try { localStorage.setItem('league', sel.value); } catch (e) {} const u = new URL(location); u.searchParams.set('league', sel.value); location.href = u.toString(); });
   if (idx && idx.status && idx.status.espn_ok === false) $('#banner').replaceChildren(h('div', { class: 'banner' }, '⚠️ ' + idx.status.message));
+  else if (idx && idx.status && (idx.status.stale || []).includes(String(LID))) $('#banner').replaceChildren(h('div', { class: 'banner' }, '⚠️ The sims crashed on the last update, so this league is showing an older run.'));
   try {
     [D, H] = await Promise.all([fetch(BASE + 'latest.json?v=' + v).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }), fetch(BASE + 'history.json?v=' + v).then(r => r.json()).catch(() => ({ runs: [], moves: [] }))]);
   } catch (e) {

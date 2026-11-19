@@ -34,6 +34,24 @@ def teams_of(event_ticker):
     return None, None
 
 
+def ev_day(code):
+    """26NOV22TBDET -> date(2026, 11, 22), the game's date from the event code."""
+    try:
+        return datetime.datetime.strptime(code[:7].title(), "%y%b%d").date()
+    except (TypeError, ValueError):
+        return None
+
+
+def keep(entry, code):
+    """One game per team and one game per player: the window can hold two games for a team (Thanksgiving week),
+    and mixing their prices would compare this week's sims to next week's market. Keep the sooner game.
+    Returns 'same' (add to it), 'new' (replace it with this sooner game) or 'skip'."""
+    if entry is None or entry.get("ev") in (None, code):
+        return "same"
+    a, b = ev_day(code), ev_day(entry["ev"])
+    return "new" if (a and b and a < b) else "skip"
+
+
 def f(x):
     try:
         v = float(x)
@@ -70,8 +88,15 @@ def main():
                      "no_ask": f(m.get("no_ask_dollars")), "vol": f(m.get("volume_fp")) or 0, "ticker": m["ticker"]}
                 if q["ask"] is None and q["no_ask"] is None:
                     continue
+                code = m["event_ticker"].split("-", 1)[1]
+                if kind in ("ml", "spread", "total"):
+                    k_ = keep(games.get(home), code)
+                    if k_ == "skip":
+                        continue
+                    if k_ == "new" or home not in games:
+                        games[home] = {"away": away, "home": home, "at": occ.isoformat(), "ev": code, "ml": {}, "spread": [], "total": []}
                 n += 1
-                g = games.setdefault(home, {"away": away, "home": home, "at": occ.isoformat(), "ml": {}, "spread": [], "total": []})
+                g = games.get(home)
                 if kind == "ml":
                     tm = FIX.get(m["ticker"].rsplit("-", 1)[-1], m["ticker"].rsplit("-", 1)[-1])
                     g["ml"][tm] = q
@@ -83,7 +108,12 @@ def main():
                 else:
                     nm = (m.get("title") or "").split(":")[0].strip()
                     if nm:
-                        props.setdefault(key(nm), {"name": nm, "home": home}).setdefault(kind, []).append(q)
+                        k_ = keep(props.get(key(nm)), code)
+                        if k_ == "skip":
+                            continue
+                        if k_ == "new" or key(nm) not in props:
+                            props[key(nm)] = {"name": nm, "home": home, "ev": code}
+                        props[key(nm)].setdefault(kind, []).append(q)
             cursor = j.get("cursor") or ""
             if not cursor:
                 break
