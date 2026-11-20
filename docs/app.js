@@ -231,6 +231,7 @@ function celebrate() {
 }
 
 // ---------- live play feed: straight from ESPN's public game feed, only your and your opponent's starters ----------
+const lfClean = t => (t || '').replace(/\((?:Shotgun|No Huddle|No Huddle, Shotgun)\)\s*/gi, '').replace(/\s*\([^()]*\)\.?\s*$/, '.').replace(/\.\.$/, '.').trim();
 const LF = { seen: new Set(), items: [], done: {}, timer: null, filter: 'all', busy: false };
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard', ESPN_SUM = id => `https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${id}`;
 function lfTracked() {
@@ -304,7 +305,7 @@ async function lfPoll() {
           const ty = ((p.type || {}).text || '').toLowerCase();
           if (/sack|interception|fumble recovery \(opponent\)|safety|blocked/.test(ty)) ha.forEach(t => { if (T.dst[t] && t !== off) hits.push({ ...T.dst[t], aid: '' }); });
           for (const h of hits) { const [pts, lab] = lfPoints(p, h, h.aid);
-            LF.items.push({ id: p.id + h.name, seq: +(p.sequenceNumber || 0), at: p.modified || '', game, who: h.name, side: h.side, pos: h.pos, pts, lab, text: (p.text || '').trim(), q: (p.period || {}).number, clk: (p.clock || {}).displayValue || '', big: !!p.scoringPlay || Math.abs(+p.statYardage || 0) >= 20, fresh: true }); }
+            LF.items.push({ id: p.id + h.name, seq: +(p.sequenceNumber || 0), at: p.modified || '', game, who: h.name, side: h.side, pos: h.pos, pts, lab, text: lfClean(p.text), q: (p.period || {}).number, clk: (p.clock || {}).displayValue || '', big: !!p.scoringPlay || Math.abs(+p.statYardage || 0) >= 20, fresh: true }); }
         } }
       if (st === 'post') LF.done[e.id] = 1;
     }
@@ -325,7 +326,7 @@ function renderLiveFeed(anyLive) {
     h('div', { class: 'lfhead' }, h('h3', { style: 'margin:0' }, anyLive ? h('span', {}, h('i', { class: 'lfdot' }), ' Live plays') : '📡 Plays today'), h('div', { class: 'lfchips' }, chip('all', 'Both teams'), chip('me', 'Mine'))),
     its.length ? h('div', { class: 'lflist' }, its.slice(0, 40).map(x => { const r = h('div', { class: `lfi ${x.side}${x.big ? ' big' : ''}${x.fresh ? ' fresh' : ''}` },
       h('div', { class: 'lftop' }, h('b', {}, pl(x.who)), x.lab ? h('span', { class: 'lflab' }, x.lab) : '', x.pts != null && x.pts !== 0 ? h('span', { class: 'lfpts ' + (x.pts > 0 ? 'pos' : 'neg') }, (x.pts > 0 ? '+' : '') + x.pts.toFixed(1)) : ''),
-      h('div', { class: 'lftx' }, x.text), h('div', { class: 'lfmeta mut' }, `${x.game} · Q${x.q} ${x.clk}${x.pts != null ? ` · ${x.who.split(' ').slice(-1)[0]} has ${f1(tot[x.who] || 0)} from plays today` : ''}`)); x.fresh = false; return r; }))
+      h('div', { class: 'lftx' }, x.text), h('div', { class: 'lfmeta mut' }, `${x.game} · Q${x.q} ${x.clk}${x.pts != null ? ` · ${f1(tot[x.who] || 0)} today` : ''}`)); x.fresh = false; return r; }))
       : h('p', { class: 'sub' }, 'No plays from your guys yet.'),
     h('p', { class: 'sub', style: 'margin:8px 0 0;font-size:11px' }, 'Points per play use your league scoring. The scoreboard above is ESPN\'s official total.'));
 }

@@ -18,6 +18,7 @@ SITE = "https://pandafilmshd.github.io/oxtail-lab/"
 DEF_PLAYS = ("sack", "interception", "fumble recovery (opponent)", "safety", "blocked", "fumble return", "defensive")
 TEAM_FIX = {"WAS": "WSH"}
 SC = {}
+TOT = {}
 
 
 def get(url):
@@ -151,6 +152,12 @@ def play_points(p, h, aid, sc):
     return round(pts, 2), lab
 
 
+def clean(t):
+    t = re.sub(r"\((?:Shotgun|No Huddle|No Huddle, Shotgun)\)\s*", "", t or "", flags=re.I)
+    t = re.sub(r"\s*\([^()]*\)\.?\s*$", ".", t).replace("..", ".")
+    return t.strip()
+
+
 def should_run():
     people, dst, _ = load_lineups()
     teams = {x["team"] for x in people.values()} | set(dst)
@@ -166,6 +173,8 @@ def run():
     t0 = time.time()
     people, dst, opp_name = load_lineups()
     seen, last_load, first = set(), time.time(), True
+    global TOT
+    TOT = {}
     print(f"watching {len(people)} players and {len(dst)} D/STs")
     while time.time() - t0 < 5.6 * 3600:
         if time.time() - last_load > 600:
@@ -195,17 +204,19 @@ def run():
                 if not pid or pid in seen:
                     continue
                 seen.add(pid)
-                if first:
-                    continue   # don't replay everything that already happened when we start
                 for h in match(off, p, people, dst, home_away):
-                    if h["side"] != "me":
+                    pts, lab = play_points(p, h, h.get("aid", ""), SC)
+                    if pts:
+                        TOT[h["name"]] = TOT.get(h["name"], 0) + pts
+                    if first or h["side"] != "me":
                         continue
                     q = (p.get("period") or {}).get("number"); clk = (p.get("clock") or {}).get("displayValue", "")
                     icon = "🔥" if p.get("scoringPlay") else "🛡️" if h["pos"] == "D" else "🏈"
                     txt = (p.get("text") or "").strip()
-                    pts, lab = play_points(p, h, h.get("aid", ""), SC)
-                    pt_s = (f" {pts:+.1f} pts" if pts else "") if pts is not None else ""
-                    send(f"{icon} {short(h['name'])}{(': ' + lab) if lab else ''}{pt_s}", f"{txt} (Q{q} {clk})", priority=3, click=SITE + "#home", tag=f"play{pid}")
+                    last = h["name"].split()[-1] if h["pos"] != "D" else h["name"]
+                    title = f"{icon} {last}" + (f" {lab}" if lab else "") + (f"  {pts:+.1f}" if pts else "")
+                    body = f"{clean(txt)}\nQ{q} {clk} · {last} {TOT.get(h['name'], 0):.1f} pts today · {e.get('shortName', '')}"
+                    send(title, body, priority=3, click=SITE + "#home", tag=f"play{pid}")
                     sent += 1
         first = False
         if sent:
