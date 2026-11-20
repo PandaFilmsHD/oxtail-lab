@@ -20,6 +20,7 @@ TEAM_FIX = {"WAS": "WSH"}
 SC = {}
 TOT = {}
 GOT = {}
+BREAKS, WATCHED = set(), set()
 
 
 def get(url):
@@ -222,6 +223,26 @@ def run():
             evs = relevant_events(get(SB), teams)
         except Exception as ex:
             print("scoreboard failed", ex); time.sleep(30); continue
+        for e, st, _ in evs:   # quarter breaks, halftime, final
+            c = e["competitions"][0]; stt = c["status"]["type"]; nm = stt.get("name", ""); per = c["status"].get("period")
+            lab_ = {"STATUS_END_PERIOD": f"End of Q{per}", "STATUS_HALFTIME": "Halftime", "STATUS_FINAL": "Final", "STATUS_END_OF_REGULATION": "End of regulation"}.get(nm)
+            if nm == "STATUS_END_PERIOD" and per == 2:
+                lab_ = "Halftime"
+            key = (e["id"], lab_)
+            if not lab_ or key in BREAKS:
+                continue
+            BREAKS.add(key)
+            if first or (nm == "STATUS_FINAL" and e["id"] not in WATCHED):
+                continue   # don't announce breaks that already happened before we started watching
+            sc_ = " ".join(f"{x['team']['abbreviation']} {x.get('score', 0)}" for x in c["competitors"])
+            ha_ = [x["team"]["abbreviation"] for x in c["competitors"]]
+            mine_ = [(x["name"], TOT.get(x["name"], 0)) for x in people.values() if x["side"] == "me" and x["team"] in ha_] + [(v["name"], TOT.get(v["name"], 0)) for t, v in dst.items() if v["side"] == "me" and t in ha_]
+            me_tot = sum(v for k, v in TOT.items() if any(x["name"] == k and x["side"] == "me" for x in list(people.values()) + list(dst.values())))
+            op_tot = sum(v for k, v in TOT.items() if any(x["name"] == k and x["side"] == "opp" for x in list(people.values()) + list(dst.values())))
+            body = " · ".join(f"{n.split()[-1] if 'D/ST' not in n else n} {v:.1f}" for n, v in mine_) or "No starters of yours in this one"
+            send(f"⏱️ {lab_}: {sc_}", f"{body}\nMatchup so far: you about {me_tot:.1f}, {opp_name} about {op_tot:.1f}", priority=3, click=SITE + "#home", tag=f"brk{e['id']}{lab_}")
+            sent_breaks = True
+        WATCHED.update(e["id"] for e, st, _ in evs if st == "in")
         live = [e for e, st, _ in evs if st == "in"]
         soon = [s for e, st, s in evs if st == "pre" and (s - now()).total_seconds() < 40 * 60]
         if not live and not soon:
