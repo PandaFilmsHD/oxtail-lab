@@ -248,9 +248,32 @@ def probe():
         print("should run:", should_run())
 
 
+def dry():
+    """One pass over every play so far in live games: show what would be pushed, send nothing."""
+    people, dst, _ = load_lineups()
+    teams = {x["team"] for x in people.values()} | set(dst)
+    evs = relevant_events(get(SB), teams)
+    print("teams", sorted(teams), "events", [(e["shortName"], st) for e, st, _ in evs])
+    for e, st, _ in evs:
+        if st == "pre":
+            continue
+        s = get(SUM.format(e["id"])); ha = [x["team"]["abbreviation"] for x in e["competitions"][0]["competitors"]]
+        n = 0
+        for off, p in all_plays(s):
+            n += 1
+            for h in match(off, p, people, dst, ha):
+                pts, lab = play_points(p, h, h.get("aid", ""), SC)
+                print(h["side"], h["name"], "|", lab, pts, "|", clean(p.get("text"))[:90])
+        print(e["shortName"], "plays:", n)
+    from notify import send
+    print("push test:", send("🏈 Oxtail Lab test", "If you see this, play pushes can reach your phone.", click=SITE + "#home", tag="livetest"))
+
+
 if __name__ == "__main__":
     if "--probe" in sys.argv:
         probe()
+    elif "--dry" in sys.argv:
+        dry()
     elif "--should-run" in sys.argv:
         print("yes" if should_run() else "no")
     else:
