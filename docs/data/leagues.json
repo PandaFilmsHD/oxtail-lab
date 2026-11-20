@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-20T18:49:07Z",
+   "at": "2026-11-20T19:17:14Z",
    "champ_pct": 19.4,
    "todo": [
     {
@@ -14,13 +14,6 @@
      "title": "Brock Bowers might not play (69%)",
      "detail": "Check his status before kickoff.",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Xavier Hutchinson + Seth McGowan for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.0%. Would you do Xavier Hutchinson and Seth McGowan for Caleb Douglas? I think Hutchinson slides right into your FLEX spot, and you get depth for injuries and byes down the stretch.",
-     "tab": "trades"
     }
    ]
   },
@@ -29,16 +22,9 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T18:49:30Z",
+   "at": "2026-11-20T19:17:36Z",
    "champ_pct": 12.9,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Isaiah Likely",
-     "detail": "ACTIVE \u2192 QUESTIONABLE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
@@ -59,6 +45,13 @@
      "title": "Isaiah Likely might not play (70%)",
      "detail": "Check his status before kickoff.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim 49ers D/ST, drop Bears D/ST",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.3%.",
+     "tab": "waivers"
     }
    ]
   },
@@ -67,7 +60,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T18:49:37Z",
+   "at": "2026-11-20T19:17:47Z",
    "champ_pct": 3.2,
    "todo": [
     {
@@ -83,6 +76,13 @@
      "title": "Carnell Tate might not play (69%)",
      "detail": "If he's ruled out, start David Montgomery (9.8).",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
+     "tab": "waivers"
     }
    ]
   },
@@ -91,7 +91,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T18:49:18Z",
+   "at": "2026-11-20T19:17:24Z",
    "champ_pct": 33.4,
    "todo": [
     {
@@ -105,14 +105,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.2%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Colston Loveland + Saquon Barkley for George Kittle (Big Deal Neil)",
-     "detail": "Title odds +4.0%. Would you do Colston Loveland and Saquon Barkley for George Kittle? I think Loveland slides right into your TE spot, and you get depth for injuries and byes down the stretch.",
+     "detail": "Title odds +3.8%. Would you do Colston Loveland and Saquon Barkley for George Kittle? I think Loveland slides right into your TE spot, and you get depth for injuries and byes down the stretch.",
      "tab": "trades"
     }
    ]
