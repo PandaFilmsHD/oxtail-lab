@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-20T15:59:42Z",
+   "at": "2026-11-20T16:27:59Z",
    "champ_pct": 30.6,
    "todo": [
     {
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T16:00:00Z",
+   "at": "2026-11-20T16:28:16Z",
    "champ_pct": 12.9,
    "todo": [
     {
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T16:00:07Z",
+   "at": "2026-11-20T16:28:24Z",
    "champ_pct": 3.0,
    "todo": [
     {
@@ -91,7 +91,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T15:59:51Z",
+   "at": "2026-11-20T16:28:08Z",
    "champ_pct": 32.2,
    "todo": [
     {
@@ -105,14 +105,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.5%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Saquon Barkley for Dak Prescott (Tyler's Talented Team)",
-     "detail": "Title odds +3.2%. Would you do Saquon Barkley for Dak Prescott? I think you're getting the best player in the deal, and you're deep at QB so you can cover Prescott's spot.",
+     "detail": "Title odds +3.4%. Would you do Saquon Barkley for Dak Prescott? I think you're getting the best player in the deal, and you're deep at QB so you can cover Prescott's spot.",
      "tab": "trades"
     }
    ]
