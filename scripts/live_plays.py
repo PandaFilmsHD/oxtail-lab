@@ -210,6 +210,12 @@ def run():
                         TOT[h["name"]] = TOT.get(h["name"], 0) + pts
                     if first or h["side"] != "me":
                         continue
+                    if h["pos"] == "QB":   # QBs: only the big stuff, or the phone never stops buzzing
+                        m_ = YDS_RE.search(p.get("text") or ""); y_ = p.get("statYardage")
+                        y_ = y_ if y_ is not None else (int(m_.group(1) or m_.group(2)) if m_ and (m_.group(1) or m_.group(2)) else 0)
+                        run_ = "run" in (lab or "")
+                        if not (p.get("scoringPlay") or (pts is not None and pts < 0) or y_ >= (15 if run_ else 20)):
+                            continue
                     q = (p.get("period") or {}).get("number"); clk = (p.get("clock") or {}).get("displayValue", "")
                     icon = "🔥" if p.get("scoringPlay") else "🛡️" if h["pos"] == "D" else "🏈"
                     txt = (p.get("text") or "").strip()
