@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-20T21:09:42Z",
-   "champ_pct": 19.7,
+   "at": "2026-11-20T21:38:03Z",
+   "champ_pct": 19.5,
    "todo": [
     {
      "urgent": false,
@@ -19,7 +19,7 @@
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at TE: Brock Bowers or Michael Mayer",
-     "detail": "Brock Bowers 6.8 vs Michael Mayer 7.7. Starting Michael Mayer raises your chance to beat BO liever from 61% to 63%.",
+     "detail": "Brock Bowers 6.8 vs Michael Mayer 7.7. Starting Michael Mayer raises your chance to beat BO liever from 49% to 50%.",
      "tab": "home"
     },
     {
@@ -36,9 +36,23 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T21:09:58Z",
-   "champ_pct": 13.0,
+   "at": "2026-11-20T21:38:21Z",
+   "champ_pct": 14.7,
    "todo": [
+    {
+     "urgent": true,
+     "icon": "\ud83d\udce3",
+     "title": "Status change: Bhayshul Tuten",
+     "detail": "QUESTIONABLE \u2192 ACTIVE. Recheck your lineup.",
+     "tab": "home"
+    },
+    {
+     "urgent": true,
+     "icon": "\ud83d\udce3",
+     "title": "Status change: Isaiah Likely",
+     "detail": "QUESTIONABLE \u2192 ACTIVE. Recheck your lineup.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
@@ -48,23 +62,9 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Bhayshul Tuten might not play (56%)",
-     "detail": "Check his status before kickoff.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Isaiah Likely might not play (70%)",
-     "detail": "Check his status before kickoff.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.3%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     }
    ]
@@ -74,7 +74,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T21:10:06Z",
+   "at": "2026-11-20T21:38:29Z",
    "champ_pct": 3.2,
    "todo": [
     {
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T21:09:51Z",
-   "champ_pct": 32.8,
+   "at": "2026-11-20T21:38:12Z",
+   "champ_pct": 36.1,
    "todo": [
     {
      "urgent": false,
@@ -112,14 +112,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +2.0%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Colston Loveland + Saquon Barkley for George Kittle (Big Deal Neil)",
-     "detail": "Title odds +3.5%. Would you do Colston Loveland and Saquon Barkley for George Kittle? I think Loveland slides right into your TE spot, and you get depth for injuries and byes down the stretch.",
+     "title": "Offer Zay Flowers for Dak Prescott (Tyler's Talented Team)",
+     "detail": "Title odds +2.4%. Would you do Zay Flowers for Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and you're deep at QB so you can cover Prescott's spot.",
      "tab": "trades"
     }
    ]
