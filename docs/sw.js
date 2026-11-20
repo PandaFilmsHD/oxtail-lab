@@ -1,5 +1,5 @@
 // Oxtail Lab service worker: always try the network first (fresh odds), fall back to the last saved copy when offline.
-const CACHE = 'oxtail-v27';
+const CACHE = 'oxtail-v28';
 const ACACHE = 'oxtail-alerts';   // full alert reports that came inside the push
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'style.css', 'app.js', 'chat.js', 'manifest.webmanifest', 'icons/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== ACACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));

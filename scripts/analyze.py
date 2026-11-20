@@ -1819,7 +1819,7 @@ try:
             n_pre += state == "pre"; n_live += state == "live"
             left = proj * frac
             have += pts; rem += left; var += (p_sd(n, proj) ** 2 * frac) if n and proj > 0 else 0
-            rows.append({"player": n or f"#{pid}", "pos": P[n]["pos"] if n else "", "nfl": nfl or "", "pts": round(pts, 1), "proj": r1(proj), "left": r1(left), "state": state, "kick": k_})
+            rows.append({"pid": pid, "player": n or f"#{pid}", "pos": P[n]["pos"] if n else "", "nfl": nfl or "", "pts": round(pts, 1), "proj": r1(proj), "left": r1(left), "state": state, "kick": k_})
         return {"pts": round(d_.get("pts") or have, 1), "left": r1(rem), "var": var, "rows": rows, "pre": n_pre, "live": n_live}
     if my_game and LV and str(ME) in LV and str(o) in LV:
         a_, b_ = side_live(ME), side_live(o)
@@ -2259,7 +2259,7 @@ try:
         changes = {"since_hrs": None, "items": []}
 except Exception as ex_:
     print("changes failed", ex_); changes = {"since_hrs": None, "items": []}
-latest = {"live": live_out, "season_odds": season_odds, "changes": changes, "summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "stream_plan": stream_plan, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
+latest = {"scoring": {k: v for k, v in (SET.get("scoring") or {}).items() if v}, "live": live_out, "season_odds": season_odds, "changes": changes, "summary": summary, "teams": team_cards, "league": league, "trades": trades, "blocks": blocks, "stream_plan": stream_plan, "waivers": waivers, "rankings": ranks, "bubble": bubble, "schedule": schedule, "breakouts": breakouts, "tossups": tossups, "todo": todo,
           "my_players": my_players, "tester": tester}
 PO_STARTERS = {x["player"] for w in (SEMI, FINAL) for x in lineup(ROSTER[ME], w, detail=True)[1]}
 

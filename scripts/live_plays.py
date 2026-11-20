@@ -5,7 +5,7 @@ python scripts/live_plays.py --probe        prints the feed format for the game 
 python scripts/live_plays.py --should-run   prints "yes" if a game with your or your opponent's starters is on or starts within 40 min
 python scripts/live_plays.py                runs until none of those games is live or about to start
 """
-import json, os, sys, time, urllib.request, datetime as dt
+import json, os, re, sys, time, urllib.request, datetime as dt
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -17,6 +17,7 @@ RAW = "https://raw.githubusercontent.com/PandaFilmsHD/oxtail-lab/main/"
 SITE = "https://pandafilmshd.github.io/oxtail-lab/"
 DEF_PLAYS = ("sack", "interception", "fumble recovery (opponent)", "safety", "blocked", "fumble return", "defensive")
 TEAM_FIX = {"WAS": "WSH"}
+SC = {}
 
 
 def get(url):
@@ -49,6 +50,8 @@ def load_lineups():
                 dst[team] = {"name": p["n"], "side": side}
             else:
                 people[str(pid)] = {"name": p["n"], "pos": p["pos"], "team": team, "side": side}
+    global SC
+    SC = (M.get("settings") or {}).get("scoring") or {}
     return people, dst, (L.get("summary") or {}).get("this_week", {}).get("opponent", "opponent")
 
 
@@ -82,7 +85,7 @@ def match(off, p, people, dst, home_away):
     for pa in p.get("participants") or []:
         aid = str(((pa.get("athlete") or {}).get("id")) or "")
         if aid in people:
-            hits.append(people[aid])
+            hits.append({**people[aid], "aid": aid})
     tx = ((p.get("type") or {}).get("text") or "").lower()
     if any(k in tx for k in DEF_PLAYS) or p.get("scoringPlay") and "return" in tx:
         for team in home_away:
@@ -93,6 +96,59 @@ def match(off, p, people, dst, home_away):
         if h["name"] not in seen:
             seen.add(h["name"]); out.append(h)
     return out
+
+
+YDS_RE = re.compile(r"for (-?\d+) yards?|for no gain|(\d+) Yd", re.I)
+
+
+def play_points(p, h, aid, sc):
+    """Fantasy points this play is worth to one tracked player, using the league's own scoring.
+    sc: ESPN statId -> points. Returns (points or None if we can't tell, short label)."""
+    S = lambda k, d=0.0: float(sc.get(str(k), d) or 0)
+    tx = (p.get("text") or ""); tl = tx.lower(); ty = ((p.get("type") or {}).get("text") or "").lower()
+    if "no play" in tl or "penalty" in ty:
+        return 0.0, "no play"
+    m = YDS_RE.search(tx); yds = p.get("statYardage")
+    if yds is None:
+        yds = int(m.group(1) or m.group(2)) if m and (m.group(1) or m.group(2)) else 0
+    td = bool(p.get("scoringPlay")) and "touchdown" in tl
+    roles = [str(pa.get("type") or "").lower() for pa in p.get("participants") or [] if str(((pa.get("athlete") or {}).get("id")) or "") == aid]
+    role = " ".join(roles)
+    if h["pos"] == "D":
+        if "sack" in ty or "sack" in tl: return S(99), "sack"
+        if "interception" in ty: return S(95) + (S(104, 6) if td else 0), "INT" + (" TD" if td else "")
+        if "fumble" in ty and "opponent" in ty: return S(96) + (S(103, 6) if td else 0), "fumble rec"
+        if "safety" in ty: return S(98), "safety"
+        if "blocked" in ty: return S(97) + (S(93, 6) if td else 0), "block"
+        return None, ""
+    if h["pos"] == "K" or "kick" in role:
+        if "extra point" in tl or "kick is good" in tl or "kick is no good" in tl:
+            good = "no good" not in tl
+            return (S(86, 1) if good else S(88, -1)), ("XP" if good else "missed XP")
+        if "field goal" in ty or "field goal" in tl:
+            if "no good" in tl or "missed" in ty or "blocked" in tl: return S(85, -1), "missed FG"
+            fm = re.search(r"(\d+)[ -](?:yd|yard)s?[ -]field goal", tx, re.I)
+            d_ = int(fm.group(1)) if fm else 30
+            return (S(201, 5) if d_ >= 60 else S(198, 4) if d_ >= 50 else S(77, 3) if d_ >= 40 else S(80, 3)), f"{d_} yd FG"
+        return None, ""
+    pts, lab = 0.0, ""
+    lost = "fumble" in tl and ("recovered by" in tl and "fumble recovery (opponent)" in ty)
+    if "pass" in role or (h["pos"] == "QB" and ("pass" in ty or "pass" in tl) and "sack" not in ty):
+        if "intercept" in ty or "intercepted" in tl: return S(20, -2), "INT"
+        if "incomplete" in tl: return 0.0, "incomplete"
+        pts = yds * S(3, 0.04) + (S(4, 4) if td else 0); lab = f"{yds} yd pass" + (" TD" if td else "")
+    elif "receiv" in role or "target" in role or ("pass" in tl and h["pos"] in ("WR", "TE", "RB")):
+        if "incomplete" in tl: return 0.0, "target"
+        pts = S(53) + yds * S(42, 0.1) + (S(43, 6) if td else 0); lab = f"{yds} yd catch" + (" TD" if td else "")
+    elif "rush" in role or "rush" in ty or "scramble" in tl or "run" in ty:
+        pts = yds * S(24, 0.1) + (S(25, 6) if td else 0); lab = f"{yds} yd run" + (" TD" if td else "")
+    elif "sack" in ty:
+        return 0.0, "sacked"
+    else:
+        return None, ""
+    if lost and "fumbler" in role:
+        pts += S(72, -2); lab += ", fumble lost"
+    return round(pts, 2), lab
 
 
 def should_run():
@@ -147,7 +203,9 @@ def run():
                     q = (p.get("period") or {}).get("number"); clk = (p.get("clock") or {}).get("displayValue", "")
                     icon = "🔥" if p.get("scoringPlay") else "🛡️" if h["pos"] == "D" else "🏈"
                     txt = (p.get("text") or "").strip()
-                    send(f"{icon} {short(h['name'])}", f"{txt} (Q{q} {clk})", priority=3, click=SITE + "#home", tag=f"play{pid}")
+                    pts, lab = play_points(p, h, h.get("aid", ""), SC)
+                    pt_s = (f" {pts:+.1f} pts" if pts else "") if pts is not None else ""
+                    send(f"{icon} {short(h['name'])}{(': ' + lab) if lab else ''}{pt_s}", f"{txt} (Q{q} {clk})", priority=3, click=SITE + "#home", tag=f"play{pid}")
                     sent += 1
         first = False
         if sent:

@@ -229,6 +229,111 @@ function celebrate() {
   if (!Number.isNaN(last) && ch - last >= 3) setTimeout(() => confetti(70), 900);
   LSS(k, String(ch));
 }
+
+// ---------- live play feed: straight from ESPN's public game feed, only your and your opponent's starters ----------
+const LF = { seen: new Set(), items: [], done: {}, timer: null, filter: 'all', busy: false };
+const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard', ESPN_SUM = id => `https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${id}`;
+function lfTracked() {
+  const L = D.live; if (!L) return null;
+  const people = {}, dst = {};
+  for (const [side, x] of [['me', L.me], ['opp', L.opp]]) for (const r of x.rows || []) {
+    if (r.pos === 'D') dst[r.nfl === 'WAS' ? 'WSH' : r.nfl] = { name: r.player, side, pos: 'D' };
+    else if (r.pid != null) people[String(r.pid)] = { name: r.player, side, pos: r.pos, team: r.nfl };
+  }
+  return { people, dst, teams: new Set([...Object.values(people).map(x => x.team === 'WAS' ? 'WSH' : x.team), ...Object.keys(dst)]) };
+}
+function lfPoints(p, h, aid) {
+  const sc = D.scoring || {}, S = (k, d = 0) => +(sc[k] ?? d);
+  const tx = p.text || '', tl = tx.toLowerCase(), ty = ((p.type || {}).text || '').toLowerCase();
+  if (tl.includes('no play') || ty.includes('penalty')) return [0, 'no play'];
+  const m = tx.match(/for (-?\d+) yards?|(\d+) Yd/i); let yds = p.statYardage;
+  if (yds == null) yds = m ? +(m[1] || m[2]) : 0;
+  const td = !!p.scoringPlay && tl.includes('touchdown');
+  const role = (p.participants || []).filter(pa => String((pa.athlete || {}).id) === aid).map(pa => String(pa.type || '').toLowerCase()).join(' ');
+  if (h.pos === 'D') {
+    if (ty.includes('sack') || tl.includes('sack')) return [S(99), 'sack'];
+    if (ty.includes('interception')) return [S(95) + (td ? S(104, 6) : 0), 'INT' + (td ? ' TD' : '')];
+    if (ty.includes('fumble') && ty.includes('opponent')) return [S(96) + (td ? S(103, 6) : 0), 'fumble rec'];
+    if (ty.includes('safety')) return [S(98), 'safety'];
+    if (ty.includes('blocked')) return [S(97) + (td ? S(93, 6) : 0), 'block'];
+    return [null, ''];
+  }
+  if (h.pos === 'K' || role.includes('kick')) {
+    if (/extra point|kick is good|kick is no good/.test(tl)) { const g = !tl.includes('no good'); return [g ? S(86, 1) : S(88, -1), g ? 'XP' : 'missed XP']; }
+    if (ty.includes('field goal') || tl.includes('field goal')) {
+      if (tl.includes('no good') || ty.includes('missed') || tl.includes('blocked')) return [S(85, -1), 'missed FG'];
+      const fm = tx.match(/(\d+)[ -](?:yd|yard)s?[ -]field goal/i), d = fm ? +fm[1] : 30;
+      return [d >= 60 ? S(201, 5) : d >= 50 ? S(198, 4) : d >= 40 ? S(77, 3) : S(80, 3), d + ' yd FG'];
+    }
+    return [null, ''];
+  }
+  let pts = 0, lab = '';
+  const lost = tl.includes('fumble') && ty.includes('fumble recovery (opponent)');
+  if (role.includes('pass') || (h.pos === 'QB' && (ty.includes('pass') || tl.includes(' pass ')) && !ty.includes('sack'))) {
+    if (ty.includes('intercept') || tl.includes('intercepted')) return [S(20, -2), 'INT'];
+    if (tl.includes('incomplete')) return [0, 'incomplete'];
+    pts = yds * S(3, 0.04) + (td ? S(4, 4) : 0); lab = `${yds} yd pass${td ? ' TD' : ''}`;
+  } else if (role.includes('receiv') || role.includes('target') || (tl.includes(' pass ') && ['WR', 'TE', 'RB'].includes(h.pos))) {
+    if (tl.includes('incomplete')) return [0, 'target'];
+    pts = S(53) + yds * S(42, 0.1) + (td ? S(43, 6) : 0); lab = `${yds} yd catch${td ? ' TD' : ''}`;
+  } else if (role.includes('rush') || ty.includes('rush') || tl.includes('scramble') || ty.includes('run')) {
+    pts = yds * S(24, 0.1) + (td ? S(25, 6) : 0); lab = `${yds} yd run${td ? ' TD' : ''}`;
+  } else if (ty.includes('sack')) return [0, 'sacked'];
+  else return [null, ''];
+  if (lost && role.includes('fumbler')) { pts += S(72, -2); lab += ', fumble lost'; }
+  return [Math.round(pts * 100) / 100, lab];
+}
+async function lfPoll() {
+  const T = lfTracked(); if (!T || LF.busy || document.hidden || !$('#lfbox')) return;
+  LF.busy = true;
+  try {
+    const sb = await fetch(ESPN_SB, { cache: 'no-store' }).then(r => r.json());
+    const evs = (sb.events || []).filter(e => { const c = e.competitions[0]; return c.competitors.some(x => T.teams.has(x.team.abbreviation)) && c.status.type.state !== 'pre'; });
+    for (const e of evs) {
+      const c = e.competitions[0], st = c.status.type.state;
+      if (st === 'post' && LF.done[e.id]) continue;
+      const s = await fetch(ESPN_SUM(e.id), { cache: 'no-store' }).then(r => r.json());
+      const ha = c.competitors.map(x => x.team.abbreviation), game = e.shortName;
+      const drives = [...((s.drives || {}).previous || []), ...((s.drives || {}).current ? [s.drives.current] : [])];
+      for (const d of drives) { const off = (d.team || {}).abbreviation;
+        for (const p of d.plays || []) {
+          if (!p.id || LF.seen.has(p.id)) continue;
+          LF.seen.add(p.id);
+          const hits = [];
+          for (const pa of p.participants || []) { const aid = String((pa.athlete || {}).id); if (T.people[aid] && !hits.some(x => x.aid === aid)) hits.push({ ...T.people[aid], aid }); }
+          const ty = ((p.type || {}).text || '').toLowerCase();
+          if (/sack|interception|fumble recovery \(opponent\)|safety|blocked/.test(ty)) ha.forEach(t => { if (T.dst[t] && t !== off) hits.push({ ...T.dst[t], aid: '' }); });
+          for (const h of hits) { const [pts, lab] = lfPoints(p, h, h.aid);
+            LF.items.push({ id: p.id + h.name, seq: +(p.sequenceNumber || 0), at: p.modified || '', game, who: h.name, side: h.side, pos: h.pos, pts, lab, text: (p.text || '').trim(), q: (p.period || {}).number, clk: (p.clock || {}).displayValue || '', big: !!p.scoringPlay || Math.abs(+p.statYardage || 0) >= 20, fresh: true }); }
+        } }
+      if (st === 'post') LF.done[e.id] = 1;
+    }
+    LF.items.sort((a, b) => (b.at || '').localeCompare(a.at || '') || b.seq - a.seq);
+    LF.items = LF.items.slice(0, 150);
+    renderLiveFeed(evs.some(e => e.competitions[0].status.type.state === 'in'));
+  } catch (e) { const b = $('#lfbox'); if (b && !LF.items.length) { b.hidden = false; b.replaceChildren(h('h3', {}, '📡 Live plays'), h('p', { class: 'sub' }, "Couldn't reach ESPN's live feed right now. It'll keep trying.")); } }
+  LF.busy = false;
+}
+function renderLiveFeed(anyLive) {
+  const b = $('#lfbox'); if (!b) return;
+  const its = LF.items.filter(x => LF.filter === 'all' || x.side === 'me');
+  if (!LF.items.length && !anyLive) { b.hidden = true; return; }
+  b.hidden = false;
+  const tot = {}; LF.items.forEach(x => { if (x.pts != null) tot[x.who] = (tot[x.who] || 0) + x.pts; });
+  const chip = (k, l) => h('button', { class: 'chip' + (LF.filter === k ? ' on' : ''), onclick: () => { LF.filter = k; renderLiveFeed(anyLive); } }, l);
+  b.replaceChildren(
+    h('div', { class: 'lfhead' }, h('h3', { style: 'margin:0' }, anyLive ? h('span', {}, h('i', { class: 'lfdot' }), ' Live plays') : '📡 Plays today'), h('div', { class: 'lfchips' }, chip('all', 'Both teams'), chip('me', 'Mine'))),
+    its.length ? h('div', { class: 'lflist' }, its.slice(0, 40).map(x => { const r = h('div', { class: `lfi ${x.side}${x.big ? ' big' : ''}${x.fresh ? ' fresh' : ''}` },
+      h('div', { class: 'lftop' }, h('b', {}, pl(x.who)), x.lab ? h('span', { class: 'lflab' }, x.lab) : '', x.pts != null && x.pts !== 0 ? h('span', { class: 'lfpts ' + (x.pts > 0 ? 'pos' : 'neg') }, (x.pts > 0 ? '+' : '') + x.pts.toFixed(1)) : ''),
+      h('div', { class: 'lftx' }, x.text), h('div', { class: 'lfmeta mut' }, `${x.game} · Q${x.q} ${x.clk}${x.pts != null ? ` · ${x.who.split(' ').slice(-1)[0]} has ${f1(tot[x.who] || 0)} from plays today` : ''}`)); x.fresh = false; return r; }))
+      : h('p', { class: 'sub' }, 'No plays from your guys yet.'),
+    h('p', { class: 'sub', style: 'margin:8px 0 0;font-size:11px' }, 'Points per play use your league scoring. The scoreboard above is ESPN\'s official total.'));
+}
+function startLiveFeed() {
+  if (LF.timer) return;
+  lfPoll(); LF.timer = setInterval(lfPoll, 25000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) lfPoll(); });
+}
 function renderChanges() {
   const C = D.changes || {}, it = C.items || [], box = $('#changebox');
   if (!box) return;
@@ -237,7 +342,7 @@ function renderChanges() {
     ...it.map(x => h('div', { class: 'todoi' }, h('span', { style: 'font-size:18px' }, x.icon), h('div', { style: 'flex:1' }, x.text))));
 }
 function renderHome() {
-  renderChanges(); renderLive(); renderMatchup(); celebrate();
+  renderChanges(); renderLive(); renderMatchup(); celebrate(); if (LID === '787523197') startLiveFeed(); else { const b = $('#lfbox'); if (b) b.hidden = true; }
   const _locked = D.summary.trade_deadline && D.summary.trade_deadline < Date.now();
   document.querySelectorAll('[data-tab=trades],[data-tab=lab]').forEach(b => b.hidden = !!_locked);
   renderTodo(); renderToss();

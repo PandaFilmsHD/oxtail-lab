@@ -582,3 +582,19 @@ body.loading #home .box:after{content:"";position:absolute;inset:0;background:li
 .hgrow{transform-box:fill-box;transform-origin:left center;animation:hgrow .55s var(--ease-out) both}.hgrow.l{transform-origin:right center}
 @keyframes hgrow{from{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.hgrow{animation:none!important}}
+
+/* live play feed */
+.lfhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.lfdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#3ddc84;margin-right:4px;animation:lpulse 1.4s ease-in-out infinite}
+.lfchips{display:flex;gap:6px}.lfchips .chip{font-size:12px;padding:4px 10px}
+.lflist{display:grid;gap:6px;max-height:520px;overflow-y:auto;overscroll-behavior:contain}
+.lfi{padding:8px 10px;border-radius:12px;background:#0f1138;box-shadow:inset 3px 0 #ffc83d}
+.lfi.opp{box-shadow:inset 3px 0 #ff4d6d;opacity:.92}
+.lfi.big{background:linear-gradient(90deg,#ffc83d1c,#0f1138 70%)}.lfi.opp.big{background:linear-gradient(90deg,#ff4d6d1c,#0f1138 70%)}
+.lfi.fresh{animation:lfin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes lfin{from{opacity:0;transform:translateY(-8px) scale(.98)}}
+.lftop{display:flex;align-items:center;gap:8px;font-size:14px}.lflab{font-size:12px;color:#cfd3ff}
+.lfpts{margin-left:auto;font-family:'Lilita One',sans-serif;font-size:16px}.lfpts.pos{color:#3ddc84}.lfpts.neg{color:#ff4d6d}
+.lftx{font-size:12px;color:#aab0e6;margin-top:3px;line-height:1.35}.lfmeta{font-size:11px;margin-top:3px}
+@media (prefers-reduced-motion:reduce){.lfi.fresh,.lfdot{animation:none}}
+.lfchips .chip{border:0;border-radius:999px;background:#1b1e55;color:#cfd3ff;font-weight:800;cursor:pointer}.lfchips .chip.on{background:#ffc83d;color:#1a1530}
