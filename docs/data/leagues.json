@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-20T03:21:53Z",
-   "champ_pct": 30.3,
+   "at": "2026-11-20T03:32:23Z",
+   "champ_pct": 30.5,
    "todo": [
     {
      "urgent": false,
@@ -14,13 +14,6 @@
      "title": "Brock Bowers might not play (56%)",
      "detail": "Check his status before kickoff.",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Xavier Hutchinson + Seth McGowan for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +1.7%. Would you do Xavier Hutchinson and Seth McGowan for Caleb Douglas? I think Hutchinson slides right into your FLEX spot, and you get depth for injuries and byes down the stretch.",
-     "tab": "trades"
     }
    ]
   },
@@ -29,7 +22,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T03:22:10Z",
+   "at": "2026-11-20T03:32:44Z",
    "champ_pct": 13.0,
    "todo": [
     {
@@ -67,7 +60,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T03:22:18Z",
+   "at": "2026-11-20T03:32:54Z",
    "champ_pct": 3.1,
    "todo": [
     {
@@ -91,7 +84,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T03:22:02Z",
+   "at": "2026-11-20T03:32:34Z",
    "champ_pct": 32.5,
    "todo": [
     {
@@ -105,7 +98,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.7%.",
      "tab": "waivers"
     },
     {
