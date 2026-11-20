@@ -80,13 +80,36 @@ def short(name):
     return f"{parts[0][0]}. {' '.join(parts[1:])}" if len(parts) > 1 and "D/ST" not in name else name
 
 
+SUFFIX = {"Jr.", "Jr", "Sr.", "II", "III", "IV", "V"}
+
+
+def abbr(name):
+    parts = [x for x in name.split() if x not in SUFFIX]
+    return f"{parts[0][0]}.{' '.join(parts[1:])}" if len(parts) > 1 else name
+
+
+def text_role(tx, name):
+    """Find a player's role from ESPN's play text, e.g. 'C.Stroud pass deep right to X.Hutchinson for 42 yards'."""
+    a = re.escape(abbr(name)); full = re.escape(name); r = []
+    if re.search(rf"\b{a} pass", tx): r.append("passer")
+    if re.search(rf"(?:pass[^.]*? to|intended for) {a}\b", tx): r.append("receiver")
+    if re.search(rf"(?:^|\. |\) ){a} (?:up the middle|left|right|scrambles|kneels|rushe?s?|for|to the|middle)", tx) and "passer" not in r: r.append("rusher")
+    if re.search(rf"\b{a} (?:extra point|kicks? is|\d+ yard field goal)|\({a} kick\)|{full} \d+ Yd Field Goal", tx, re.I): r.append("kicker")
+    if re.search(rf"\b{a} FUMBLES", tx): r.append("fumbler")
+    return r
+
+
 def match(off, p, people, dst, home_away):
     """Which of the tracked players/defenses this play involves."""
     hits = []
-    for pa in p.get("participants") or []:
-        aid = str(((pa.get("athlete") or {}).get("id")) or "")
-        if aid in people:
-            hits.append({**people[aid], "aid": aid})
+    tx = p.get("text") or ""
+    for aid, x in people.items():
+        if x["team"] not in home_away:
+            continue
+        roles = [str(pa.get("type") or "").lower() for pa in p.get("participants") or [] if str(((pa.get("athlete") or {}).get("id")) or "") == aid]
+        roles = roles or text_role(tx, x["name"])
+        if roles:
+            hits.append({**x, "aid": aid, "role": " ".join(roles)})
     tx = ((p.get("type") or {}).get("text") or "").lower()
     if any(k in tx for k in DEF_PLAYS) or p.get("scoringPlay") and "return" in tx:
         for team in home_away:
@@ -113,8 +136,7 @@ def play_points(p, h, aid, sc):
     if yds is None:
         yds = int(m.group(1) or m.group(2)) if m and (m.group(1) or m.group(2)) else 0
     td = bool(p.get("scoringPlay")) and "touchdown" in tl
-    roles = [str(pa.get("type") or "").lower() for pa in p.get("participants") or [] if str(((pa.get("athlete") or {}).get("id")) or "") == aid]
-    role = " ".join(roles)
+    role = h.get("role") or " ".join(str(pa.get("type") or "").lower() for pa in p.get("participants") or [] if str(((pa.get("athlete") or {}).get("id")) or "") == aid)
     if h["pos"] == "D":
         if "sack" in ty or "sack" in tl: return S(99), "sack"
         if "interception" in ty: return S(95) + (S(104, 6) if td else 0), "INT" + (" TD" if td else "")

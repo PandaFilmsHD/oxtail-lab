@@ -243,6 +243,17 @@ function lfTracked() {
   }
   return { people, dst, teams: new Set([...Object.values(people).map(x => x.team === 'WAS' ? 'WSH' : x.team), ...Object.keys(dst)]) };
 }
+const lfEsc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function lfAbbr(n) { const ps = n.split(' ').filter(x => !['Jr.', 'Jr', 'Sr.', 'II', 'III', 'IV', 'V'].includes(x)); return ps.length > 1 ? ps[0][0] + '.' + ps.slice(1).join(' ') : n; }
+function lfTextRole(tx, name) {
+  const a = lfEsc(lfAbbr(name)), full = lfEsc(name), r = [];
+  if (new RegExp(`\\b${a} pass`).test(tx)) r.push('passer');
+  if (new RegExp(`(?:pass[^.]*? to|intended for) ${a}\\b`).test(tx)) r.push('receiver');
+  if (!r.includes('passer') && new RegExp(`(?:^|\\. |\\) )${a} (?:up the middle|left|right|scrambles|kneels|rushe?s?|for|to the|middle)`).test(tx)) r.push('rusher');
+  if (new RegExp(`\\b${a} (?:extra point|kicks? is|\\d+ yard field goal)|\\(${a} kick\\)|${full} \\d+ Yd Field Goal`, 'i').test(tx)) r.push('kicker');
+  if (new RegExp(`\\b${a} FUMBLES`).test(tx)) r.push('fumbler');
+  return r;
+}
 function lfPoints(p, h, aid) {
   const sc = D.scoring || {}, S = (k, d = 0) => +(sc[k] ?? d);
   const tx = p.text || '', tl = tx.toLowerCase(), ty = ((p.type || {}).text || '').toLowerCase();
@@ -250,7 +261,7 @@ function lfPoints(p, h, aid) {
   const m = tx.match(/for (-?\d+) yards?|(\d+) Yd/i); let yds = p.statYardage;
   if (yds == null) yds = m ? +(m[1] || m[2]) : 0;
   const td = !!p.scoringPlay && tl.includes('touchdown');
-  const role = (p.participants || []).filter(pa => String((pa.athlete || {}).id) === aid).map(pa => String(pa.type || '').toLowerCase()).join(' ');
+  const role = h.role || (p.participants || []).filter(pa => String((pa.athlete || {}).id) === aid).map(pa => String(pa.type || '').toLowerCase()).join(' ');
   if (h.pos === 'D') {
     if (ty.includes('sack') || tl.includes('sack')) return [S(99), 'sack'];
     if (ty.includes('interception')) return [S(95) + (td ? S(104, 6) : 0), 'INT' + (td ? ' TD' : '')];
@@ -301,7 +312,12 @@ async function lfPoll() {
           if (!p.id || LF.seen.has(p.id)) continue;
           LF.seen.add(p.id);
           const hits = [];
-          for (const pa of p.participants || []) { const aid = String((pa.athlete || {}).id); if (T.people[aid] && !hits.some(x => x.aid === aid)) hits.push({ ...T.people[aid], aid }); }
+          for (const [aid, x] of Object.entries(T.people)) {
+            if (!ha.includes(x.team === 'WAS' ? 'WSH' : x.team)) continue;
+            let roles = (p.participants || []).filter(pa => String((pa.athlete || {}).id) === aid).map(pa => String(pa.type || '').toLowerCase());
+            if (!roles.length) roles = lfTextRole(p.text || '', x.name);
+            if (roles.length) hits.push({ ...x, aid, role: roles.join(' ') });
+          }
           const ty = ((p.type || {}).text || '').toLowerCase();
           if (/sack|interception|fumble recovery \(opponent\)|safety|blocked/.test(ty)) ha.forEach(t => { if (T.dst[t] && t !== off) hits.push({ ...T.dst[t], aid: '' }); });
           for (const h of hits) { const [pts, lab] = lfPoints(p, h, h.aid);
