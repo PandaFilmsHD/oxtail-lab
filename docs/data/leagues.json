@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-20T19:17:14Z",
-   "champ_pct": 19.4,
+   "at": "2026-11-20T19:45:28Z",
+   "champ_pct": 19.3,
    "todo": [
     {
      "urgent": false,
@@ -14,6 +14,13 @@
      "title": "Brock Bowers might not play (69%)",
      "detail": "Check his status before kickoff.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Xavier Hutchinson + Seth McGowan for Caleb Douglas (Faiz's Fantastic Team)",
+     "detail": "Title odds +1.5%. Would you do Xavier Hutchinson and Seth McGowan for Caleb Douglas? I think Hutchinson slides right into your FLEX spot, and you get depth for injuries and byes down the stretch.",
+     "tab": "trades"
     }
    ]
   },
@@ -22,8 +29,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T19:17:36Z",
-   "champ_pct": 12.9,
+   "at": "2026-11-20T19:45:49Z",
+   "champ_pct": 12.8,
    "todo": [
     {
      "urgent": false,
@@ -60,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T19:17:47Z",
+   "at": "2026-11-20T19:45:59Z",
    "champ_pct": 3.2,
    "todo": [
     {
@@ -91,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T19:17:24Z",
-   "champ_pct": 33.4,
+   "at": "2026-11-20T19:45:39Z",
+   "champ_pct": 33.3,
    "todo": [
     {
      "urgent": false,
@@ -105,14 +112,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.8%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.5%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Colston Loveland + Saquon Barkley for George Kittle (Big Deal Neil)",
-     "detail": "Title odds +3.8%. Would you do Colston Loveland and Saquon Barkley for George Kittle? I think Loveland slides right into your TE spot, and you get depth for injuries and byes down the stretch.",
+     "detail": "Title odds +4.2%. Would you do Colston Loveland and Saquon Barkley for George Kittle? I think Loveland slides right into your TE spot, and you get depth for injuries and byes down the stretch.",
      "tab": "trades"
     }
    ]
