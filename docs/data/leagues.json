@@ -5,16 +5,9 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-20T01:01:41Z",
-   "champ_pct": 30.4,
+   "at": "2026-11-20T01:18:14Z",
+   "champ_pct": 30.3,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udd12",
-     "title": "Set your lineup by Thu 5:15 PM PT",
-     "detail": "C.J. Stroud, Ka'imi Fairbairn, Xavier Hutchinson play first. Players lock when their game starts.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -36,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T01:09:00Z",
+   "at": "2026-11-20T01:18:34Z",
    "champ_pct": 12.9,
    "todo": [
     {
@@ -74,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T01:02:13Z",
+   "at": "2026-11-20T01:18:43Z",
    "champ_pct": 3.0,
    "todo": [
     {
@@ -98,7 +91,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T01:01:53Z",
+   "at": "2026-11-20T01:18:24Z",
    "champ_pct": 31.8,
    "todo": [
     {
@@ -112,7 +105,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.7%.",
      "tab": "waivers"
     },
     {
