@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-20T04:03:20Z",
+   "at": "2026-11-20T04:13:02Z",
    "champ_pct": 30.6,
    "todo": [
     {
@@ -14,6 +14,13 @@
      "title": "Brock Bowers might not play (56%)",
      "detail": "Check his status before kickoff.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Xavier Hutchinson + Seth McGowan for Caleb Douglas (Faiz's Fantastic Team)",
+     "detail": "Title odds +2.0%. Would you do Xavier Hutchinson and Seth McGowan for Caleb Douglas? I think Hutchinson slides right into your FLEX spot, and you get depth for injuries and byes down the stretch.",
+     "tab": "trades"
     }
    ]
   },
@@ -22,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T04:03:41Z",
+   "at": "2026-11-20T04:13:22Z",
    "champ_pct": 13.0,
    "todo": [
     {
@@ -43,14 +50,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.4%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.3%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.1%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -60,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T04:03:50Z",
+   "at": "2026-11-20T04:13:32Z",
    "champ_pct": 3.1,
    "todo": [
     {
@@ -76,6 +83,13 @@
      "title": "Carnell Tate might not play (69%)",
      "detail": "If he's ruled out, start David Montgomery (10.8).",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
+     "tab": "waivers"
     }
    ]
   },
@@ -84,7 +98,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-20T04:03:31Z",
+   "at": "2026-11-20T04:13:11Z",
    "champ_pct": 32.4,
    "todo": [
     {
@@ -98,14 +112,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.7%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.9%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Zay Flowers + Saquon Barkley for Puka Nacua (Ethan)",
-     "detail": "Title odds +9.1%. Would you do Zay Flowers and Saquon Barkley for Puka Nacua? I think it bumps your lineup about 1.8 pts a week for the playoff push, and Flowers slides right into your WR spot over Meyers.",
+     "detail": "Title odds +9.5%. Would you do Zay Flowers and Saquon Barkley for Puka Nacua? I think it bumps your lineup about 1.8 pts a week for the playoff push, and Flowers slides right into your WR spot over Meyers.",
      "tab": "trades"
     }
    ]
