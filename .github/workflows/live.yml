@@ -31,4 +31,7 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           PUSH_SUB: ${{ secrets.PUSH_SUB }}
         run: |
-          if [ "${{ github.event.inputs.probe }}" = "true" ]; then python scripts/live_plays.py --probe; else python scripts/live_plays.py; fi
+          if [ "${{ github.event.inputs.probe }}" = "true" ]; then
+            python scripts/live_plays.py --probe
+            echo "CORS:"; curl -s -D - -o /dev/null -H "Origin: https://pandafilmshd.github.io" "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard" | grep -i "access-control" || echo "no CORS header"
+          else python scripts/live_plays.py; fi

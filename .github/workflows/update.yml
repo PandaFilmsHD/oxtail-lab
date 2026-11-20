@@ -59,6 +59,16 @@ jobs:
             git fetch origin main && git rebase -X theirs origin/main || { git rebase --abort; git pull --no-rebase -X ours origin main --no-edit; }
             sleep $((i * 3))
           done
+      - name: Start the live play watcher when a game with your starters is on
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(python scripts/live_plays.py --should-run 2>/dev/null)" = "yes" ]; then
+            a=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/live.yml/runs?status=in_progress" --jq '.total_count')
+            b=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/live.yml/runs?status=queued" --jq '.total_count')
+            if [ "$a" = 0 ] && [ "$b" = 0 ]; then gh workflow run live.yml --ref main -R "$GITHUB_REPOSITORY" && echo "live watcher started"; else echo "live watcher already running"; fi
+          fi
       - name: Start the next run (GitHub's schedule can lag by hours, so each run queues the next one itself)
         if: always()
         env:
