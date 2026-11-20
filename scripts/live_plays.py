@@ -19,6 +19,7 @@ DEF_PLAYS = ("sack", "interception", "fumble recovery (opponent)", "safety", "bl
 TEAM_FIX = {"WAS": "WSH"}
 SC = {}
 TOT = {}
+GOT = {}
 
 
 def get(url):
@@ -81,6 +82,13 @@ def short(name):
 
 
 SUFFIX = {"Jr.", "Jr", "Sr.", "II", "III", "IV", "V"}
+REV_RE = re.compile(r"(?:play|ruling) (?:was|is) reversed\.?\s*", re.I)
+
+
+def final_text(t):
+    """After a replay reversal ESPN keeps the original call and appends the new one. Only the new one counts."""
+    parts = REV_RE.split(t or "")
+    return parts[-1].strip() if len(parts) > 1 and parts[-1].strip() else (t or "")
 
 
 def abbr(name):
@@ -102,7 +110,7 @@ def text_role(tx, name):
 def match(off, p, people, dst, home_away):
     """Which of the tracked players/defenses this play involves."""
     hits = []
-    tx = p.get("text") or ""
+    tx = final_text(p.get("text"))
     for aid, x in people.items():
         if x["team"] not in home_away:
             continue
@@ -110,8 +118,9 @@ def match(off, p, people, dst, home_away):
         roles = roles or text_role(tx, x["name"])
         if roles:
             hits.append({**x, "aid": aid, "role": " ".join(roles)})
-    tx = ((p.get("type") or {}).get("text") or "").lower()
-    if any(k in tx for k in DEF_PLAYS) or p.get("scoringPlay") and "return" in tx:
+    rev = tx != (p.get("text") or "")
+    tx = tx.lower() if rev else ((p.get("type") or {}).get("text") or "").lower()   # after a reversal only the new ruling counts
+    if any(k in tx for k in (("intercepted", "sacked", "safety", "blocked") if rev else DEF_PLAYS)) or (not rev and p.get("scoringPlay") and "return" in tx):
         for team in home_away:
             if team in dst and team != off:
                 hits.append({"name": dst[team]["name"], "pos": "D", "team": team, "side": dst[team]["side"]})
@@ -129,7 +138,10 @@ def play_points(p, h, aid, sc):
     """Fantasy points this play is worth to one tracked player, using the league's own scoring.
     sc: ESPN statId -> points. Returns (points or None if we can't tell, short label)."""
     S = lambda k, d=0.0: float(sc.get(str(k), d) or 0)
-    tx = (p.get("text") or ""); tl = tx.lower(); ty = ((p.get("type") or {}).get("text") or "").lower()
+    tx = final_text(p.get("text")); tl = tx.lower(); ty = ((p.get("type") or {}).get("text") or "").lower()
+    if tx != (p.get("text") or ""):
+        p = {**p, "statYardage": None, "scoringPlay": p.get("scoringPlay") and "touchdown" in tl}
+        ty = "pass" if " pass " in f" {tl} " else "rush" if YDS_RE.search(tx) else ""   # the play type field still shows the old call
     if "no play" in tl or "penalty" in ty:
         return 0.0, "no play"
     m = YDS_RE.search(tx); yds = p.get("statYardage")
@@ -194,9 +206,9 @@ def run():
     from notify import send
     t0 = time.time()
     people, dst, opp_name = load_lineups()
-    seen, last_load, first = set(), time.time(), True
-    global TOT
-    TOT = {}
+    seen, last_load, first = {}, time.time(), True
+    global TOT, GOT
+    TOT, GOT = {}, {}
     print(f"watching {len(people)} players and {len(dst)} D/STs")
     while time.time() - t0 < 5.6 * 3600:
         if time.time() - last_load > 600:
@@ -223,14 +235,24 @@ def run():
             home_away = [x["team"]["abbreviation"] for x in e["competitions"][0]["competitors"]]
             for off, p in all_plays(s):
                 pid = p.get("id")
-                if not pid or pid in seen:
+                txt0 = p.get("text") or ""
+                if not pid or seen.get(pid) == txt0:
                     continue
-                seen.add(pid)
+                changed = pid in seen
+                seen[pid] = txt0
                 for h in match(off, p, people, dst, home_away):
                     pts, lab = play_points(p, h, h.get("aid", ""), SC)
-                    if pts:
-                        TOT[h["name"]] = TOT.get(h["name"], 0) + pts
+                    key = (pid, h["name"]); old = GOT.get(key)
+                    GOT[key] = (pts or 0, lab)
+                    TOT[h["name"]] = TOT.get(h["name"], 0) + (pts or 0) - (old[0] if old else 0)
                     if first or h["side"] != "me":
+                        continue
+                    if changed:   # replay review or stat fix changed a play we already counted
+                        if old and abs((pts or 0) - old[0]) >= 0.05:
+                            last = h["name"].split()[-1] if h["pos"] != "D" else h["name"]
+                            diff = (pts or 0) - old[0]
+                            send(f"↩️ {last} {old[1]} overturned" + (f": {lab}" if lab else "") + f"  {diff:+.1f}", f"{clean(final_text(txt0))}\n{last} {TOT.get(h['name'], 0):.1f} pts today · {e.get('shortName', '')}", priority=3, click=SITE + "#home", tag=f"play{pid}")
+                            sent += 1
                         continue
                     if h["pos"] == "QB":   # QBs: only the big stuff, or the phone never stops buzzing
                         m_ = YDS_RE.search(p.get("text") or ""); y_ = p.get("statYardage")
@@ -240,7 +262,7 @@ def run():
                             continue
                     q = (p.get("period") or {}).get("number"); clk = (p.get("clock") or {}).get("displayValue", "")
                     icon = "🔥" if p.get("scoringPlay") else "🛡️" if h["pos"] == "D" else "🏈"
-                    txt = (p.get("text") or "").strip()
+                    txt = final_text(p.get("text")).strip()
                     last = h["name"].split()[-1] if h["pos"] != "D" else h["name"]
                     title = f"{icon} {last}" + (f" {lab}" if lab else "") + (f"  {pts:+.1f}" if pts else "")
                     body = f"{clean(txt)}\nQ{q} {clk} · {last} {TOT.get(h['name'], 0):.1f} pts today · {e.get('shortName', '')}"

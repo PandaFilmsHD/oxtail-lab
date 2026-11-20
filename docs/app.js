@@ -232,7 +232,7 @@ function celebrate() {
 
 // ---------- live play feed: straight from ESPN's public game feed, only your and your opponent's starters ----------
 const lfClean = t => (t || '').replace(/\((?:Shotgun|No Huddle|No Huddle, Shotgun)\)\s*/gi, '').replace(/\s*\([^()]*\)\.?\s*$/, '.').replace(/\.\.$/, '.').trim();
-const LF = { seen: new Set(), items: [], done: {}, timer: null, filter: 'all', busy: false };
+const LF = { seen: new Map(), items: [], done: {}, timer: null, filter: 'all', busy: false };
 const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard', ESPN_SUM = id => `https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${id}`;
 function lfTracked() {
   const L = D.live; if (!L) return null;
@@ -243,6 +243,7 @@ function lfTracked() {
   }
   return { people, dst, teams: new Set([...Object.values(people).map(x => x.team === 'WAS' ? 'WSH' : x.team), ...Object.keys(dst)]) };
 }
+const lfFinal = t => { const ps = (t || '').split(/(?:play|ruling) (?:was|is) reversed\.?\s*/i); return ps.length > 1 && ps[ps.length - 1].trim() ? ps[ps.length - 1].trim() : (t || ''); };
 const lfEsc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function lfAbbr(n) { const ps = n.split(' ').filter(x => !['Jr.', 'Jr', 'Sr.', 'II', 'III', 'IV', 'V'].includes(x)); return ps.length > 1 ? ps[0][0] + '.' + ps.slice(1).join(' ') : n; }
 function lfTextRole(tx, name) {
@@ -256,7 +257,9 @@ function lfTextRole(tx, name) {
 }
 function lfPoints(p, h, aid) {
   const sc = D.scoring || {}, S = (k, d = 0) => +(sc[k] ?? d);
-  const tx = p.text || '', tl = tx.toLowerCase(), ty = ((p.type || {}).text || '').toLowerCase();
+  const tx = lfFinal(p.text), tl = tx.toLowerCase(), rev = tx !== (p.text || '');
+  let ty = ((p.type || {}).text || '').toLowerCase();
+  if (rev) { p = { ...p, statYardage: null, scoringPlay: p.scoringPlay && tl.includes('touchdown') }; ty = tl.includes(' pass ') || tl.startsWith('pass') ? 'pass' : /for -?\d+ yards?|for no gain/i.test(tx) ? 'rush' : ''; }
   if (tl.includes('no play') || ty.includes('penalty')) return [0, 'no play'];
   const m = tx.match(/for (-?\d+) yards?|(\d+) Yd/i); let yds = p.statYardage;
   if (yds == null) yds = m ? +(m[1] || m[2]) : 0;
@@ -309,19 +312,21 @@ async function lfPoll() {
       const drives = [...((s.drives || {}).previous || []), ...((s.drives || {}).current ? [s.drives.current] : [])];
       for (const d of drives) { const off = (d.team || {}).abbreviation;
         for (const p of d.plays || []) {
-          if (!p.id || LF.seen.has(p.id)) continue;
-          LF.seen.add(p.id);
+          if (!p.id || LF.seen.get(p.id) === (p.text || '')) continue;
+          const upd = LF.seen.has(p.id);
+          LF.seen.set(p.id, p.text || '');
+          if (upd) LF.items = LF.items.filter(x => x.pid !== p.id);
           const hits = [];
           for (const [aid, x] of Object.entries(T.people)) {
             if (!ha.includes(x.team === 'WAS' ? 'WSH' : x.team)) continue;
             let roles = (p.participants || []).filter(pa => String((pa.athlete || {}).id) === aid).map(pa => String(pa.type || '').toLowerCase());
-            if (!roles.length) roles = lfTextRole(p.text || '', x.name);
+            if (!roles.length) roles = lfTextRole(lfFinal(p.text), x.name);
             if (roles.length) hits.push({ ...x, aid, role: roles.join(' ') });
           }
-          const ty = ((p.type || {}).text || '').toLowerCase();
-          if (/sack|interception|fumble recovery \(opponent\)|safety|blocked/.test(ty)) ha.forEach(t => { if (T.dst[t] && t !== off) hits.push({ ...T.dst[t], aid: '' }); });
+          const ft = lfFinal(p.text), rev = ft !== (p.text || ''), ty = rev ? ft.toLowerCase() : ((p.type || {}).text || '').toLowerCase();
+          if ((rev ? /intercepted|sacked|safety|blocked/ : /sack|interception|fumble recovery \(opponent\)|safety|blocked/).test(ty)) ha.forEach(t => { if (T.dst[t] && t !== off) hits.push({ ...T.dst[t], aid: '' }); });
           for (const h of hits) { const [pts, lab] = lfPoints(p, h, h.aid);
-            LF.items.push({ id: p.id + h.name, seq: +(p.sequenceNumber || 0), at: p.modified || '', game, who: h.name, side: h.side, pos: h.pos, pts, lab, text: lfClean(p.text), q: (p.period || {}).number, clk: (p.clock || {}).displayValue || '', big: !!p.scoringPlay || Math.abs(+p.statYardage || 0) >= 20, fresh: true }); }
+            LF.items.push({ id: p.id + h.name, pid: p.id, rev: upd || rev, seq: +(p.sequenceNumber || 0), at: p.modified || '', game, who: h.name, side: h.side, pos: h.pos, pts, lab, text: lfClean(lfFinal(p.text)), q: (p.period || {}).number, clk: (p.clock || {}).displayValue || '', big: !!p.scoringPlay || Math.abs(+p.statYardage || 0) >= 20, fresh: true }); }
         } }
       if (st === 'post') LF.done[e.id] = 1;
     }
@@ -341,7 +346,7 @@ function renderLiveFeed(anyLive) {
   b.replaceChildren(
     h('div', { class: 'lfhead' }, h('h3', { style: 'margin:0' }, anyLive ? h('span', {}, h('i', { class: 'lfdot' }), ' Live plays') : '📡 Plays today'), h('div', { class: 'lfchips' }, chip('all', 'Both teams'), chip('me', 'Mine'))),
     its.length ? h('div', { class: 'lflist' }, its.slice(0, 40).map(x => { const r = h('div', { class: `lfi ${x.side}${x.big ? ' big' : ''}${x.fresh ? ' fresh' : ''}` },
-      h('div', { class: 'lftop' }, h('b', {}, pl(x.who)), x.lab ? h('span', { class: 'lflab' }, x.lab) : '', x.pts != null && x.pts !== 0 ? h('span', { class: 'lfpts ' + (x.pts > 0 ? 'pos' : 'neg') }, (x.pts > 0 ? '+' : '') + x.pts.toFixed(1)) : ''),
+      h('div', { class: 'lftop' }, h('b', {}, pl(x.who)), x.lab ? h('span', { class: 'lflab' }, x.lab) : '', x.rev ? h('span', { class: 'lst bye' }, 'REVIEWED') : '', x.pts != null && x.pts !== 0 ? h('span', { class: 'lfpts ' + (x.pts > 0 ? 'pos' : 'neg') }, (x.pts > 0 ? '+' : '') + x.pts.toFixed(1)) : ''),
       h('div', { class: 'lftx' }, x.text), h('div', { class: 'lfmeta mut' }, `${x.game} · Q${x.q} ${x.clk}${x.pts != null ? ` · ${f1(tot[x.who] || 0)} today` : ''}`)); x.fresh = false; return r; }))
       : h('p', { class: 'sub' }, 'No plays from your guys yet.'),
     h('p', { class: 'sub', style: 'margin:8px 0 0;font-size:11px' }, 'Points per play use your league scoring. The scoreboard above is ESPN\'s official total.'));
