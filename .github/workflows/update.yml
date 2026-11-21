@@ -11,12 +11,12 @@ permissions:
   contents: write
   actions: write   # lets each run start the next one
 
-concurrency:
-  group: update
-  cancel-in-progress: false
 
 jobs:
   update:
+    concurrency:
+      group: update
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -69,8 +69,14 @@ jobs:
             b=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/live.yml/runs?status=queued" --jq '.total_count')
             if [ "$a" = 0 ] && [ "$b" = 0 ]; then gh workflow run live.yml --ref main -R "$GITHUB_REPOSITORY" && echo "live watcher started"; else echo "live watcher already running"; fi
           fi
+
+  next:
+    needs: update
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
       - name: Start the next run (GitHub's schedule can lag by hours, so each run queues the next one itself)
-        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -79,4 +85,6 @@ jobs:
           if { [ "$D" = 7 ] && [ $H -ge 16 ]; } || { [[ "$D" =~ ^(1|2|5)$ ]] && [ $H -le 5 ]; }; then WAIT=7; else WAIT=25; fi
           echo "next run in about $WAIT min"
           sleep $((WAIT * 60))
+          newest=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/update.yml/runs?per_page=1" --jq '.workflow_runs[0].id')
+          if [ "$newest" != "${{ github.run_id }}" ]; then echo "a newer run already exists, not starting another"; exit 0; fi
           gh workflow run update.yml --ref main -R "$GITHUB_REPOSITORY" || echo "could not queue next run"
