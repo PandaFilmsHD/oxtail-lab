@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-21T21:28:43Z",
-   "champ_pct": 19.8,
+   "at": "2026-11-21T21:57:14Z",
+   "champ_pct": 19.6,
    "todo": [
     {
      "urgent": false,
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-21T21:29:02Z",
+   "at": "2026-11-21T21:57:34Z",
    "champ_pct": 14.8,
    "todo": [
     {
@@ -60,7 +60,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-21T21:29:14Z",
+   "at": "2026-11-21T21:57:43Z",
    "champ_pct": 3.2,
    "todo": [
     {
@@ -69,6 +69,13 @@
      "title": "Set your lineup by Sun 10:00 AM PT",
      "detail": "Carnell Tate, Chuba Hubbard, Colston Loveland, Luther Burden III, Rashee Rice, Ravens D/ST, Tony Pollard, Trevor Lawrence, Tyler Bass play first. Players lock when their game starts.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
+     "tab": "waivers"
     },
     {
      "urgent": false,
@@ -84,7 +91,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-21T21:28:51Z",
+   "at": "2026-11-21T21:57:24Z",
    "champ_pct": 36.2,
    "todo": [
     {
