@@ -652,10 +652,88 @@ _dst = [p["avg"] for p in P.values() if p["pos"] == "D" and p["avg"]]
 DST_SCALE = (sorted(_dst)[len(_dst) // 2] / 5.0) if _dst else 1.0   # this league's D/ST scoring vs the standard the fit used
 _k = [p["avg"] for p in P.values() if p["pos"] == "K" and p["avg"]]
 K_SCALE = (sorted(_k)[len(_k) // 2] / 7.9) if _k else 1.0
+# trained D/ST and kicker models (scripts/fit_dk.py, refit every Tuesday on nflverse history)
+try:
+    DK = json.loads((ROOT / "data" / "dk_model.json").read_text())
+except Exception:
+    DK = None
+DOMES = {"ARI", "ATL", "DAL", "DET", "HOU", "IND", "LV", "LAR", "LAC", "MIN", "NO"}
+DKFIX = {"WSH": "WAS", "JAC": "JAX"}
+def _dk_team(t):
+    return (DK or {}).get("teams", {}).get(DKFIX.get(t, t), {})
+def _dk_z(m, feats):
+    return [(feats.get(x, m_) - m_) / s_ for x, m_, s_ in zip(m["x"], m["mu"], m["sd"])]
+def _backup_starting(team, w):
+    tq_ = TEAM_QB.get(team)
+    if not tq_:
+        return 0
+    a_ = (AVAIL.get(tq_[0]) or {}).get(str(w))
+    return 1 if a_ is not None and a_ < 0.5 else 0
+def dk_feats(team, w):
+    g = None
+    for p_ in P.values():
+        if p_["nfl"] == team:
+            g = opp(p_, w); break
+    if not g or g == "?":
+        return None
+    o = g.lstrip("@"); home = 0 if g.startswith("@") else 1
+    it_t = ((LINES.get(w) or {}).get(team) or {}).get("it") or OPP_IT.get(team)
+    it_o = ((LINES.get(w) or {}).get(o) or {}).get("it") or OPP_IT.get(o)
+    if it_t is None or it_o is None:
+        return None
+    venue = team if home else o
+    dome = 1 if venue in DOMES else 0
+    wx = (LINES.get(w) or {}).get(team) or {}
+    wind = 0.0 if dome else float(wx.get("wind") or 8.0)
+    cold = 1 if (not dome and wx.get("temp") is not None and float(wx["temp"]) <= 32) else 0
+    f = {"it": it_t, "opp_it": it_o, "spread": it_t - it_o, "home": home, "dome": dome, "wind": wind, "cold": cold, "opp_backup": _backup_starting(o, w)}
+    me_, op_ = _dk_team(team), _dk_team(o)
+    lr = DK.get("league_rates", {})
+    for k in ("dd_sack", "dd_int", "dd_fr", "kk_fga", "kk_stall", "kk_acc", "od_fga"):
+        f[k] = me_.get(k, lr.get(k, 0)) if k != "od_fga" else me_.get(k, lr.get("od_fga", 0))
+    for k in ("oo_sack", "oo_int", "oo_fum"):
+        f[k] = op_.get(k, lr.get(k, 0))
+    return f
+_DK_LVL = {}
+def dk_level(pos):
+    """Match the model's average to what D/STs and kickers actually score in this league this season."""
+    if pos not in _DK_LVL:
+        fn = _dk_dst_raw if pos == "D" else _dk_k_raw
+        mod = [fn(p_["nfl"], CUR) for p_ in P.values() if p_["pos"] == pos]
+        mod = [x for x in mod if x is not None]
+        act = [v for p_ in P.values() if p_["pos"] == pos for v in (p_.get("wk") or {}).values() if v is not None]
+        _DK_LVL[pos] = max(0.8, min(1.25, (sum(act) / len(act)) / (sum(mod) / len(mod)))) if mod and len(act) > 40 else 1.0
+    return _DK_LVL[pos]
+def dk_dst(team, w):
+    r_ = _dk_dst_raw(team, w)
+    return None if r_ is None else r_ * dk_level("D")
+def dk_k(team, w):
+    r_ = _dk_k_raw(team, w)
+    return None if r_ is None else r_ * dk_level("K")
+def _dk_dst_raw(team, w):
+    f = dk_feats(team, w)
+    if not f or not DK:
+        return None
+    m = DK["dst"]; z = _dk_z(m, f); W_ = m["w"]
+    part = {y: math.exp(c["icpt"] + sum(a * b for a, b in zip(c["coef"], z))) for y, c in m["parts"].items()}
+    pa = m["pa"]["icpt"] + sum(a * b for a, b in zip(m["pa"]["coef"], z))
+    cdf = lambda x: 0.5 * (1 + math.erf((x - pa) / (m["pa_sd"] * math.sqrt(2))))
+    tier = sum((cdf(hi + 0.5) - cdf(lo - 0.5 if lo > 0 else -99)) * W_["pa"].get(k, 0) for lo, hi, k in m["tiers"])
+    return max(0.0, W_["sack"] * part["y_sack"] + W_["int"] * part["y_int"] + W_["fr"] * part["y_fr"] + W_["td"] * part["y_td"] + W_["sfb"] * part["y_sfb"] + tier)
+def _dk_k_raw(team, w):
+    f = dk_feats(team, w)
+    if not f or not DK:
+        return None
+    m = DK["k"]; z = _dk_z(m, f)
+    return max(0.0, m["icpt"] + sum(a * b for a, b in zip(m["coef"], z)))
 def k_proj(p, w):
     """Kickers: own team's Vegas expected score + a little of his own average (2022-25 backtest)."""
     if not opp(p, w):
         return None
+    if DK:
+        k_ = dk_k(p["nfl"], w)
+        if k_ is not None:
+            return k_
     it = ((LINES.get(w) or {}).get(p["nfl"]) or {}).get("it") or OPP_IT.get(p["nfl"])
     if it is None:
         return None
@@ -664,6 +742,10 @@ def dst_proj(p, w):
     g = opp(p, w)
     if not g or g == "?":
         return None
+    if DK:
+        d_ = dk_dst(p["nfl"], w)
+        if d_ is not None:
+            return d_
     o = g.lstrip("@")
     it = ((LINES.get(w) or {}).get(o) or {}).get("it") or OPP_IT.get(o)
     if it is None:
