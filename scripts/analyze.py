@@ -1656,21 +1656,22 @@ swing.sort(key=lambda x: x["change_pts"])
 nw = max(1, len([w for w in WKS if w > CUR]))
 ranks = []
 for n, p in P.items():
-    if p["pos"] not in SKILL:
+    if p["pos"] not in SKILL + ("D", "K"):
         continue
     o = TNAME.get(p["t"], "Free agent")
-    ranks.append({"player": n, "pos": p["pos"], "nfl": p["nfl"], "owner": "You" if p["t"] == ME else o, "ros_ppg": r1(ros_pg(n)),
+    ranks.append({"player": n, "wk_pts": r1(ev(n, CUR)), "opp_now": opp(p, CUR) or "BYE", "pos": p["pos"], "nfl": p["nfl"], "owner": "You" if p["t"] == ME else o, "ros_ppg": r1(ros_pg(n)),
                   "reg_pts": r1(reg_pts(n)), "playoff_pts": r1(po_pts(n)), "opp16": opp(p, SEMI) or "BYE", "rank16": opp_rank(p, SEMI),
                   "opp17": opp(p, FINAL) or "BYE", "rank17": opp_rank(p, FINAL), "recent": V[n]["recent"], "status": p["inj"],
                   "value": PROF.get(n, {}).get("value"), "my_value": PROF.get(n, {}).get("my_value"),
                   "xfp": PROF.get(n, {}).get("xfp"), "fpoe": PROF.get(n, {}).get("fpoe"), "trend": PROF.get(n, {}).get("trend"),
                   "sos_ros": PROF.get(n, {}).get("sos_ros_label"), "sos_po": PROF.get(n, {}).get("sos_po_label"), "own_chg": p.get("own_chg")})
-for pos in SKILL:
+for pos in SKILL + ("D", "K"):
     L = [x for x in ranks if x["pos"] == pos]
+    for i, x in enumerate(sorted(L, key=lambda x: -x["wk_pts"])): x["wk_n"] = i + 1
     for i, x in enumerate(sorted(L, key=lambda x: -x["ros_ppg"])): x["ros_n"] = i + 1
     for i, x in enumerate(sorted(L, key=lambda x: -x["playoff_pts"])): x["po_n"] = i + 1
-lim = {"QB": 20, "TE": 20, "RB": 45, "WR": 55}
-ranks = [x for x in ranks if x["ros_n"] <= lim[x["pos"]] or x["po_n"] <= lim[x["pos"]] or x["owner"] == "You"]
+lim = {"QB": 20, "TE": 20, "RB": 45, "WR": 55, "D": 32, "K": 32}
+ranks = [x for x in ranks if x["ros_n"] <= lim[x["pos"]] or x["po_n"] <= lim[x["pos"]] or x.get("wk_n", 99) <= lim[x["pos"]] or x["owner"] == "You"]
 ranks.sort(key=lambda x: -x["playoff_pts"])
 
 

@@ -616,17 +616,17 @@ function renderRanks() {
   setTimeout(() => { const old = document.getElementById('rmore'); if (old) old.remove(); const b = moreBtn('ranks', allRows.length, renderRanks); if (b) { b.id = 'rmore'; $('#rtable').closest('.tw').after(b); } }, 0);
   const sosC = v => v === 'Easy' ? 'pos' : v === 'Tough' ? 'neg' : '';
   table($('#rtable'), [
-    { k: 'player', h: 'Player', l: 1, f: r => h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(r.player, r.nfl, r.pos, r.value, 26), pl(r.player)) }, { k: 'tier', h: 'Tier', l: 1, sv: r => ['common', 'uncommon', 'rare', 'epic', 'legendary'].indexOf(TIERS[r.player]), f: r => tierEl(r.player) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'owner', h: 'Team', l: 1 },
+    { k: 'player', h: 'Player', l: 1, f: r => h('span', { style: 'display:inline-flex;gap:8px;align-items:center' }, avatar(r.player, r.nfl, r.pos, r.value, 26), pl(r.player)) }, { k: 'wk_pts', h: 'This week', t: 'Projected points this week', f: r => r.wk_pts == null ? '—' : h('span', { style: 'white-space:nowrap' }, h('b', {}, f1(r.wk_pts)), ' ', h('span', { class: 'mut', style: 'font-size:12px' }, r.opp_now && r.opp_now !== 'BYE' ? r.opp_now : 'BYE')) }, { k: 'tier', h: 'Tier', l: 1, sv: r => ['common', 'uncommon', 'rare', 'epic', 'legendary'].indexOf(TIERS[r.player]), f: r => tierEl(r.player) }, { k: 'pos', h: 'Pos', l: 1 }, { k: 'owner', h: 'Team', l: 1 },
     { k: 'value', h: 'Trade value', t: '0-100. Points over a replacement starter for the rest of the season, adjusted for usage trend', f: r => r.value == null ? '—' : r.value },
     { k: 'my_value', h: 'Value to you', t: '0-100. Same idea but weighted to the playoff weeks you will actually play', f: r => r.my_value == null ? '—' : r.my_value },
-    { k: 'po_n', h: 'Playoff rk', sv: r => -r.po_n, f: r => r.pos + r.po_n }, { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) },
-    { k: 'ros_n', h: 'ROS rk', sv: r => -r.ros_n, f: r => r.pos + r.ros_n }, { k: 'ros_ppg', h: 'Pts/wk rest of yr', f: r => f1(r.ros_ppg) },
+    { k: 'wk_n', h: 'Week rk', sv: r => -(r.wk_n || 99), f: r => r.wk_n ? (r.pos === 'D' ? 'DST' : r.pos) + r.wk_n : '—' }, { k: 'po_n', h: 'Playoff rk', sv: r => -r.po_n, f: r => (r.pos === 'D' ? 'DST' : r.pos) + r.po_n }, { k: 'playoff_pts', h: 'Playoff pts', f: r => f1(r.playoff_pts) },
+    { k: 'ros_n', h: 'ROS rk', sv: r => -r.ros_n, f: r => (r.pos === 'D' ? 'DST' : r.pos) + r.ros_n }, { k: 'ros_ppg', h: 'Pts/wk rest of yr', f: r => f1(r.ros_ppg) },
     { k: 'xfp', h: 'xFP/g', t: 'Expected fantasy points per game from usage (this league\'s scoring)', f: r => f1(r.xfp) },
     { k: 'fpoe', h: 'Luck', t: 'Actual minus expected points per game. Big plus = running hot, may cool off. Big minus = due to bounce back.', f: r => sgn(r.fpoe), c: r => r.fpoe > 2 ? 'neg' : r.fpoe < -2 ? 'pos' : '' },
     { k: 'trend', h: 'Usage trend', t: 'Last 3 games touches+targets vs season average', f: r => r.trend == null ? '—' : (r.trend > 1 ? '▲ ' : r.trend < 1 ? '▼ ' : '') + Math.round((r.trend - 1) * 100) + '%', c: r => r.trend > 1.08 ? 'pos' : r.trend < 0.92 ? 'neg' : '' },
     { k: 'sos_ros', h: 'Sched ROS', l: 1, c: r => sosC(r.sos_ros) }, { k: 'sos_po', h: 'Sched playoffs', l: 1, c: r => sosC(r.sos_po) },
     { k: 'opp16', h: 'Semis', l: 1 }, { k: 'opp17', h: 'Final', l: 1 }
-  ], rows, { rowClass: r => r.owner === 'You' ? 'me' : '', sort: { k: RK.sort === 'po' ? 'playoff_pts' : RK.sort === 'val' ? 'value' : 'ros_ppg', d: -1 }, onRow: r => openCard(r.player) });
+  ], rows, { rowClass: r => r.owner === 'You' ? 'me' : '', sort: { k: RK.sort === 'wk' ? 'wk_pts' : RK.sort === 'po' ? 'playoff_pts' : RK.sort === 'val' ? 'value' : 'ros_ppg', d: -1 }, onRow: r => openCard(r.player) });
 }
 seg('rpos', v => { RK.pos = v; renderRanks(); }); seg('rsort', v => { RK.sort = v; renderRanks(); });
 $('#rq').addEventListener('input', e => { RK.q = e.target.value; renderRanks(); }); $('#faonly').addEventListener('change', e => { RK.fa = e.target.checked; renderRanks(); });
