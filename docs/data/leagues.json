@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-21T18:40:18Z",
+   "at": "2026-11-21T19:08:08Z",
    "champ_pct": 19.5,
    "todo": [
     {
@@ -21,13 +21,6 @@
      "title": "Toss-up at TE: Brock Bowers or Michael Mayer",
      "detail": "Brock Bowers 6.8 vs Michael Mayer 7.7. Starting Michael Mayer raises your chance to beat BO liever from 49% to 50%.",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Michael Mayer + Seth McGowan for Omar Cooper Jr. (JELQING MY KING JD5)",
-     "detail": "Title odds +1.7%. Would you do Michael Mayer and Seth McGowan for Omar Cooper Jr.? I think you get depth for injuries and byes down the stretch, and Cooper is just sitting on your bench.",
-     "tab": "trades"
     }
    ]
   },
@@ -36,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-21T18:40:41Z",
+   "at": "2026-11-21T19:08:33Z",
    "champ_pct": 14.8,
    "todo": [
     {
@@ -50,7 +43,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Bears D/ST",
-     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.2%.",
+     "detail": "Real upgrade: about +2.0 pts a week in your lineup the rest of the way, title odds +2.5%.",
      "tab": "waivers"
     },
     {
@@ -67,8 +60,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-21T18:40:51Z",
-   "champ_pct": 3.2,
+   "at": "2026-11-21T19:08:45Z",
+   "champ_pct": 3.3,
    "todo": [
     {
      "urgent": true,
@@ -79,9 +72,16 @@
     },
     {
      "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Buccaneers D/ST, drop Ravens D/ST",
+     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
+     "tab": "waivers"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Carnell Tate or David Montgomery",
-     "detail": "Carnell Tate 10.1 vs David Montgomery 9.8. Carnell Tate is 87% to play, so if he's ruled out, David Montgomery is your guy.",
+     "detail": "Carnell Tate 10.2 vs David Montgomery 9.8. Carnell Tate is 87% to play, so if he's ruled out, David Montgomery is your guy.",
      "tab": "home"
     }
    ]
@@ -91,7 +91,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-21T18:40:30Z",
+   "at": "2026-11-21T19:08:21Z",
    "champ_pct": 36.2,
    "todo": [
     {
@@ -105,7 +105,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.1%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
