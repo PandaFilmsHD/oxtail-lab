@@ -67,8 +67,9 @@ def _webpush(title, body, url, tag, alert=None):
     ok = False
     for sub in subs:
         try:
-            webpush(subscription_info=sub, data=_payload(title, body, url, tag, alert),
-                    vapid_private_key=vk, vapid_claims={"sub": "mailto:oxtail-bot@users.noreply.github.com"}, ttl=3600)
+            r_ = webpush(subscription_info=sub, data=_payload(title, body, url, tag, alert),
+                         vapid_private_key=vk, vapid_claims={"sub": "mailto:oxtail-bot@users.noreply.github.com"}, ttl=3600)
+            print("notify: push accepted by", (sub.get("endpoint") or "")[8:30], getattr(r_, "status_code", ""))
             ok = True
         except WebPushException as e:
             print("notify: web push failed", getattr(e.response, "status_code", ""), str(e)[:120])

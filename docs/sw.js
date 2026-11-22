@@ -1,5 +1,5 @@
 // Oxtail Lab service worker: always try the network first (fresh odds), fall back to the last saved copy when offline.
-const CACHE = 'oxtail-v32';
+const CACHE = 'oxtail-v33';
 const ACACHE = 'oxtail-alerts';   // full alert reports that came inside the push
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'index.html', 'style.css', 'app.js', 'chat.js', 'manifest.webmanifest', 'icons/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== ACACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
@@ -14,8 +14,10 @@ self.addEventListener('fetch', e => {
 // phone alerts sent straight from GitHub (web push): show it, and open Oxtail when tapped
 self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (x) { d = { title: 'Oxtail', body: e.data ? e.data.text() : '' }; }
-  const save = d.alert ? caches.open(ACACHE).then(c => c.put('alert-' + d.alert.id, new Response(JSON.stringify(d.alert), { headers: { 'Content-Type': 'application/json' } }))) : Promise.resolve();
-  e.waitUntil(save.then(() => self.registration.showNotification(d.title || 'Oxtail', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag, data: { url: d.url || './', alert: d.alert || null } })));
+  // show the notification first, always; saving the report is a bonus that must never block it (iOS punishes pushes that show nothing)
+  const show = self.registration.showNotification(d.title || 'Oxtail', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag, data: { url: d.url || './', alert: d.alert || null } });
+  const save = d.alert ? caches.open(ACACHE).then(c => c.put('alert-' + d.alert.id, new Response(JSON.stringify(d.alert), { headers: { 'Content-Type': 'application/json' } }))).catch(() => {}) : Promise.resolve();
+  e.waitUntil(Promise.all([show, save]));
 });
 self.addEventListener('notificationclick', e => {
   e.notification.close();
