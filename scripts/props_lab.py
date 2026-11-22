@@ -1296,6 +1296,17 @@ def main():
         b_[2] = round(b_[2], 2)
     for k in rec["weeks"]:
         rec["weeks"][k][2] = round(rec["weeks"][k][2], 2)
+    kal_bets = []   # every Kalshi buy, every week, for the tappable list on the Record tab
+    for w_, pk in PK.items():
+        for k, x in pk.items():
+            if not k.startswith("KA|"):
+                continue
+            c_ = ((x.get("cost") or 0) + (x.get("fee") or 0)) / 100
+            st = "open" if not x.get("graded") else "push" if x.get("result") is None else "won" if x["result"] else "lost"
+            u_ = (1 / c_ - 1) if st == "won" and c_ > 0 else -1 if st == "lost" else 0
+            kal_bets.append({"week": w_, "label": x.get("label"), "cost": x.get("cost"), "fee": x.get("fee"), "p": x.get("p"), "edge": x.get("edge"),
+                             "ev": x.get("ev"), "kick": x.get("kick"), "type": x.get("type"), "actual": x.get("actual"), "status": st, "u": round(u_, 3)})
+    kal_bets.sort(key=lambda b: (b["kick"] or "", b["label"] or ""))
     graded = [dict(x, week=w_) for w_, pk in PK.items() for k, x in pk.items() if x.get("graded") and not x.get("auto")]
     rec["auto_open"] = {"games": sum(1 for k, x in wk.items() if k.startswith("GA|") and x.get("tier") == "bet" and not x.get("graded")),
                         "props": sum(1 for k, x in wk.items() if k.startswith("PA|") and x.get("tier") == "bet" and not x.get("graded"))}
@@ -1349,7 +1360,7 @@ def main():
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),
            "props": [x for x in props if x["grade"]][:80], "all_props": len(props),
-           "record": rec, "recent": sorted(graded, key=lambda x: (x["week"], x.get("kick") or ""), reverse=True)[:40],
+           "record": rec, "kalshi_bets": kal_bets, "recent": sorted(graded, key=lambda x: (x["week"], x.get("kick") or ""), reverse=True)[:40],
            "backtest": {"ats_model": "49 to 51% against the closing spread 2020-25 (need 52.4% to profit at -110)", "line_mae": 9.8, "model_mae": 10.3,
                         "angles": ANG}}
     # phone alerts: news plays (lines older than the injury) + a weekly "lines are in" digest

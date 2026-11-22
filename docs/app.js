@@ -953,6 +953,37 @@ function whyOf(label) {   // reasons for a parlay leg / longshot, looked up by p
   if (g) { const w = gameWhy(g); if (/moneyline|alt spread| by /.test(label)) w.push(`🎯 This leg in the sims: ${label}. The sims use real past games with a similar spread, so 3 and 7 point finishes are as common as they really are.`); return w; }
   return null;
 }
+// ---------- Kalshi bets list (tap the Kalshi row on Record) ----------
+let KW = null, KF = 'all', KS = 'kick';
+function openKalshi() {
+  const B = (PLD && PLD.kalshi_bets) || [];
+  const weeks = [...new Set(B.map(b => b.week))].sort((a, b) => +a - +b);
+  if (KW == null || (KW !== 'all' && !weeks.includes(KW))) KW = weeks.includes(String(PLD.week)) ? String(PLD.week) : (weeks[weeks.length - 1] || 'all');
+  const body = h('div', { class: 'asbody' }), sub = h('div', { class: 'sub', style: 'margin:2px 0 0;font-size:12px' });
+  const m = h('div', { class: 'modal asheetwrap', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'asheet', style: 'max-height:86vh' },
+    h('div', { class: 'ashead' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'astitle' }, '💸 Kalshi buys'), sub),
+      h('button', { class: 'asx', 'aria-label': 'Close', onclick: () => m.remove() }, '×')), body));
+  const chips = (opts, cur, set) => h('div', { class: 'seg kseg' }, ...opts.map(([v, t]) => h('button', { class: v === cur ? 'on' : '', onclick: () => { set(v); draw(); } }, t)));
+  const when = k => k ? new Date(k).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+  function draw() {
+    const inW = B.filter(b => KW === 'all' || b.week === KW);
+    const L = inW.filter(b => KF === 'all' || b.status === KF);
+    const srt = { kick: (a, b) => (a.kick || '').localeCompare(b.kick || ''), edge: (a, b) => (b.edge || 0) - (a.edge || 0), profit: (a, b) => (b.u || 0) - (a.u || 0), chance: (a, b) => (b.p || 0) - (a.p || 0) }[KS];
+    L.sort(srt);
+    const n = st => inW.filter(b => b.status === st).length, u = inW.reduce((t, b) => t + (b.u || 0), 0);
+    sub.textContent = `${KW === 'all' ? 'All weeks' : 'Week ' + KW}: ${n('won')}-${n('lost')}${n('push') ? '-' + n('push') : ''}, ${u >= 0 ? '+' : '-'}${usd(Math.abs(u))}, ${n('open')} open. 1 unit (${usd(1)}) each at the real share price.`;
+    body.replaceChildren(
+      chips([...weeks.map(w => [w, (w === String(PLD.week) ? 'This wk ' : 'Wk ') + w]), ['all', 'All']], KW, v => KW = v),
+      chips([['all', `All ${inW.length}`], ['open', `Open ${n('open')}`], ['won', `Won ${n('won')}`], ['lost', `Lost ${n('lost')}`]], KF, v => KF = v),
+      chips([['kick', 'Kickoff'], ['edge', 'Edge'], ['chance', 'Chance'], ['profit', 'Profit']], KS, v => KS = v),
+      L.length ? h('div', { class: 'leglist' }, ...L.map(b => h('div', { class: 'legpick kbet' },
+        h('span', { class: 'tag ' + ({ won: 'real', lost: 'lost', open: 'no', push: 'no' })[b.status] }, b.status.toUpperCase()),
+        h('span', { class: 'll' }, h('b', {}, b.label || '?'), h('div', { class: 'k' }, `${b.cost}¢ · we had ${Math.round(b.p)}% · edge ${b.edge}${b.actual != null ? ` · had ${b.actual}` : ''} · ${KW === 'all' ? 'Wk ' + b.week + ' ' : ''}${when(b.kick)}`)),
+        h('b', { class: b.status === 'won' ? 'pos' : b.status === 'lost' ? 'neg' : 'mut', style: 'white-space:nowrap' }, b.status === 'won' ? '+' + usd(b.u) : b.status === 'lost' ? '-' + usd(1) : b.status === 'push' ? '$0' : 'pays ' + usd(1 / ((b.cost + (b.fee || 0)) / 100) - 1)))))
+        : h('div', { class: 'box mut' }, B.length ? 'No bets here.' : 'The bet list shows up after the next update (about 10 minutes).'));
+  }
+  draw(); document.body.append(m);
+}
 function openWhy(title, lines, sub) {
   const m = h('div', { class: 'modal asheetwrap', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'asheet' },
     h('div', { class: 'ashead' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'astitle' }, title), sub ? h('div', { class: 'sub', style: 'margin:2px 0 0;font-size:12px' }, sub) : ''),
@@ -1192,12 +1223,12 @@ async function renderProps() {
       row('Player props', R.props || [0, 0, 0]), row('Game lines', R.games || [0, 0, 0]),
       h('h3', { style: 'margin-top:14px' }, '🧾 Every-bet tracker'), h('p', { class: 'sub', style: 'margin:0 0 8px' }, `Pretend 1 unit (${usd(1)}) on every bet the sims like more than the market, at what a share would cost on DraftKings Predictions or Kalshi (the market's chance plus about 1¢ and the fee), 60¢ or less. Only bets that still come out ahead after that price count.${R.auto_open ? ` Open this week: ${R.auto_open.games} game bets, ${R.auto_open.props} props.` : ''}`),
       row('All game lines', R.auto_games || [0, 0, 0]), row('All props', R.auto_props || [0, 0, 0]),
-      row(`💸 Kalshi buys (real prices${R.kalshi_open ? `, ${R.kalshi_open} open` : ''})`, R.kalshi || [0, 0, 0]),
+      (() => { const r_ = row(`💸 Kalshi buys (real prices${R.kalshi_open ? `, ${R.kalshi_open} open` : ''}) ›`, R.kalshi || [0, 0, 0]); r_.style.cursor = 'pointer'; r_.classList.add('tap'); r_.onclick = openKalshi; return r_; })(),
       ...Object.entries(R.tracker || {}).map(([n, s]) => h('div', { class: 'pathrow', style: 'cursor:default' }, h('span', { class: 'pn' }, n), h('span', {}, `${s.w}-${s.l}${s.push ? '-' + s.push : ''}${s.open ? ` (${s.open} open)` : ''}`),
         h('span', { class: 'k' }, s.roi != null ? `ROI ${s.roi}% ±${s.roi_se}` : ''), h('b', { class: (s.clv_ev || 0) >= 0 ? 'pos' : 'neg' }, s.clv_n ? `CLV ${s.clv_ev}% ±${s.clv_se} (${s.clv_n})` : ''))),
       h('div', { class: 'k', style: 'margin-top:10px' }, `Backtest: ${PLD.backtest.ats_model}. The closing line missed by ${PLD.backtest.line_mae} pts on average vs ${PLD.backtest.model_mae} for a ratings model, so game sims start from the line.`)),
       h('div', { class: 'leglist', style: 'margin-top:12px' }, ...(PLD.recent || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'tag ' + (x.void || x.result == null ? 'no' : x.result ? 'real' : 'stretch') }, x.void ? 'VOID' : x.result == null ? 'PUSH' : x.result ? 'WIN' : 'LOSS'),
-        h('span', { class: 'll' }, x.pick ? `Wk ${x.week} ${x.game}: ${x.pick}` : x.label ? `Wk ${x.week} 💸 ${x.away && x.home ? x.away + ' @ ' + x.home + ': ' : ''}${x.label}${x.side && x.side !== 'Yes' ? ' (' + x.side + ')' : ''}${x.cost ? ` at ${x.cost}¢` : ''}` : `Wk ${x.week} ${x.player || ''} ${x.side || ''} ${x.line ?? ''} ${(x.market || '').toLowerCase()}${x.actual != null ? ` (had ${x.actual})` : ''}`)))),
+        h('span', { class: 'll' }, x.pick ? `Wk ${x.week} ${x.game}: ${x.pick}` : x.label ? `Wk ${x.week} 💸 ${x.away && x.home ? x.away + ' @ ' + x.home + ': ' : ''}${x.label}${x.cost ? ` at ${x.cost}¢` : ''}` : `Wk ${x.week} ${x.player || ''} ${x.side || ''} ${x.line ?? ''} ${(x.market || '').toLowerCase()}${x.actual != null ? ` (had ${x.actual})` : ''}`)))),
       !(PLD.recent || []).length ? h('div', { class: 'box mut' }, 'No graded picks yet. This week\'s picks get graded after the games.') : ''];
   }
   body.replaceChildren(...out.filter(Boolean));
