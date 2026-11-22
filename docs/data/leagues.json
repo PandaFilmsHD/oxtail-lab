@@ -5,15 +5,15 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-22T18:38:34Z",
-   "champ_pct": 19.3,
+   "at": "2026-11-22T18:48:00Z",
+   "champ_pct": 19.1,
    "todo": [
     {
      "urgent": false,
-     "icon": "\u2705",
-     "title": "You're all set this week",
-     "detail": "Lineup is full, no must-have waiver claims, no trade worth forcing.",
-     "tab": "home"
+     "icon": "\ud83d\udce5",
+     "title": "Claim Darren Waller, drop Michael Mayer",
+     "detail": "Real upgrade: about +1.3 pts a week in your lineup the rest of the way.",
+     "tab": "waivers"
     }
    ]
   },
@@ -22,8 +22,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T18:38:53Z",
-   "champ_pct": 17.1,
+   "at": "2026-11-22T18:48:21Z",
+   "champ_pct": 17.0,
    "todo": [
     {
      "urgent": false,
@@ -46,7 +46,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T18:39:02Z",
+   "at": "2026-11-22T18:48:31Z",
    "champ_pct": 4.3,
    "todo": [
     {
@@ -63,14 +63,14 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T18:38:43Z",
-   "champ_pct": 36.5,
+   "at": "2026-11-22T18:48:11Z",
+   "champ_pct": 36.6,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Zay Flowers for Dak Prescott (Tyler's Talented Team)",
-     "detail": "Title odds +1.7%. Would you do Zay Flowers for Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and you're deep at QB so you can cover Prescott's spot.",
+     "detail": "Title odds +1.8%. Would you do Zay Flowers for Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and you're deep at QB so you can cover Prescott's spot.",
      "tab": "trades"
     },
     {
