@@ -24,6 +24,7 @@ SITE = "https://pandafilmshd.github.io/oxtail-lab/"
 HOOK = {c: os.environ.get(f"DISCORD_{c}", "").strip() for c in ("BEST", "PARLAYS", "KALSHI", "RESULTS", "RECEIPTS")}
 LEAD_MIN = 100          # post a window this many minutes before kickoff (runs are 10 to 30 min apart)
 MAX_BEST, MAX_KAL = 5, 5
+PING_EV, PING_EDGE, PING_PER_DAY = 15.0, 6.0, 3   # @everyone only for big Kalshi edges, at most 3 a day
 PROP_EDGE, GAME_EDGE, KAL_EDGE = 3.5, 2.5, 4.0   # strict: below this it doesn't make the channel
 COLORS = dict(best=0x5B7CFF, parlay=0xFFC83D, kalshi=0x3DDC84, win=0x3DDC84, loss=0xFF5A6E, receipt=0x8A8FB8, push=0x8A8FB8)
 
@@ -59,13 +60,13 @@ def usd(u):
     return f"{'+' if v >= 0 else '-'}${abs(v):,.2f}".replace(".00", "")
 
 
-def post(ch, content=None, embeds=None, file=None):
+def post(ch, content=None, embeds=None, file=None, ping=False):
     """Send to one channel. Returns True on success. Quietly skips channels with no webhook set."""
     url = HOOK.get(ch)
     if not url or not url.startswith("https://"):
         print(f"discord: {ch} webhook not set, skipping")
         return False
-    body = {"allowed_mentions": {"parse": []}}
+    body = {"allowed_mentions": {"parse": ["everyone"] if ping else []}}
     if content:
         body["content"] = content[:1990]
     if embeds:
@@ -241,6 +242,37 @@ def kalshi(S, PLD, wk, now):
             S["kal_done"][k] = now.isoformat()
             for x in L:
                 posted[f"KA|{x['ticker']}|{x['side']}"] = dict(week=str(wk), ch="kalshi", text=x["label"], cost=x["cost"], fee=x.get("fee") or 0, units=1, kick=k, at=now.isoformat())
+
+
+def big_edges(S, PLD, wk, now):
+    """@everyone when Kalshi has a share priced well under our chance. Any time before kickoff, max 3 a day, one per player."""
+    K = PLD.get("kalshi") or {}
+    day = now.astimezone(PT).strftime("%Y-%m-%d")
+    pinged = S.setdefault("pinged", {})
+    today = [v for v in pinged.values() if v.get("day") == day]
+    if len(today) >= PING_PER_DAY:
+        return
+    seen_players = {v.get("who") for v in pinged.values() if v.get("week") == str(wk)}
+    L = [x for x in (K.get("buys") or []) + (K.get("safe") or []) if x.get("ticker") and (x.get("ev") or 0) >= PING_EV and (x.get("edge") or 0) >= PING_EDGE
+         and x.get("kick") and iso(x["kick"]) - now > datetime.timedelta(minutes=10)]
+    L = one_per(L, lambda x: x.get("player") or x.get("game") or x["label"], lambda x: x.get("ev") or 0)
+    L = [x for x in L if f"KA|{x['ticker']}|{x['side']}" not in pinged and (x.get("player") or x.get("game")) not in seen_players]
+    L.sort(key=lambda x: -(x.get("ev") or 0))
+    posted = S.setdefault("posted", {})
+    for x in L[:PING_PER_DAY - len(today)]:
+        fee = x.get("fee") or 0
+        cap = int(x["p"] - fee - 1)   # still worth buying up to about this price
+        who = x.get("player")
+        line = (f"Our sims ran this game 50,000 times and this hits **{round(x['p'])}%** of the time, but Kalshi is selling it at **{x['cost']}¢**, like it's only a {x['cost']}% shot. "
+                f"That's **+{x['ev']}% EV**: every $1 in is worth about ${1 + x['ev'] / 100:.2f} on average.")
+        why = [trim(l) for l in (x.get("why") or []) if l.startswith(("🧮", "⬆️", "⬇️", "📈"))][:3]
+        e = {"title": f"🚨 +{x['ev']}% EV on Kalshi: {x['label']}", "color": 0xFF5A6E,
+             "description": line + "\n\n" + f"👉 Buy **{x['side']}** at **{x['cost']}¢**, worth it up to **{cap}¢**. Pays {usd(1 / ((x['cost'] + fee) / 100) - 1)} on {usd(1)[1:]}.\n🕒 Kickoff {pt(x['kick'])} PT" + ("\n\n" + "\n".join(why) if why else ""),
+             "footer": {"text": "Prices move fast. If it's above the max price, skip it. Locked in #receipts."}}
+        if post("KALSHI", content=f"@everyone **+{x['ev']}% EV** on Kalshi 🚨", embeds=[e], ping=True):
+            kk = f"KA|{x['ticker']}|{x['side']}"
+            pinged[kk] = {"day": day, "week": str(wk), "who": who or x.get("game"), "at": now.isoformat()}
+            posted.setdefault(kk, dict(week=str(wk), ch="kalshi", text=x["label"], cost=x["cost"], fee=fee, units=1, kick=x["kick"], at=now.isoformat()))
 
 
 def parlays(S, PLD, now):
@@ -466,7 +498,7 @@ def main():
             backfill(S, PK, wk, now)
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
-    for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, wk, now),
+    for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, wk, now), lambda: big_edges(S, PLD, wk, now),
                  lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD)):
         try:
             step()
