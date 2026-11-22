@@ -130,7 +130,7 @@ def receipts(S, PK, wk, now):
         return
     rows = sorted(new.items(), key=lambda kv: (kv[1]["kick"], kv[1]["kind"], kv[1]["text"]))
     buf = io.StringIO(); w = csv.writer(buf)
-    w.writerow(["week", "kickoff_utc", "type", "pick", "price", "model_pct", "edge", "locked_at_utc", "id"])
+    w.writerow(["week", "kickoff_utc", "type", "pick", "price", "model_pct", "edge_pct_pts", "locked_at_utc", "id"])
     for k, v in rows:
         w.writerow([wk, v["kick"], v["kind"], v["text"], v["price"], v["p"], v["edge"], v.get("at") or now.isoformat(timespec="seconds"), k])
     data = buf.getvalue().encode()
@@ -177,7 +177,7 @@ def best_bets(S, PLD, PK, wk, now):
         if cands:
             lines = []
             for c in cands:
-                lines.append(f"{c['icon']} **{c['text']}** ({am(c['price'])})\n> {round(c['p'])}% in 50,000 sims · edge {c['edge']} · {c['units']}u ({usd(c['units'])[1:]})" +
+                lines.append(f"{c['icon']} **{c['text']}** ({am(c['price'])})\n> {round(c['p'])}% in 50,000 sims · +{c['edge']}% edge · {c['units']}u ({usd(c['units'])[1:]})" +
                              "".join(f"\n> {w}" for w in c["why"]))
             e = {"title": f"🎯 Best bets · {pt(k)} PT", "description": f"*{names}*\n\n" + "\n\n".join(lines), "color": COLORS["best"],
                  "footer": {"text": f"Only take it at this price or better. 1u = ${UNIT:.0f}. Receipts in #receipts."}, "url": SITE + "#lab"}
@@ -201,7 +201,7 @@ def kalshi(S, PLD, wk, now):
         L = L[:MAX_KAL]
         if not L:
             S["kal_done"][k] = now.isoformat(); continue   # quiet when there's nothing; no need for a pass post here
-        lines = [f"💸 **{x['label']}** · buy **{x['side']}** at **{x['cost']}¢** or less\n> we have it {round(x['p'])}% · edge {x['edge']} · pays {usd(1 / ((x['cost'] + (x.get('fee') or 0)) / 100) - 1)} on {usd(1)[1:]}" for x in L]
+        lines = [f"💸 **{x['label']}** · buy **{x['side']}** at **{x['cost']}¢** or less\n> we have it {round(x['p'])}% · +{x['edge']}% edge · +{x.get('ev')}% EV · pays {usd(1 / ((x['cost'] + (x.get('fee') or 0)) / 100) - 1)} on {usd(1)[1:]}" for x in L]
         e = {"title": f"💸 Kalshi buys · {pt(k)} PT", "description": "\n\n".join(lines), "color": COLORS["kalshi"],
              "footer": {"text": "Only buy if a share costs less than our chance (in cents). Prices move fast."}}
         if post("KALSHI", embeds=[e]):
@@ -309,7 +309,7 @@ def backfill(S, PK, wk, now):
     if not past:
         S["backfilled"].append(str(wk)); return
     buf = io.StringIO(); w = csv.writer(buf)
-    w.writerow(["week", "kickoff_utc", "type", "pick", "price", "model_pct", "edge", "locked_at_utc", "id"])
+    w.writerow(["week", "kickoff_utc", "type", "pick", "price", "model_pct", "edge_pct_pts", "locked_at_utc", "id"])
     for k, v in past:
         w.writerow([wk, v["kick"], v["kind"], v["text"], v["price"], v["p"], v["edge"], v.get("at") or "", k])
     data = buf.getvalue().encode(); fp = hashlib.sha256(data).hexdigest()

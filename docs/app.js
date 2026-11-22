@@ -971,14 +971,14 @@ function openKalshi() {
     const srt = { kick: (a, b) => (a.kick || '').localeCompare(b.kick || ''), edge: (a, b) => (b.edge || 0) - (a.edge || 0), profit: (a, b) => (b.u || 0) - (a.u || 0), chance: (a, b) => (b.p || 0) - (a.p || 0) }[KS];
     L.sort(srt);
     const n = st => inW.filter(b => b.status === st).length, u = inW.reduce((t, b) => t + (b.u || 0), 0);
-    sub.textContent = `${KW === 'all' ? 'All weeks' : 'Week ' + KW}: ${n('won')}-${n('lost')}${n('push') ? '-' + n('push') : ''}, ${u >= 0 ? '+' : '-'}${usd(Math.abs(u))}, ${n('open')} open. 1 unit (${usd(1)}) each at the real share price.`;
+    sub.textContent = `${KW === 'all' ? 'All weeks' : 'Week ' + KW}: ${n('won')}-${n('lost')}${n('push') ? '-' + n('push') : ''}, ${u >= 0 ? '+' : '-'}${usd(Math.abs(u))}, ${n('open')} open. 1 unit (${usd(1)}) each at the real share price. Edge = our chance minus the market's. EV = expected profit per $1 after the fee.`;
     body.replaceChildren(
       chips([...weeks.map(w => [w, (w === String(PLD.week) ? 'This wk ' : 'Wk ') + w]), ['all', 'All']], KW, v => KW = v),
       chips([['all', `All ${inW.length}`], ['open', `Open ${n('open')}`], ['won', `Won ${n('won')}`], ['lost', `Lost ${n('lost')}`]], KF, v => KF = v),
       chips([['kick', 'Kickoff'], ['edge', 'Edge'], ['chance', 'Chance'], ['profit', 'Profit']], KS, v => KS = v),
       L.length ? h('div', { class: 'leglist' }, ...L.map(b => h('div', { class: 'legpick kbet' },
         h('span', { class: 'tag ' + ({ won: 'real', lost: 'lost', open: 'no', push: 'no' })[b.status] }, b.status.toUpperCase()),
-        h('span', { class: 'll' }, h('b', {}, b.label || '?'), h('div', { class: 'k' }, `${b.cost}¢ · we had ${Math.round(b.p)}% · edge ${b.edge}${b.actual != null ? ` · had ${b.actual}` : ''} · ${KW === 'all' ? 'Wk ' + b.week + ' ' : ''}${when(b.kick)}`)),
+        h('span', { class: 'll' }, h('b', {}, b.label || '?'), h('div', { class: 'k' }, `${b.cost}¢ · we had ${Math.round(b.p)}% · +${b.edge}% edge${b.ev != null ? ` · ${b.ev >= 0 ? '+' : ''}${b.ev}% EV` : ''}${b.actual != null ? ` · had ${b.actual}` : ''} · ${KW === 'all' ? 'Wk ' + b.week + ' ' : ''}${when(b.kick)}`)),
         h('b', { class: b.status === 'won' ? 'pos' : b.status === 'lost' ? 'neg' : 'mut', style: 'white-space:nowrap' }, b.status === 'won' ? '+' + usd(b.u) : b.status === 'lost' ? '-' + usd(1) : b.status === 'push' ? '$0' : 'pays ' + usd(1 / ((b.cost + (b.fee || 0)) / 100) - 1)))))
         : h('div', { class: 'box mut' }, B.length ? 'No bets here.' : 'The bet list shows up after the next update (about 10 minutes).'));
   }
