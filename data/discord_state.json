@@ -262,6 +262,11 @@
   "2026-11-22": "2026-11-22T22:30:21.610681+00:00",
   "2026-11-23": "2026-11-22T22:30:21.610681+00:00"
  },
+ "parlay_rec": {
+  "l": 0,
+  "u": 0.0,
+  "w": 0
+ },
  "parlays": [
   {
    "at": "2026-11-22T22:32:32.466802+00:00",
@@ -272,12 +277,14 @@
      "kick": "2026-11-23T01:20:00Z",
      "label": "Jauan Jennings Under 3.5 catches",
      "p": 75.9,
+     "res": null,
      "type": "prop"
     },
     {
      "kick": "2026-11-23T01:20:00Z",
      "label": "Justin Jefferson Under 135.5 rec yds",
      "p": 83.5,
+     "res": null,
      "type": "prop"
     }
    ],
@@ -293,12 +300,14 @@
      "kick": "2026-11-23T01:20:00Z",
      "label": "Jauan Jennings Under 3.5 catches",
      "p": 75.9,
+     "res": null,
      "type": "prop"
     },
     {
      "kick": "2026-11-23T01:20:00Z",
      "label": "Jordan Mason Under 78.5 rush yds",
      "p": 83.7,
+     "res": null,
      "type": "prop"
     }
    ],
@@ -314,12 +323,14 @@
      "kick": "2026-11-24T01:15:00Z",
      "label": "Ja'Marr Chase Under 11.5 catches",
      "p": 81.2,
+     "res": null,
      "type": "prop"
     },
     {
      "kick": "2026-11-24T01:15:00Z",
      "label": "Joe Burrow Under 381.5 pass yds",
      "p": 83.2,
+     "res": null,
      "type": "prop"
     }
    ],
@@ -335,12 +346,14 @@
      "kick": "2026-11-24T01:15:00Z",
      "label": "Ja'Marr Chase Under 10.5 catches",
      "p": 74.5,
+     "res": null,
      "type": "prop"
     },
     {
      "kick": "2026-11-24T01:15:00Z",
      "label": "Joe Burrow Under 381.5 pass yds",
      "p": 83.2,
+     "res": null,
      "type": "prop"
     }
    ],
