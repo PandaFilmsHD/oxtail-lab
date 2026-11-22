@@ -47,6 +47,14 @@ jobs:
           python scripts/run_all.py
           python scripts/notify.py publish
           python scripts/alerts.py || echo "alerts failed"
+      - name: Post picks, receipts and results to Discord
+        env:
+          DISCORD_BEST: ${{ secrets.DISCORD_BEST }}
+          DISCORD_PARLAYS: ${{ secrets.DISCORD_PARLAYS }}
+          DISCORD_KALSHI: ${{ secrets.DISCORD_KALSHI }}
+          DISCORD_RESULTS: ${{ secrets.DISCORD_RESULTS }}
+          DISCORD_RECEIPTS: ${{ secrets.DISCORD_RECEIPTS }}
+        run: python -u scripts/post_discord.py || echo "discord failed"
       - name: Save results
         run: |
           git config user.name "oxtail-bot"

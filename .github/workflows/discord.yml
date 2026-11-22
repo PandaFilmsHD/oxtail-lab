@@ -1,0 +1,44 @@
+name: Discord (test or backfill)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "test = hello in every channel, backfill = this week's already-played picks (labeled late)"
+        required: true
+        default: test
+        type: choice
+        options: [test, backfill]
+
+permissions:
+  contents: write
+
+jobs:
+  discord:
+    concurrency:
+      group: update
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Post
+        env:
+          DISCORD_BEST: ${{ secrets.DISCORD_BEST }}
+          DISCORD_PARLAYS: ${{ secrets.DISCORD_PARLAYS }}
+          DISCORD_KALSHI: ${{ secrets.DISCORD_KALSHI }}
+          DISCORD_RESULTS: ${{ secrets.DISCORD_RESULTS }}
+          DISCORD_RECEIPTS: ${{ secrets.DISCORD_RECEIPTS }}
+        run: python -u scripts/post_discord.py --${{ inputs.mode }}
+      - name: Save what was posted
+        if: inputs.mode == 'backfill'
+        run: |
+          git config user.name "oxtail-bot"
+          git config user.email "oxtail-bot@users.noreply.github.com"
+          git add data/discord_state.json
+          git diff --cached --quiet || git commit -m "Discord backfill"
+          for i in 1 2 3 4 5; do git push && break; git pull --rebase -X theirs origin main; sleep $((i * 3)); done
