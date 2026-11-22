@@ -61,6 +61,10 @@ def usd(u):
     return f"{'+' if v >= 0 else '-'}${abs(v):,.2f}".replace(".00", "")
 
 
+def uu(u):
+    return f"{usd(u)} ({u:+.2f}u)"
+
+
 def post(ch, content=None, embeds=None, file=None, ping=False):
     """Send to one channel. Returns True on success. Quietly skips channels with no webhook set."""
     url = HOOK.get(ch)
@@ -240,7 +244,7 @@ def ka_line(x, show_res=False):
     money = ""
     if show_res and x.get("graded"):
         u = (1 / c_ - 1) if x.get("result") else -1 if x.get("result") is False else 0
-        money = f" · **{usd(u)}**"
+        money = f" · **{uu(u)}**"
     had = f" · had {x['actual']}" if show_res and x.get("actual") is not None else ""
     return f"{res} {x.get('label')} at **{x.get('cost')}¢** · {round(x.get('p') or 0)}% · +{x.get('edge')}% edge · +{x.get('ev')}% EV{had}{money}"
 
@@ -388,14 +392,14 @@ def results(S, PK, now, PLD=None):
     kopen = ((PLD or {}).get("record") or {}).get("kalshi_open")
     fr = lambda r_: f"{r_['w']}-{r_['l']}{'-' + str(r_['p']) if r_['p'] else ''} · {usd(r_['u'])}"
     if out:
-        mark = lambda x: f"{'✅' if x['result'] == 'win' else '❌' if x['result'] == 'loss' else '➖'} {x['text']}{f' (had {x['actual']})' if x.get('actual') is not None else ''} · **{usd(x['u'])}**"
+        mark = lambda x: f"{'✅' if x['result'] == 'win' else '❌' if x['result'] == 'loss' else '➖'} {x['text']}{f' (had {x['actual']})' if x.get('actual') is not None else ''} · **{uu(x['u'])}**"
         good = sum(x["u"] for x in out) >= 0
         post("RESULTS", embeds=[{"title": f"🎯 Best bets: {len(out)} graded", "description": "\n".join(mark(x) for x in out)[:3900], "color": COLORS["win" if good else "loss"],
-                                 "footer": {"text": f"Best bets all time: {fr(rec)} at ${UNIT:.0f} a unit"}}])
+                                 "footer": {"text": f"Best bets all time: {rec['w']}-{rec['l']} · {uu(rec['u'])} at ${UNIT:.0f} a unit"}}])
     if kal:
         kw = sum(1 for _, x in kal if x.get("result")); kl = sum(1 for _, x in kal if x.get("result") is False)
         if post_fields("RESULTS", f"💸 Kalshi: {len(kal)} graded ({kw}-{kl})", "", ka_fields(kal, show_res=True), COLORS["win" if kw >= kl else "loss"],
-                       f"Kalshi all time (every bet, same as the site's Record tab): {kr[0]}-{kr[1]} · {usd(kr[2])}" + (f" · {kopen} open" if kopen else "")):
+                       f"Kalshi all time (every bet, same as the site's Record tab): {kr[0]}-{kr[1]} · {uu(kr[2])}" + (f" · {kopen} open" if kopen else "")):
             S["kal_said"] = sorted(said | {kk for kk, _ in kal})
     # daily recap: the morning after, for picks graded the day before
     today = now.astimezone(PT).date()
@@ -539,6 +543,44 @@ def backfill(S, PK, wk, now):
     S["backfilled"].append(str(wk))
 
 
+def ka_u(x):
+    c_ = ((x.get("cost") or 0) + (x.get("fee") or 0)) / 100
+    return (1 / c_ - 1) if x.get("result") else -1 if x.get("result") is False else 0
+
+
+def slate_recap(S, PK, PLD, now):
+    """Once a kickoff window is (nearly) all graded: one summary with W-L, dollars and units for best bets and Kalshi."""
+    done = S.setdefault("slate_recap", {})
+    posted = S.get("posted", {})
+    for w_, pk in PK.items():
+        kicks = {x.get("kick") for k, x in pk.items() if k.startswith("KA|") and x.get("kick")} | {x["kick"] for x in posted.values() if x.get("week") == w_ and x.get("ch") == "best"}
+        for k in sorted(kicks):
+            if done.get(k) or iso(k) > now - datetime.timedelta(hours=3):
+                continue
+            kal = [x for kk, x in pk.items() if kk.startswith("KA|") and x.get("kick") == k]
+            best = [x for x in posted.values() if x.get("week") == w_ and x.get("ch") == "best" and x.get("kick") == k]
+            tot = len(kal) + len(best)
+            g_ = sum(1 for x in kal if x.get("graded")) + sum(1 for x in best if x.get("result") in ("win", "loss", "push", "gone"))
+            if not tot or (g_ / tot < 0.85 and iso(k) > now - datetime.timedelta(hours=40)):
+                continue
+            kg = [x for x in kal if x.get("graded")]
+            kw, kl, ku = sum(1 for x in kg if x.get("result")), sum(1 for x in kg if x.get("result") is False), sum(ka_u(x) for x in kg)
+            bg = [x for x in best if x.get("result") in ("win", "loss", "push")]
+            bw, bl, bu = sum(x["result"] == "win" for x in bg), sum(x["result"] == "loss" for x in bg), sum(x["u"] for x in bg)
+            games = sorted({f"{g['away']} @ {g['home']}" for g in PLD.get("games", []) if g.get("kick") == k})
+            top = sorted([(ka_u(x), f"💸 {x.get('label')} at {x.get('cost')}¢") for x in kg] + [(x["u"], f"🎯 {x['text']}") for x in bg], reverse=True)[:3]
+            left = tot - g_
+            desc = (f"🎯 **Best bets:** {bw}-{bl} · **{uu(bu)}**\n💸 **Kalshi:** {kw}-{kl} · **{uu(ku)}**\n➕ **Slate total:** {bw + kw}-{bl + kl} · **{uu(bu + ku)}**\n\n"
+                    + ("🔥 **Best hits**\n" + "\n".join(f"{t} · {uu(u)}" for u, t in top if u > 0) if any(u > 0 for u, _ in top) else "")
+                    + (f"\n\n⏳ {left} still waiting on stats; they'll show up in the results feed." if left > 0 else ""))
+            kr = (PLD.get("record") or {}).get("kalshi") or [0, 0, 0]
+            rec = S.get("record") or {"w": 0, "l": 0, "u": 0}
+            e = {"title": f"🧾 {iso(k).astimezone(PT).strftime('%a %-I:%M %p')} slate recap · Week {w_}", "description": desc, "color": COLORS["win" if bu + ku >= 0 else "loss"],
+                 "footer": {"text": f"{', '.join(games)[:200]}\nAll time: Kalshi {kr[0]}-{kr[1]} {uu(kr[2])} · Best bets {rec['w']}-{rec['l']} {uu(rec['u'])} · 1u = ${UNIT:.0f}"}}
+            if post("RESULTS", embeds=[e]):
+                done[k] = now.isoformat()
+
+
 def main():
     if "--test" in sys.argv:
         for ch, t in [("BEST", "🎯 Oxtail Picks is connected. Best bets post here about 90 minutes before each kickoff."),
@@ -576,7 +618,7 @@ def main():
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
     for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, PK, wk, now), lambda: big_edges(S, PLD, wk, now),
-                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD)):
+                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: slate_recap(S, PK, PLD, now)):
         try:
             step()
         except Exception as e:
