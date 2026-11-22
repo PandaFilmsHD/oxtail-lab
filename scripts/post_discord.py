@@ -11,7 +11,7 @@ Run:  python scripts/post_discord.py          (normal, called by update.yml)
       python scripts/post_discord.py --test   (one hello per channel)
 State lives in data/discord_state.json so nothing posts twice.
 """
-import csv, datetime, hashlib, io, json, os, sys, time
+import csv, datetime, hashlib, io, json, os, re, sys, time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import requests
@@ -365,14 +365,24 @@ def parlays(S, PLD, now, force=False):
         _parlay_day(S, PLD, now, day, first)
 
 
-def _parlay_day(S, PLD, now, day, first):
+def pick_parlays(PLD, now, day):
     kick_of = {l["label"]: l.get("kick") for l in PLD.get("legs") or []}
-    eod = iso(first).astimezone(PT).replace(hour=23, minute=59)
     def ok(pl):
         kk = [kick_of.get(l["label"]) for l in pl["legs"]]
         return all(x and now < iso(x) and iso(x).astimezone(PT).strftime("%Y-%m-%d") == day for x in kk)
     P = PLD.get("parlays") or {}
     pick = [pl for pl in (P.get("2") or []) if ok(pl)][:2] + [pl for pl in (P.get("3") or []) if ok(pl)][:1]
+    return pick, kick_of
+
+
+def remember_parlays(S, PLD, pick, kick_of, day, now):
+    for pl in pick:
+        S.setdefault("parlays", []).append({"day": day, "week": str(PLD.get("week")), "p": pl["p"], "fair": pl["fair"], "at": now.isoformat(),
+                                            "legs": [{"label": l["label"], "p": l["p"], "kick": kick_of.get(l["label"]), "type": l.get("type")} for l in pl["legs"]]})
+
+
+def _parlay_day(S, PLD, now, day, first):
+    pick, kick_of = pick_parlays(PLD, now, day)
     if not pick:
         S["parlay_days"][day] = now.isoformat(); return
     lines = []
@@ -381,9 +391,82 @@ def _parlay_day(S, PLD, now, day, first):
         pay = (100 / -pl["fair"]) if pl["fair"] < 0 else pl["fair"] / 100
         lines.append(f"🎲 **{len(pl['legs'])}-leg parlay · hits {round(pl['p'])}% of sims**{' · same game' if pl.get('same_game') else ''}\n{legs}\n> 💰 Worth it at **{am(pl['fair'])} or better** (on $25 that's a ${25 * pay:,.2f} payout or more).")
     e = {"title": f"🎲 Parlays · {iso(first).astimezone(PT).strftime('%A')}", "description": "\n\n".join(lines), "color": COLORS["parlay"],
-         "footer": {"text": "If your app pays less than the odds shown, skip it. The hit % already counts legs that move together."}}
+         "footer": {"text": "If your app pays less than the odds shown, skip it. The hit % already counts legs that move together. Graded in #results."}}
     if post("PARLAYS", embeds=[e]):
         S["parlay_days"][day] = now.isoformat()
+        remember_parlays(S, PLD, pick, kick_of, day, now)
+
+
+NK = lambda n: re.sub(r"[^a-z]", "", re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", (n or "").lower()))
+STAT = {"catches": "rec", "rec yds": "recyd", "rush yds": "rushyd", "pass yds": "passyd", "pass tds": "ptd"}
+
+
+def grade_leg(leg, U, PLD, wk, now):
+    """True / False, 'void' (player didn't play), or None (not final yet)."""
+    lab, kick = leg["label"], leg.get("kick")
+    L = (U.get("lines") or {}).get(str(wk), {})
+    m = re.match(r"^(.*) (Over|Under) ([\d.]+) (catches|rec yds|rush yds|pass yds|pass tds)$", lab)
+    if m:
+        who, side, line, mk = m.group(1), m.group(2), float(m.group(3)), m.group(4)
+        pl = next((v for v in (U.get("players") or {}).values() if NK(v.get("name")) == NK(who)), None)
+        if not pl:
+            return "void" if kick and iso(kick) < now - datetime.timedelta(days=2) else None
+        wkrow = next((w for w in pl.get("weeks", []) if str(w.get("w")) == str(wk)), None)
+        if not wkrow or "pts" not in wkrow:
+            team_in = any(str(w.get("w")) == str(wk) and "pts" in w and v.get("team") == pl.get("team") for v in (U.get("players") or {}).values() for w in v.get("weeks", []))
+            return "void" if team_in and kick and iso(kick) < now - datetime.timedelta(days=1) else None
+        val = wkrow.get(STAT[mk], 0) or 0
+        leg["actual"] = val
+        return (val > line) if side == "Over" else (val < line)
+    def pts(t):
+        return (L.get(t) or {}).get("pts")
+    g = next((g for g in PLD.get("games", []) if g.get("kick") == kick), None)
+    m = re.match(r"^(\w+) @ (\w+) (Over|Under) ([\d.]+)$", lab)
+    if m:
+        a, h, side, line = m.group(1), m.group(2), m.group(3), float(m.group(4))
+        if pts(a) is None or pts(h) is None:
+            return None
+        t = pts(a) + pts(h); leg["actual"] = t
+        return (t > line) if side == "Over" else (t < line)
+    m = re.match(r"^(\w+) ([+-][\d.]+)( alt spread)?$", lab) or re.match(r"^(\w+) (moneyline)$", lab)
+    if m and g:
+        tm = m.group(1); opp = g["away"] if tm == g["home"] else g["home"]
+        if pts(tm) is None or pts(opp) is None:
+            return None
+        mar = pts(tm) - pts(opp); leg["actual"] = f"{pts(tm)}-{pts(opp)}"
+        if m.group(2) == "moneyline":
+            return mar > 0
+        return mar + float(m.group(2)) > 0
+    return None
+
+
+def parlay_results(S, PLD, now):
+    U = load(D / "usage.json", {})
+    if not U:
+        return
+    rec = S.setdefault("parlay_rec", {"w": 0, "l": 0, "u": 0.0})
+    for pl in S.get("parlays", []):
+        if pl.get("result"):
+            continue
+        res = [grade_leg(l, U, PLD, pl["week"], now) for l in pl["legs"]]
+        for l, r in zip(pl["legs"], res):
+            l["res"] = r
+        if any(r is False for r in res):
+            out = "loss"
+        elif all(r is True or r == "void" for r in res):
+            out = "win" if any(r is True for r in res) else "void"
+        else:
+            continue
+        pay = (100 / -pl["fair"]) if pl["fair"] < 0 else pl["fair"] / 100
+        u = pay if out == "win" else -1 if out == "loss" else 0
+        pl.update(result=out, u=round(u, 3), graded_at=now.isoformat())
+        if out != "void":
+            rec["w" if out == "win" else "l"] += 1; rec["u"] = round(rec["u"] + u, 3)
+        legs = "\n".join(f"{'✅' if r is True else '❌' if r is False else '➖'} {l['label']}" + (f" → had **{l['actual']}**" if l.get("actual") is not None else "") for l, r in zip(pl["legs"], res))
+        e = {"title": f"🎲 Parlay {'HIT ✅' if out == 'win' else 'missed ❌' if out == 'loss' else 'void ➖'} · {uu(u)}", "color": COLORS["win" if out == "win" else "loss" if out == "loss" else "push"],
+             "description": legs + f"\n\nGraded at {am(pl['fair'])}, the lowest price we said to take.",
+             "footer": {"text": f"Parlays all time: {rec['w']}-{rec['l']} · {uu(rec['u'])} at ${UNIT:.0f} a parlay"}}
+        post("RESULTS", embeds=[e])
 
 
 def results(S, PK, now, PLD=None):
@@ -624,6 +707,14 @@ def main():
             S.setdefault("msgs", []).extend(MSGS); MSGS.clear()
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
         return
+    if "--parlays-track" in sys.argv:
+        for day in S.get("parlay_days", {}):
+            if not any(p_.get("day") == day for p_ in S.get("parlays", [])):
+                pick, kick_of = pick_parlays(PLD, now, day)
+                remember_parlays(S, PLD, pick, kick_of, day, now)
+                print("discord: tracking", len(pick), "parlays for", day, [[l["label"] for l in p_["legs"]] for p_ in pick])
+        (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
+        return
     if "--parlays-now" in sys.argv:
         try:
             parlays(S, PLD, now, force=True)
@@ -643,7 +734,7 @@ def main():
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
     for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, PK, wk, now), lambda: big_edges(S, PLD, wk, now),
-                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: slate_recap(S, PK, PLD, now)):
+                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: parlay_results(S, PLD, now), lambda: slate_recap(S, PK, PLD, now)):
         try:
             step()
         except Exception as e:
