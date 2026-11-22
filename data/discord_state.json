@@ -189,9 +189,44 @@
    "at": "2026-11-22T21:57:33.115649+00:00",
    "ch": "RESULTS",
    "id": "1574182072355004599"
+  },
+  {
+   "at": "2026-11-22T22:02:31.489337+00:00",
+   "ch": "KALSHI",
+   "id": "1574183323914211511"
+  },
+  {
+   "at": "2026-11-22T22:02:32.366379+00:00",
+   "ch": "KALSHI",
+   "id": "1574183327341219972"
+  },
+  {
+   "at": "2026-11-22T22:02:33.205156+00:00",
+   "ch": "KALSHI",
+   "id": "1574183331224887448"
   }
  ],
  "parlay_days": {},
+ "pinged": {
+  "KA|KXNFLPASSTDS-26NOV23CINWAS-CINJBURROW9-2|No": {
+   "at": "2026-11-22T22:02:31.122926+00:00",
+   "day": "2026-11-22",
+   "week": "11",
+   "who": "Joe Burrow"
+  },
+  "KA|KXNFLREC-26NOV22MINSF-SFGKITTLE85-6|Yes": {
+   "at": "2026-11-22T22:02:31.122926+00:00",
+   "day": "2026-11-22",
+   "week": "11",
+   "who": "George Kittle"
+  },
+  "KA|KXNFLRSHYDS-26NOV22MINSF-MINJMASON27-60|Yes": {
+   "at": "2026-11-22T22:02:31.122926+00:00",
+   "day": "2026-11-22",
+   "week": "11",
+   "who": "Jordan Mason"
+  }
+ },
  "posted": {
   "Alvin Kamara|Anytime TD": {
    "at": "2026-11-22T21:44:38.878462+00:00",
@@ -334,6 +369,16 @@
    "units": 1,
    "week": "11"
   },
+  "KA|KXNFLPASSTDS-26NOV23CINWAS-CINJBURROW9-2|No": {
+   "at": "2026-11-22T22:02:31.122926+00:00",
+   "ch": "kalshi",
+   "cost": 18,
+   "fee": 1.0,
+   "kick": "2026-11-24T01:15:00Z",
+   "text": "Joe Burrow under 2 pass tds",
+   "units": 1,
+   "week": "11"
+  },
   "KA|KXNFLPASSYDS-26NOV22JACNYG-JACTLAWRENCE16-250|Yes": {
    "at": "2026-11-22T21:44:38.878462+00:00",
    "backfill": true,
@@ -441,6 +486,16 @@
    "fee": 1.3,
    "kick": "2026-11-22T21:25:00Z",
    "text": "Ashton Jeanty 6+ catches",
+   "units": 1,
+   "week": "11"
+  },
+  "KA|KXNFLREC-26NOV22MINSF-SFGKITTLE85-6|Yes": {
+   "at": "2026-11-22T22:02:31.122926+00:00",
+   "ch": "kalshi",
+   "cost": 28,
+   "fee": 1.4,
+   "kick": "2026-11-23T01:20:00Z",
+   "text": "George Kittle 6+ catches",
    "units": 1,
    "week": "11"
   },
@@ -776,6 +831,16 @@
    "fee": 1.4,
    "kick": "2026-11-22T18:00:00Z",
    "text": "James Cook 120+ rush yds",
+   "units": 1,
+   "week": "11"
+  },
+  "KA|KXNFLRSHYDS-26NOV22MINSF-MINJMASON27-60|Yes": {
+   "at": "2026-11-22T22:02:31.122926+00:00",
+   "ch": "kalshi",
+   "cost": 24,
+   "fee": 1.3,
+   "kick": "2026-11-23T01:20:00Z",
+   "text": "Jordan Mason 60+ rush yds",
    "units": 1,
    "week": "11"
   },
