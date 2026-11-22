@@ -5,28 +5,14 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-22T16:39:30Z",
-   "champ_pct": 19.6,
+   "at": "2026-11-22T16:49:24Z",
+   "champ_pct": 19.5,
    "todo": [
-    {
-     "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Dalton Schultz, drop Michael Mayer",
-     "detail": "Real upgrade: about +1.1 pts a week in your lineup the rest of the way.",
-     "tab": "waivers"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd14",
-     "title": "Toss-up at TE: Brock Bowers or Michael Mayer",
-     "detail": "Brock Bowers 8.4 vs Michael Mayer 7.7. Keeping Brock Bowers gives you a 52% chance to win vs 52% with Michael Mayer.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer D'Andre Swift for Matthew Golden (Griffin's Great Team)",
-     "detail": "Title odds +2.8%. Would you do D'Andre Swift for Matthew Golden? I think Swift slides right into your RB spot, and you're deep at WR so you can cover Golden's spot.",
+     "detail": "Title odds +2.9%. Would you do D'Andre Swift for Matthew Golden? I think Swift slides right into your RB spot, and you're deep at WR so you can cover Golden's spot.",
      "tab": "trades"
     }
    ]
@@ -36,8 +22,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T16:39:49Z",
-   "champ_pct": 16.0,
+   "at": "2026-11-22T16:49:45Z",
+   "champ_pct": 15.9,
    "todo": [
     {
      "urgent": true,
@@ -60,16 +46,9 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T16:39:56Z",
-   "champ_pct": 3.8,
+   "at": "2026-11-22T16:49:55Z",
+   "champ_pct": 4.0,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Carnell Tate",
-     "detail": "QUESTIONABLE \u2192 ACTIVE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": true,
      "icon": "\ud83d\udd12",
@@ -91,7 +70,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T16:39:40Z",
+   "at": "2026-11-22T16:49:35Z",
    "champ_pct": 36.6,
    "todo": [
     {
