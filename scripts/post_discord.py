@@ -255,9 +255,22 @@ def ka_fields(rows, show_res=False, whys=None):
         groups.setdefault(ka_who(x), []).append(x)
     flds = []
     for who, xs in groups.items():
-        top = (whys or {}).get(who)
-        val = "\n".join(ka_line(x, show_res) for x in xs) + (f"\n{trim(top, 200)}" if top else "")
-        flds.append({"name": trim(f"💸 {who}", 250), "value": trim(val, 1020), "inline": False})
+        if show_res and any(x.get("graded") for x in xs):
+            g_ = [x for x in xs if x.get("graded")]
+            w, l, u = sum(1 for x in g_ if x.get("result")), sum(1 for x in g_ if x.get("result") is False), sum(ka_u(x) for x in g_)
+            icon = "✅" if l == 0 and w else "❌" if w == 0 and l else "🟨"
+            name = f"{icon} {who} · {w}-{l} · {uu(u)}"
+            def short(x):
+                lab = (x.get("label") or "").replace(who + " ", "")
+                r = {True: "✅", False: "❌"}.get(x.get("result"), "➖" if x.get("graded") else "⏳")
+                had = f" → had **{x['actual']}**" if x.get("actual") is not None else ""
+                return f"{r} {lab} at {x.get('cost')}¢{had}" + (f" · {uu(ka_u(x))}" if x.get("graded") else "")
+            val = "\n".join(short(x) for x in xs)
+        else:
+            top = (whys or {}).get(who)
+            name = f"💸 {who}"
+            val = "\n".join(ka_line(x, show_res) for x in xs) + (f"\n{trim(top, 200)}" if top else "")
+        flds.append({"name": trim(name, 250), "value": trim(val, 1020), "inline": False})
     return flds
 
 
@@ -340,20 +353,24 @@ def big_edges(S, PLD, wk, now):
             posted.setdefault(kk, dict(week=str(wk), ch="kalshi", text=x["label"], cost=x["cost"], fee=fee, units=1, kick=x["kick"], at=now.isoformat()))
 
 
-def parlays(S, PLD, now):
+def parlays(S, PLD, now, force=False):
     """Once per game day: top 2-leg and 3-leg parlays whose legs haven't started."""
     ks = [k for k in sorted({g["kick"] for g in PLD.get("games", [])}) if iso(k) > now]
-    if not ks:
-        return
-    first = ks[0]
-    day = iso(first).astimezone(PT).strftime("%Y-%m-%d")
-    if S.setdefault("parlay_days", {}).get(day) or iso(first) - now > datetime.timedelta(minutes=LEAD_MIN):
-        return
+    days = {}
+    for k in ks:
+        days.setdefault(iso(k).astimezone(PT).strftime("%Y-%m-%d"), k)
+    for day, first in days.items():
+        if S.setdefault("parlay_days", {}).get(day) or (not force and iso(first) - now > datetime.timedelta(minutes=LEAD_MIN)):
+            continue
+        _parlay_day(S, PLD, now, day, first)
+
+
+def _parlay_day(S, PLD, now, day, first):
     kick_of = {l["label"]: l.get("kick") for l in PLD.get("legs") or []}
     eod = iso(first).astimezone(PT).replace(hour=23, minute=59)
     def ok(pl):
         kk = [kick_of.get(l["label"]) for l in pl["legs"]]
-        return all(x and now < iso(x) <= eod for x in kk)
+        return all(x and now < iso(x) and iso(x).astimezone(PT).strftime("%Y-%m-%d") == day for x in kk)
     P = PLD.get("parlays") or {}
     pick = [pl for pl in (P.get("2") or []) if ok(pl)][:2] + [pl for pl in (P.get("3") or []) if ok(pl)][:1]
     if not pick:
@@ -361,9 +378,10 @@ def parlays(S, PLD, now):
     lines = []
     for pl in pick:
         legs = "\n".join(f"> • {l['label']} ({round(l['p'])}%)" for l in pl["legs"])
-        lines.append(f"🎲 **{len(pl['legs'])}-leg · hits {round(pl['p'])}% · fair {am(pl['fair'])}**{' · same game' if pl.get('same_game') else ''}\n{legs}\n> Only take it at better than **{am(pl['fair'])}**.")
+        pay = (100 / -pl["fair"]) if pl["fair"] < 0 else pl["fair"] / 100
+        lines.append(f"🎲 **{len(pl['legs'])}-leg parlay · hits {round(pl['p'])}% of sims**{' · same game' if pl.get('same_game') else ''}\n{legs}\n> 💰 Worth it at **{am(pl['fair'])} or better** (on $25 that's a ${25 * pay:,.2f} payout or more).")
     e = {"title": f"🎲 Parlays · {iso(first).astimezone(PT).strftime('%A')}", "description": "\n\n".join(lines), "color": COLORS["parlay"],
-         "footer": {"text": "Same-game legs are correlated; the hit % already accounts for that."}}
+         "footer": {"text": "If your app pays less than the odds shown, skip it. The hit % already counts legs that move together."}}
     if post("PARLAYS", embeds=[e]):
         S["parlay_days"][day] = now.isoformat()
 
@@ -602,6 +620,13 @@ def main():
     if "--kalshi-redo" in sys.argv:
         try:
             kalshi_redo(S, PLD, PK, wk, now)
+        finally:
+            S.setdefault("msgs", []).extend(MSGS); MSGS.clear()
+            (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
+        return
+    if "--parlays-now" in sys.argv:
+        try:
+            parlays(S, PLD, now, force=True)
         finally:
             S.setdefault("msgs", []).extend(MSGS); MSGS.clear()
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))

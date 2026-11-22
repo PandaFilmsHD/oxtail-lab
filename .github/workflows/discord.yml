@@ -8,7 +8,7 @@ on:
         required: true
         default: test
         type: choice
-        options: [test, backfill, repost, kalshi-redo]
+        options: [test, backfill, repost, kalshi-redo, parlays-now]
 
 permissions:
   contents: write
