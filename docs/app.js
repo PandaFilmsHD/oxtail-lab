@@ -1197,7 +1197,7 @@ async function renderProps() {
         h('span', { class: 'k' }, s.roi != null ? `ROI ${s.roi}% ±${s.roi_se}` : ''), h('b', { class: (s.clv_ev || 0) >= 0 ? 'pos' : 'neg' }, s.clv_n ? `CLV ${s.clv_ev}% ±${s.clv_se} (${s.clv_n})` : ''))),
       h('div', { class: 'k', style: 'margin-top:10px' }, `Backtest: ${PLD.backtest.ats_model}. The closing line missed by ${PLD.backtest.line_mae} pts on average vs ${PLD.backtest.model_mae} for a ratings model, so game sims start from the line.`)),
       h('div', { class: 'leglist', style: 'margin-top:12px' }, ...(PLD.recent || []).map(x => h('div', { class: 'legpick' }, h('span', { class: 'tag ' + (x.void || x.result == null ? 'no' : x.result ? 'real' : 'stretch') }, x.void ? 'VOID' : x.result == null ? 'PUSH' : x.result ? 'WIN' : 'LOSS'),
-        h('span', { class: 'll' }, x.pick ? `Wk ${x.week} ${x.game}: ${x.pick}` : `Wk ${x.week} ${x.player} ${x.side} ${x.line ?? ''} ${x.market.toLowerCase()}${x.actual != null ? ` (had ${x.actual})` : ''}`)))),
+        h('span', { class: 'll' }, x.pick ? `Wk ${x.week} ${x.game}: ${x.pick}` : x.label ? `Wk ${x.week} 💸 ${x.away && x.home ? x.away + ' @ ' + x.home + ': ' : ''}${x.label}${x.side && x.side !== 'Yes' ? ' (' + x.side + ')' : ''}${x.cost ? ` at ${x.cost}¢` : ''}` : `Wk ${x.week} ${x.player || ''} ${x.side || ''} ${x.line ?? ''} ${(x.market || '').toLowerCase()}${x.actual != null ? ` (had ${x.actual})` : ''}`)))),
       !(PLD.recent || []).length ? h('div', { class: 'box mut' }, 'No graded picks yet. This week\'s picks get graded after the games.') : ''];
   }
   body.replaceChildren(...out.filter(Boolean));
