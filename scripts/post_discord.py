@@ -152,9 +152,42 @@ def windows(PLD, now):
     return [k for k in ks if datetime.timedelta(0) < iso(k) - now <= datetime.timedelta(minutes=LEAD_MIN)]
 
 
-def best_bets(S, PLD, PK, wk, now):
+def trim(t, n=230):
+    return t if len(t) <= n else t[:n - 1] + "…"
+
+
+def why_prop(x):
+    """Plain-English case for a prop: market vs us, where our number comes from, what moved it, recent form."""
+    w = x.get("why") or []
+    pm = x.get("p_mkt")
+    head = f"📊 Books give it **{round(pm)}%**, our 50,000 sims give it **{round(x['p'])}%**. That gap is the edge." if pm else f"🎲 Our sims give it **{round(x['p'])}%**."
+    pick = [l for l in w if l.startswith("🧮")][:1] + [l for l in w if l.startswith(("⬆️", "⬇️"))][:2] + [l for l in w if l.startswith("📈")][:1] + [l for l in w if l.startswith("🏈")][:1]
+    return [head] + [trim(l) for l in pick]
+
+
+def why_game(pl, g):
+    head = f"📊 Books give it **{round(pl.get('p_mkt') or 50)}%**, our sims give it **{round(pl['p'])}%**."
+    sim = g.get("sim") or {}
+    extra = [f"🏟️ Sims have it {g['away']} {sim.get('away_pts')}, {g['home']} {sim.get('home_pts')} (fair total {sim.get('fair_total')})."] if sim.get("home_pts") else []
+    wx = g.get("weather") or {}
+    if wx.get("wind"):
+        extra.append(f"🌬️ Forecast: {wx['wind']} mph wind, {wx.get('temp')}°F, {wx.get('rain', 0)}% rain.")
+    return [head] + [trim(l) for l in (pl.get("why") or []) if not l.startswith("🎲")][:3] + extra
+
+
+def pick_field(c):
+    val = f"**{round(c['p'])}% to hit · +{c['edge']}% edge · {c['units']}u ({usd(c['units'])[1:]})**\n" + "\n".join(c["why"])
+    return {"name": trim(f"{c['icon']} {c['text']} ({am(c['price'])})", 250), "value": trim(val, 1020), "inline": False}
+
+
+def windows_ahead(PLD, now, hours):
+    ks = sorted({g["kick"] for g in PLD.get("games", []) if g.get("kick")})
+    return [k for k in ks if datetime.timedelta(0) < iso(k) - now <= datetime.timedelta(hours=hours)]
+
+
+def best_bets(S, PLD, PK, wk, now, ahead=None):
     posted = S.setdefault("posted", {})
-    for k in windows(PLD, now):
+    for k in (windows_ahead(PLD, now, ahead) if ahead else windows(PLD, now)):
         if S.setdefault("best_done", {}).get(k):
             continue
         games = [g for g in PLD["games"] if g["kick"] == k]
@@ -167,20 +200,18 @@ def best_bets(S, PLD, PK, wk, now):
                     key = f"G|{g['home']}|{pl['kind']}|{side}"
                     auto = next((a for a in g.get("auto") or [] if a.get("kind") == pl["kind"]), {})
                     cands.append(dict(id=key, kind="game", icon="🏈", text=f"{g['away']} @ {g['home']}: {pl['pick']}", price=auto.get("price") or -110,
-                                      p=pl["p"], edge=pl["edge"], why=(pl.get("why") or [])[:2], units=pl.get("units") or 0.5))
+                                      p=pl["p"], edge=pl["edge"], why=why_game(pl, g), units=pl.get("units") or 0.5))
         for x in PLD.get("props") or []:
             if x.get("kick") == k and ((x.get("edge") or 0) >= PROP_EDGE or x.get("grade") in ("A", "B")):
                 cands.append(dict(id=f"{x['player']}|{x['market']}", kind="prop", icon="👤", text=prop_text(x), price=x.get("price"),
-                                  p=x["p"], edge=x["edge"], why=[w for w in (x.get("why") or []) if w.startswith(("🧮", "⬆️", "⬇️"))][:2], units=1 if x.get("grade") in ("A", "B") else 0.5))
+                                  p=x["p"], edge=x["edge"], why=why_prop(x), units=1 if x.get("grade") in ("A", "B") else 0.5))
         cands.sort(key=lambda c: -(c["edge"] or 0))
         cands = cands[:MAX_BEST]
         if cands:
-            lines = []
-            for c in cands:
-                lines.append(f"{c['icon']} **{c['text']}** ({am(c['price'])})\n> {round(c['p'])}% in 50,000 sims · +{c['edge']}% edge · {c['units']}u ({usd(c['units'])[1:]})" +
-                             "".join(f"\n> {w}" for w in c["why"]))
-            e = {"title": f"🎯 Best bets · {pt(k)} PT", "description": f"*{names}*\n\n" + "\n\n".join(lines), "color": COLORS["best"],
-                 "footer": {"text": f"Only take it at this price or better. 1u = ${UNIT:.0f}. Receipts in #receipts."}, "url": SITE + "#lab"}
+            e = {"title": f"🎯 Best bets · {pt(k)} PT", "color": COLORS["best"], "url": SITE + "#lab",
+                 "description": f"*{names}*\n" + ("The spot where our sims disagree with the books the most." if len(cands) == 1 else f"The {len(cands)} spots where our sims disagree with the books the most.") + " Bet size goes up with confidence.",
+                 "fields": [pick_field(c) for c in cands],
+                 "footer": {"text": f"Only take it at this price or better. 1u = ${UNIT:.0f}. Every pick is locked in #receipts first."}}
         else:
             e = {"title": f"🎯 Best bets · {pt(k)} PT", "description": f"*{names}*\n\nNothing strong enough this slate. Passing is a pick too. 🧘", "color": COLORS["push"]}
         if post("BEST", embeds=[e]):
@@ -201,8 +232,10 @@ def kalshi(S, PLD, wk, now):
         L = L[:MAX_KAL]
         if not L:
             S["kal_done"][k] = now.isoformat(); continue   # quiet when there's nothing; no need for a pass post here
-        lines = [f"💸 **{x['label']}** · buy **{x['side']}** at **{x['cost']}¢** or less\n> we have it {round(x['p'])}% · +{x['edge']}% edge · +{x.get('ev')}% EV · pays {usd(1 / ((x['cost'] + (x.get('fee') or 0)) / 100) - 1)} on {usd(1)[1:]}" for x in L]
-        e = {"title": f"💸 Kalshi buys · {pt(k)} PT", "description": "\n\n".join(lines), "color": COLORS["kalshi"],
+        flds = [{"name": trim(f"💸 {x['label']} · buy {x['side']} at {x['cost']}¢ or less", 250),
+                 "value": trim(f"**We have it {round(x['p'])}% vs {x['cost']}¢ price · +{x['edge']}% edge · +{x.get('ev')}% EV · pays {usd(1 / ((x['cost'] + (x.get('fee') or 0)) / 100) - 1)} on {usd(1)[1:]}**\n" +
+                              "\n".join(trim(l) for l in [l for l in (x.get("why") or []) if l.startswith(("🧮", "⬆️", "⬇️", "📈"))][:3]), 1020), "inline": False} for x in L]
+        e = {"title": f"💸 Kalshi buys · {pt(k)} PT", "description": "A share pays $1 if it hits. Our chance is higher than the price, so it's worth buying.", "fields": flds, "color": COLORS["kalshi"],
              "footer": {"text": "Only buy if a share costs less than our chance (in cents). Prices move fast."}}
         if post("KALSHI", embeds=[e]):
             S["kal_done"][k] = now.isoformat()
@@ -297,6 +330,41 @@ def results(S, PK, now, PLD=None):
             post("RESULTS", embeds=[e])
 
 
+def repost(S, PLD, PK, wk, now):
+    """Fresh copies in the new format: week so far (with results and reasons), early best bets for the rest of the week, results summary."""
+    posted = S.setdefault("posted", {})
+    mine = {k: x for k, x in posted.items() if x.get("week") == str(wk)}
+    allp = PK.get(str(wk)) or {}
+    em = lambda r: {"win": "✅", "loss": "❌", "push": "➖"}.get(r, "⏳")
+    for ch, title, emj in (("best", "🎯 Week {} so far", "BEST"), ("kalshi", "💸 Week {} Kalshi so far", "KALSHI")):
+        rows = sorted([(k, x) for k, x in mine.items() if x["ch"] == ch and iso(x["kick"]) <= now], key=lambda kv: (kv[1]["kick"], kv[1]["text"]))
+        if not rows:
+            continue
+        lines = []
+        for k, x in rows:
+            g = allp.get(k) or {}
+            if ch == "kalshi":
+                why = f"we had {round(g.get('p') or 0)}% vs {g.get('cost')}¢ (+{g.get('edge')}% edge)"
+                lbl = f"{x['text']} at {x.get('cost')}¢"
+            else:
+                why = f"books {round(g['p_mkt'])}%, our sims {round(g['p'])}%" if g.get("p_mkt") else f"our sims {round(g.get('p') or 0)}%"
+                lbl = f"{x['text']} ({am(x.get('price'))})"
+            res = f" · had {x['actual']}" if x.get("actual") is not None else ""
+            money = f" · **{usd(x['u'])}**" if x.get("result") in ("win", "loss", "push") else ""
+            lines.append(f"{em(x.get('result'))} {lbl} · {why}{res}{money}")
+        r_ = (S.get("record_by") or {}).get(ch)
+        head = (f"Record so far: **{r_['w']}-{r_['l']} · {usd(r_['u'])}**. ⏳ = still waiting on box scores.\n" if r_ else "") + "Picked before kickoff (proof in #receipts), posted here late because the channel is new.\n\n"
+        chunks, cur = [], head
+        for ln in lines:
+            if len(cur) + len(ln) > 3900:
+                chunks.append(cur); cur = ""
+            cur += ln + "\n"
+        chunks.append(cur)
+        for i, c in enumerate(chunks):
+            post(emj, embeds=[{"title": title.format(wk) + (f" ({i + 1}/{len(chunks)})" if len(chunks) > 1 else ""), "description": c, "color": COLORS["push"]}])
+    best_bets(S, PLD, PK, wk, now, ahead=36)
+
+
 HIST = "https://github.com/PandaFilmsHD/oxtail-lab/commits/main/data/props_picks.json"
 
 
@@ -387,6 +455,12 @@ def main():
     S = load(D / "discord_state.json", {})
     now = now_utc()
     wk = PLD.get("week")
+    if "--repost" in sys.argv:
+        try:
+            results(S, PK, now, PLD)
+            repost(S, PLD, PK, wk, now)
+        finally:
+            (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
     if "--backfill" in sys.argv:
         try:
             backfill(S, PK, wk, now)

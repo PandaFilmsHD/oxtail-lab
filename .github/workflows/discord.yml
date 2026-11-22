@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "test = hello in every channel, backfill = this week's already-played picks (labeled late)"
+        description: "test = hello in every channel, backfill = already-played picks (labeled late), repost = week so far + early best bets"
         required: true
         default: test
         type: choice
-        options: [test, backfill]
+        options: [test, backfill, repost]
 
 permissions:
   contents: write
@@ -35,10 +35,10 @@ jobs:
           DISCORD_RECEIPTS: ${{ secrets.DISCORD_RECEIPTS }}
         run: python -u scripts/post_discord.py --${{ inputs.mode }}
       - name: Save what was posted
-        if: inputs.mode == 'backfill'
+        if: inputs.mode != 'test'
         run: |
           git config user.name "oxtail-bot"
           git config user.email "oxtail-bot@users.noreply.github.com"
           git add data/discord_state.json
-          git diff --cached --quiet || git commit -m "Discord backfill"
+          git diff --cached --quiet || git commit -m "Discord ${{ inputs.mode }}"
           for i in 1 2 3 4 5; do git push && break; git pull --rebase -X theirs origin main; sleep $((i * 3)); done
