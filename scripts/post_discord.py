@@ -26,6 +26,7 @@ LEAD_MIN = 100          # post a window this many minutes before kickoff (runs a
 MAX_BEST, MAX_KAL = 5, 5
 PING_EV, PING_EDGE, PING_PER_DAY = 15.0, 6.0, 3   # @everyone only for big Kalshi edges, at most 3 a day
 PROP_EDGE, GAME_EDGE, KAL_EDGE = 3.5, 2.5, 4.0   # strict: below this it doesn't make the channel
+MSGS = []   # ids of everything posted this run, saved to state so posts can be deleted or fixed later
 COLORS = dict(best=0x5B7CFF, parlay=0xFFC83D, kalshi=0x3DDC84, win=0x3DDC84, loss=0xFF5A6E, receipt=0x8A8FB8, push=0x8A8FB8)
 
 
@@ -83,6 +84,10 @@ def post(ch, content=None, embeds=None, file=None, ping=False):
             time.sleep(float((r.json() or {}).get("retry_after", 2)) + 0.5); continue
         print("discord:", ch, r.status_code)
         if r.ok:
+            try:
+                MSGS.append({"ch": ch, "id": r.json().get("id"), "at": now_utc().isoformat()})
+            except Exception:
+                pass
             time.sleep(0.6)
             return True
         return False
@@ -221,28 +226,84 @@ def best_bets(S, PLD, PK, wk, now, ahead=None):
                 posted[c["id"]] = dict(week=str(wk), ch="best", text=c["text"], price=c["price"], units=c["units"], kick=k, at=now.isoformat())
 
 
-def kalshi(S, PLD, wk, now):
-    posted = S.setdefault("posted", {})
-    K = PLD.get("kalshi") or {}
-    for k in windows(PLD, now):
-        if S.setdefault("kal_done", {}).get(k):
-            continue
-        L = [x for x in (K.get("buys") or []) + (K.get("safe") or []) if x.get("kick") == k and (x.get("edge") or 0) >= KAL_EDGE and x.get("ticker")]
-        L = one_per(L, lambda x: x.get("player") or x.get("game") or x["label"], lambda x: x.get("edge") or 0)
-        L.sort(key=lambda x: -(x.get("edge") or 0))
-        L = L[:MAX_KAL]
-        if not L:
-            S["kal_done"][k] = now.isoformat(); continue   # quiet when there's nothing; no need for a pass post here
-        flds = [{"name": trim(f"💸 {x['label']} · buy {x['side']} at {x['cost']}¢ or less", 250),
-                 "value": trim(f"**We have it {round(x['p'])}% vs {x['cost']}¢ price · +{x['edge']}% edge · +{x.get('ev')}% EV · pays {usd(1 / ((x['cost'] + (x.get('fee') or 0)) / 100) - 1)} on {usd(1)[1:]}**\n" +
-                              "\n".join(trim(l) for l in [l for l in (x.get("why") or []) if l.startswith(("🧮", "⬆️", "⬇️", "📈"))][:3]), 1020), "inline": False} for x in L]
-        e = {"title": f"💸 Kalshi buys · {pt(k)} PT", "description": "A share pays $1 if it hits. Our chance is higher than the price, so it's worth buying.", "fields": flds, "color": COLORS["kalshi"],
-             "footer": {"text": "Only buy if a share costs less than our chance (in cents). Prices move fast."}}
-        if post("KALSHI", embeds=[e]):
-            S["kal_done"][k] = now.isoformat()
-            for x in L:
-                posted[f"KA|{x['ticker']}|{x['side']}"] = dict(week=str(wk), ch="kalshi", text=x["label"], cost=x["cost"], fee=x.get("fee") or 0, units=1, kick=k, at=now.isoformat())
+def ka_rows(PK, wk, pred):
+    return sorted([(k, x) for k, x in (PK.get(str(wk)) or {}).items() if k.startswith("KA|") and pred(x)], key=lambda kv: (kv[1].get("kick") or "", kv[1].get("label") or ""))
 
+
+def ka_who(x):
+    return x.get("player") or (f"{x.get('away')} @ {x.get('home')}" if x.get("home") else (x.get("label") or "?").split(" by ")[0])
+
+
+def ka_line(x, show_res=False):
+    res = {True: "✅", False: "❌"}.get(x.get("result"), "➖" if x.get("graded") else "⏳") if show_res else "•"
+    c_ = ((x.get("cost") or 0) + (x.get("fee") or 0)) / 100
+    money = ""
+    if show_res and x.get("graded"):
+        u = (1 / c_ - 1) if x.get("result") else -1 if x.get("result") is False else 0
+        money = f" · **{usd(u)}**"
+    had = f" · had {x['actual']}" if show_res and x.get("actual") is not None else ""
+    return f"{res} {x.get('label')} at **{x.get('cost')}¢** · {round(x.get('p') or 0)}% · +{x.get('edge')}% edge · +{x.get('ev')}% EV{had}{money}"
+
+
+def ka_fields(rows, show_res=False, whys=None):
+    groups = {}
+    for k, x in rows:
+        groups.setdefault(ka_who(x), []).append(x)
+    flds = []
+    for who, xs in groups.items():
+        top = (whys or {}).get(who)
+        val = "\n".join(ka_line(x, show_res) for x in xs) + (f"\n{trim(top, 200)}" if top else "")
+        flds.append({"name": trim(f"💸 {who}", 250), "value": trim(val, 1020), "inline": False})
+    return flds
+
+
+def post_fields(ch, title, desc, flds, color, footer=None, ping=False, content=None):
+    """Discord allows 25 fields and about 5,500 characters per embed: split long lists across messages."""
+    chunks, cur, size = [], [], len(desc)
+    for f in flds:
+        n = len(f["name"]) + len(f["value"])
+        if cur and (len(cur) >= 20 or size + n > 5200):
+            chunks.append(cur); cur, size = [], 0
+        cur.append(f); size += n
+    if cur or not chunks:
+        chunks.append(cur)
+    ok = True
+    for i, c in enumerate(chunks):
+        e = {"title": title + (f" ({i + 1}/{len(chunks)})" if len(chunks) > 1 else ""), "color": color, "fields": c}
+        if i == 0 and desc:
+            e["description"] = desc
+        if footer and i == len(chunks) - 1:
+            e["footer"] = {"text": footer}
+        ok = post(ch, content=content if i == 0 else None, embeds=[e], ping=ping and i == 0) and ok
+    return ok
+
+
+def kalshi(S, PLD, PK, wk, now):
+    """Every Kalshi buy the model locks gets posted (same list the site's Record tab counts), grouped by player."""
+    whys = {}
+    for x in ((PLD.get("kalshi") or {}).get("buys") or []) + ((PLD.get("kalshi") or {}).get("safe") or []):
+        w_ = [l for l in (x.get("why") or []) if l.startswith("🧮")]
+        if w_:
+            whys.setdefault(ka_who(x), w_[0])
+    done = S.setdefault("kal_done", {})
+    shown = set(S.setdefault("kal_shown", []))
+    for k in windows(PLD, now):
+        if done.get(k):
+            continue
+        rows = ka_rows(PK, wk, lambda x: x.get("kick") == k)
+        done[k] = now.isoformat()
+        if not rows:
+            continue
+        if post_fields("KALSHI", f"💸 Kalshi buys · {pt(k)} PT", f"Every share we'd buy for this slate ({len(rows)}). A share pays $1 if it hits. We buy when our chance is higher than the price.\nLadders (50+, 60+, 70+) on one player ride on the same game, so size down if you take several.",
+                       ka_fields(rows, whys=whys), COLORS["kalshi"], "Only buy at the price shown or lower. Prices move fast. All of these get graded in #results."):
+            shown |= {kk for kk, _ in rows}
+    # buys locked after their slate was already posted
+    late = ka_rows(PK, wk, lambda x: x.get("kick") and done.get(x["kick"]) and iso(x["kick"]) > now)
+    late = [(kk, x) for kk, x in late if kk not in shown]
+    if late:
+        if post_fields("KALSHI", "➕ New Kalshi buys", "Prices moved and these just turned into buys.", ka_fields(late, whys=whys), COLORS["kalshi"]):
+            shown |= {kk for kk, _ in late}
+    S["kal_shown"] = sorted(shown)
 
 def big_edges(S, PLD, wk, now):
     """@everyone when Kalshi has a share priced well under our chance. Any time before kickoff, max 3 a day, one per player."""
@@ -308,7 +369,7 @@ def results(S, PK, now, PLD=None):
     rec = S.setdefault("record", {"w": 0, "l": 0, "p": 0, "u": 0.0})
     out = []
     for key, x in posted.items():
-        if x.get("result"):
+        if x.get("result") or x.get("ch") == "kalshi":
             continue
         g = (PK.get(x["week"]) or {}).get(key)
         if not g or not g.get("graded"):
@@ -316,49 +377,37 @@ def results(S, PK, now, PLD=None):
                 x["result"] = "gone"
             continue
         res = "push" if g.get("result") is None else "win" if g["result"] else "loss"
-        if x["ch"] == "kalshi":
-            u = (100 / (x["cost"] + x["fee"]) - 1) if res == "win" else -1 if res == "loss" else 0
-        else:
-            u = x["units"] * (win_units(x.get("price")) if res == "win" else -1 if res == "loss" else 0)
+        u = x["units"] * (win_units(x.get("price")) if res == "win" else -1 if res == "loss" else 0)
         x.update(result=res, u=round(u, 3), actual=g.get("actual"), graded_at=now.isoformat())
         rec["w" if res == "win" else "l" if res == "loss" else "p"] += 1; rec["u"] = round(rec["u"] + u, 3)
         out.append(x)
-    if "record_by" not in S:   # first run with the split: rebuild from everything graded before this run
-        S["record_by"] = {}
-        for x in posted.values():
-            if x.get("result") in ("win", "loss", "push") and x not in out:
-                r_ = S["record_by"].setdefault(x["ch"], {"w": 0, "l": 0, "p": 0, "u": 0.0})
-                r_["w" if x["result"] == "win" else "l" if x["result"] == "loss" else "p"] += 1; r_["u"] = round(r_["u"] + x["u"], 3)
-    rb = S["record_by"]
-    for x in out:
-        r_ = rb.setdefault(x["ch"], {"w": 0, "l": 0, "p": 0, "u": 0.0})
-        r_["w" if x["result"] == "win" else "l" if x["result"] == "loss" else "p"] += 1; r_["u"] = round(r_["u"] + x["u"], 3)
+    said = set(S.setdefault("kal_said", []))
+    kal = [(f"{w_}|{k}", x) for w_, pk in PK.items() for k, x in pk.items() if k.startswith("KA|") and x.get("graded") and f"{w_}|{k}" not in said]
+    kal.sort(key=lambda kv: (kv[1].get("kick") or "", kv[1].get("label") or ""))
+    kr = ((PLD or {}).get("record") or {}).get("kalshi") or [0, 0, 0]
+    kopen = ((PLD or {}).get("record") or {}).get("kalshi_open")
+    fr = lambda r_: f"{r_['w']}-{r_['l']}{'-' + str(r_['p']) if r_['p'] else ''} · {usd(r_['u'])}"
     if out:
         mark = lambda x: f"{'✅' if x['result'] == 'win' else '❌' if x['result'] == 'loss' else '➖'} {x['text']}{f' (had {x['actual']})' if x.get('actual') is not None else ''} · **{usd(x['u'])}**"
-        fr = lambda r_: f"{r_['w']}-{r_['l']}{'-' + str(r_['p']) if r_['p'] else ''} · {usd(r_['u'])}"
-        parts = []
-        for ch, name in (("best", "🎯 Best bets (sportsbook)"), ("kalshi", "💸 Kalshi")):
-            L_ = [x for x in out if x["ch"] == ch]
-            if L_:
-                parts.append(f"**{name}** · all time {fr(rb[ch])}\n" + "\n".join(mark(x) for x in L_))
         good = sum(x["u"] for x in out) >= 0
-        e = {"title": f"📊 {len(out)} graded", "description": "\n\n".join(parts)[:3900], "color": COLORS["win" if good else "loss"],
-             "footer": {"text": f"All Discord picks: {fr(rec)} at ${UNIT:.0f} a unit"}}
-        kr = ((PLD or {}).get("record") or {}).get("kalshi")
-        if kr and (kr[0] + kr[1]):
-            e["footer"]["text"] += f"\nEvery Kalshi rung the model liked (incl. ladders): {kr[0]}-{kr[1]} · {usd(kr[2])}"
-        post("RESULTS", embeds=[e])
+        post("RESULTS", embeds=[{"title": f"🎯 Best bets: {len(out)} graded", "description": "\n".join(mark(x) for x in out)[:3900], "color": COLORS["win" if good else "loss"],
+                                 "footer": {"text": f"Best bets all time: {fr(rec)} at ${UNIT:.0f} a unit"}}])
+    if kal:
+        kw = sum(1 for _, x in kal if x.get("result")); kl = sum(1 for _, x in kal if x.get("result") is False)
+        if post_fields("RESULTS", f"💸 Kalshi: {len(kal)} graded ({kw}-{kl})", "", ka_fields(kal, show_res=True), COLORS["win" if kw >= kl else "loss"],
+                       f"Kalshi all time (every bet, same as the site's Record tab): {kr[0]}-{kr[1]} · {usd(kr[2])}" + (f" · {kopen} open" if kopen else "")):
+            S["kal_said"] = sorted(said | {kk for kk, _ in kal})
     # daily recap: the morning after, for picks graded the day before
     today = now.astimezone(PT).date()
     yday = (today - datetime.timedelta(days=1)).isoformat()
     if now.astimezone(PT).hour >= 8 and S.setdefault("recaps", {}).get(yday) is None:
-        day = [x for x in posted.values() if x.get("graded_at") and iso(x["graded_at"]).astimezone(PT).date().isoformat() == yday and x["result"] in ("win", "loss", "push")]
+        day = [x for x in posted.values() if x.get("ch") != "kalshi" and x.get("graded_at") and iso(x["graded_at"]).astimezone(PT).date().isoformat() == yday and x["result"] in ("win", "loss", "push")]
         S["recaps"][yday] = len(day)
         if day:
             w = sum(x["result"] == "win" for x in day); l = sum(x["result"] == "loss" for x in day); u = sum(x["u"] for x in day)
             bestp = max(day, key=lambda x: x["u"])
             e = {"title": f"🗓️ {datetime.date.fromisoformat(yday).strftime('%A')} recap: {w}-{l} · {usd(u)}", "color": COLORS["win" if u >= 0 else "loss"],
-                 "description": f"Best hit: {bestp['text']} ({usd(bestp['u'])})\nAll time here: {rec['w']}-{rec['l']} · {usd(rec['u'])}"}
+                 "description": f"Best hit: {bestp['text']} ({usd(bestp['u'])})\nBest bets all time: {rec['w']}-{rec['l']} · {usd(rec['u'])}\nKalshi all time: {(((PLD or {}).get('record') or {}).get('kalshi') or [0, 0, 0])[0]}-{(((PLD or {}).get('record') or {}).get('kalshi') or [0, 0, 0])[1]} · {usd((((PLD or {}).get('record') or {}).get('kalshi') or [0, 0, 0])[2])}"}
             post("RESULTS", embeds=[e])
 
 
@@ -395,6 +444,27 @@ def repost(S, PLD, PK, wk, now):
         for i, c in enumerate(chunks):
             post(emj, embeds=[{"title": title.format(wk) + (f" ({i + 1}/{len(chunks)})" if len(chunks) > 1 else ""), "description": c, "color": COLORS["push"]}])
     best_bets(S, PLD, PK, wk, now, ahead=36)
+
+
+def kalshi_redo(S, PLD, PK, wk, now):
+    rows = ka_rows(PK, wk, lambda x: True)
+    kr = (PLD.get("record") or {}).get("kalshi") or [0, 0, 0]
+    kopen = (PLD.get("record") or {}).get("kalshi_open") or 0
+    desc = (f"Every Kalshi share the model said to buy this week ({len(rows)}), with results. This is the full list the site's Record tab counts: **{kr[0]}-{kr[1]} · {usd(kr[2])}**, {kopen} still open.\n"
+            "Picked before kickoff (proof in #receipts). Ladders (several lines on one player) ride on the same game.")
+    if post_fields("KALSHI", f"📋 Week {wk}: every Kalshi bet", desc, ka_fields(rows, show_res=True), COLORS["kalshi"], "⏳ = not graded yet. Updates land in #results."):
+        S["kal_shown"] = sorted(set(S.get("kal_shown", [])) | {k for k, _ in rows})
+    for k in {x["kick"] for _, x in rows if x.get("kick") and iso(x["kick"]) <= now}:
+        S.setdefault("kal_done", {})[k] = now.isoformat()
+    graded = [(f"{wk}|{k}", x) for k, x in rows if x.get("graded")]
+    rb = {"w": 0, "l": 0, "p": 0, "u": 0.0}   # best bets only now; Kalshi is counted from every locked buy
+    for x in S.get("posted", {}).values():
+        if x.get("ch") != "kalshi" and x.get("result") in ("win", "loss", "push"):
+            rb["w" if x["result"] == "win" else "l" if x["result"] == "loss" else "p"] += 1; rb["u"] = round(rb["u"] + x["u"], 3)
+    S["record"] = rb
+    post("RESULTS", embeds=[{"title": f"📊 Week {wk} record so far", "color": COLORS["win"],
+                             "description": f"💸 **Kalshi (every bet):** {kr[0]}-{kr[1]} · **{usd(kr[2])}** · {kopen} open\n🎯 **Best bets:** {rb['w']}-{rb['l']} · **{usd(rb['u'])}**\n\nFrom here on, every graded bet posts here as it finishes. Kalshi numbers match the site's Record tab."}])
+    S["kal_said"] = sorted(set(S.get("kal_said", [])) | {kk for kk, _ in graded})
 
 
 HIST = "https://github.com/PandaFilmsHD/oxtail-lab/commits/main/data/props_picks.json"
@@ -487,6 +557,13 @@ def main():
     S = load(D / "discord_state.json", {})
     now = now_utc()
     wk = PLD.get("week")
+    if "--kalshi-redo" in sys.argv:
+        try:
+            kalshi_redo(S, PLD, PK, wk, now)
+        finally:
+            S.setdefault("msgs", []).extend(MSGS); MSGS.clear()
+            (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
+        return
     if "--repost" in sys.argv:
         try:
             results(S, PK, now, PLD)
@@ -498,12 +575,13 @@ def main():
             backfill(S, PK, wk, now)
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
-    for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, wk, now), lambda: big_edges(S, PLD, wk, now),
+    for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, PK, wk, now), lambda: big_edges(S, PLD, wk, now),
                  lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD)):
         try:
             step()
         except Exception as e:
             print("discord: step failed", type(e).__name__, e)
+        S.setdefault("msgs", []).extend(MSGS); MSGS.clear(); S["msgs"] = S["msgs"][-2000:]
         (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))   # save after each step so a crash never double posts
 
 
