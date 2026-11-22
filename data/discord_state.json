@@ -262,6 +262,92 @@
   "2026-11-22": "2026-11-22T22:30:21.610681+00:00",
   "2026-11-23": "2026-11-22T22:30:21.610681+00:00"
  },
+ "parlays": [
+  {
+   "at": "2026-11-22T22:32:32.466802+00:00",
+   "day": "2026-11-22",
+   "fair": -174,
+   "legs": [
+    {
+     "kick": "2026-11-23T01:20:00Z",
+     "label": "Jauan Jennings Under 3.5 catches",
+     "p": 75.9,
+     "type": "prop"
+    },
+    {
+     "kick": "2026-11-23T01:20:00Z",
+     "label": "Justin Jefferson Under 135.5 rec yds",
+     "p": 83.5,
+     "type": "prop"
+    }
+   ],
+   "p": 63.5,
+   "week": "11"
+  },
+  {
+   "at": "2026-11-22T22:32:32.466802+00:00",
+   "day": "2026-11-22",
+   "fair": -175,
+   "legs": [
+    {
+     "kick": "2026-11-23T01:20:00Z",
+     "label": "Jauan Jennings Under 3.5 catches",
+     "p": 75.9,
+     "type": "prop"
+    },
+    {
+     "kick": "2026-11-23T01:20:00Z",
+     "label": "Jordan Mason Under 78.5 rush yds",
+     "p": 83.7,
+     "type": "prop"
+    }
+   ],
+   "p": 63.6,
+   "week": "11"
+  },
+  {
+   "at": "2026-11-22T22:32:32.466802+00:00",
+   "day": "2026-11-23",
+   "fair": -251,
+   "legs": [
+    {
+     "kick": "2026-11-24T01:15:00Z",
+     "label": "Ja'Marr Chase Under 11.5 catches",
+     "p": 81.2,
+     "type": "prop"
+    },
+    {
+     "kick": "2026-11-24T01:15:00Z",
+     "label": "Joe Burrow Under 381.5 pass yds",
+     "p": 83.2,
+     "type": "prop"
+    }
+   ],
+   "p": 71.5,
+   "week": "11"
+  },
+  {
+   "at": "2026-11-22T22:32:32.466802+00:00",
+   "day": "2026-11-23",
+   "fair": -199,
+   "legs": [
+    {
+     "kick": "2026-11-24T01:15:00Z",
+     "label": "Ja'Marr Chase Under 10.5 catches",
+     "p": 74.5,
+     "type": "prop"
+    },
+    {
+     "kick": "2026-11-24T01:15:00Z",
+     "label": "Joe Burrow Under 381.5 pass yds",
+     "p": 83.2,
+     "type": "prop"
+    }
+   ],
+   "p": 66.5,
+   "week": "11"
+  }
+ ],
  "pinged": {
   "KA|KXNFLPASSTDS-26NOV23CINWAS-CINJBURROW9-2|No": {
    "at": "2026-11-22T22:02:31.122926+00:00",
