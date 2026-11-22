@@ -238,7 +238,7 @@ def parlays(S, PLD, now):
         S["parlay_days"][day] = now.isoformat()
 
 
-def results(S, PK, now):
+def results(S, PK, now, PLD=None):
     posted = S.setdefault("posted", {})
     rec = S.setdefault("record", {"w": 0, "l": 0, "p": 0, "u": 0.0})
     out = []
@@ -262,7 +262,10 @@ def results(S, PK, now):
         lines = [f"{'✅' if x['result'] == 'win' else '❌' if x['result'] == 'loss' else '➖'} {x['text']}{f' (had {x['actual']})' if x.get('actual') is not None else ''} · **{usd(x['u'])}**" for x in out]
         good = sum(x["u"] for x in out) >= 0
         e = {"title": f"📊 {len(out)} graded", "description": "\n".join(lines)[:3900], "color": COLORS["win" if good else "loss"],
-             "footer": {"text": f"Discord record: {rec['w']}-{rec['l']}{'-' + str(rec['p']) if rec['p'] else ''} · {usd(rec['u'])} at ${UNIT:.0f} a unit"}}
+             "footer": {"text": f"Discord picks: {rec['w']}-{rec['l']}{'-' + str(rec['p']) if rec['p'] else ''} · {usd(rec['u'])} at ${UNIT:.0f} a unit"}}
+        kr = ((PLD or {}).get("record") or {}).get("kalshi")
+        if kr and (kr[0] + kr[1]):
+            e["footer"]["text"] += f"\nEvery Kalshi rung the model liked (incl. ladders): {kr[0]}-{kr[1]} · {usd(kr[2])}"
         post("RESULTS", embeds=[e])
     # daily recap: the morning after, for picks graded the day before
     today = now.astimezone(PT).date()
@@ -374,7 +377,7 @@ def main():
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
     for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, wk, now),
-                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now)):
+                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD)):
         try:
             step()
         except Exception as e:
