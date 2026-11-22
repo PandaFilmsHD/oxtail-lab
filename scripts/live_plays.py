@@ -193,6 +193,18 @@ def clean(t):
     return t.strip()
 
 
+def recent(p, mins=4):
+    """Was this play logged in the last few minutes? (so a restart mid-game doesn't miss what just happened)"""
+    m = p.get("modified") or p.get("wallclock") or ""
+    try:
+        t = dt.datetime.fromisoformat(m.replace("Z", "+00:00"))
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=dt.timezone.utc)
+        return (now() - t).total_seconds() < mins * 60
+    except Exception:
+        return False
+
+
 def should_run():
     people, dst, _ = load_lineups()
     teams = {x["team"] for x in people.values()} | set(dst)
@@ -266,13 +278,13 @@ def run():
                     key = (pid, h["name"]); old = GOT.get(key)
                     GOT[key] = (pts or 0, lab)
                     TOT[h["name"]] = TOT.get(h["name"], 0) + (pts or 0) - (old[0] if old else 0)
-                    if first or h["side"] != "me":
-                        continue
+                    if first and not recent(p):
+                        continue   # on (re)start, skip what already happened except the last few minutes
                     if changed:   # replay review or stat fix changed a play we already counted
                         if old and abs((pts or 0) - old[0]) >= 0.05:
                             last = h["name"].split()[-1] if h["pos"] != "D" else h["name"]
                             diff = (pts or 0) - old[0]
-                            send(f"↩️ {last} {old[1]} overturned" + (f": {lab}" if lab else "") + f"  {diff:+.1f}", f"{clean(final_text(txt0))}\n{last} {TOT.get(h['name'], 0):.1f} pts today · {e.get('shortName', '')}", priority=3, click=SITE + "#home", tag=f"play{pid}")
+                            send(("" if h["side"] == "me" else f"😬 {opp_name} · ") + f"↩️ {last} {old[1]} overturned" + (f": {lab}" if lab else "") + f"  {diff:+.1f}", f"{clean(final_text(txt0))}\n{last} {TOT.get(h['name'], 0):.1f} pts today · {e.get('shortName', '')}", priority=3, click=SITE + "#home", tag=f"play{pid}{h['side']}")
                             sent += 1
                         continue
                     if h["pos"] == "QB":   # QBs: only the big stuff, or the phone never stops buzzing
@@ -282,12 +294,12 @@ def run():
                         if not (p.get("scoringPlay") or (pts is not None and pts < 0) or y_ >= (15 if run_ else 20)):
                             continue
                     q = (p.get("period") or {}).get("number"); clk = (p.get("clock") or {}).get("displayValue", "")
-                    icon = "🔥" if p.get("scoringPlay") else "🛡️" if h["pos"] == "D" else "🏈"
+                    icon = ("🔥" if p.get("scoringPlay") else "🛡️" if h["pos"] == "D" else "🏈") if h["side"] == "me" else f"😬 {opp_name} ·"
                     txt = final_text(p.get("text")).strip()
                     last = h["name"].split()[-1] if h["pos"] != "D" else h["name"]
                     title = f"{icon} {last}" + (f" {lab}" if lab else "") + (f"  {pts:+.1f}" if pts else "")
                     body = f"{clean(txt)}\nQ{q} {clk} · {last} {TOT.get(h['name'], 0):.1f} pts today · {e.get('shortName', '')}"
-                    send(title, body, priority=3, click=SITE + "#home", tag=f"play{pid}")
+                    send(title, body, priority=3, click=SITE + "#home", tag=f"play{pid}{h['side']}")
                     sent += 1
         first = False
         if sent:
