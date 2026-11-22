@@ -28,8 +28,8 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Time bucket for nflverse cache
         id: tb
-        run: echo "b=$(date -u +%Y%m%d)-$(( 10#$(date -u +%H) / 6 ))" >> "$GITHUB_OUTPUT"
-      - name: Reuse nflverse stats pulled in the last 6 hours
+        run: echo "b=$(date -u +%Y%m%d-%H)" >> "$GITHUB_OUTPUT"
+      - name: Reuse nflverse stats pulled this hour
         id: nfl
         uses: actions/cache@v4
         with:
