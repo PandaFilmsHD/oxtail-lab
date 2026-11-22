@@ -258,11 +258,27 @@ def results(S, PK, now, PLD=None):
         x.update(result=res, u=round(u, 3), actual=g.get("actual"), graded_at=now.isoformat())
         rec["w" if res == "win" else "l" if res == "loss" else "p"] += 1; rec["u"] = round(rec["u"] + u, 3)
         out.append(x)
+    if "record_by" not in S:   # first run with the split: rebuild from everything graded before this run
+        S["record_by"] = {}
+        for x in posted.values():
+            if x.get("result") in ("win", "loss", "push") and x not in out:
+                r_ = S["record_by"].setdefault(x["ch"], {"w": 0, "l": 0, "p": 0, "u": 0.0})
+                r_["w" if x["result"] == "win" else "l" if x["result"] == "loss" else "p"] += 1; r_["u"] = round(r_["u"] + x["u"], 3)
+    rb = S["record_by"]
+    for x in out:
+        r_ = rb.setdefault(x["ch"], {"w": 0, "l": 0, "p": 0, "u": 0.0})
+        r_["w" if x["result"] == "win" else "l" if x["result"] == "loss" else "p"] += 1; r_["u"] = round(r_["u"] + x["u"], 3)
     if out:
-        lines = [f"{'✅' if x['result'] == 'win' else '❌' if x['result'] == 'loss' else '➖'} {x['text']}{f' (had {x['actual']})' if x.get('actual') is not None else ''} · **{usd(x['u'])}**" for x in out]
+        mark = lambda x: f"{'✅' if x['result'] == 'win' else '❌' if x['result'] == 'loss' else '➖'} {x['text']}{f' (had {x['actual']})' if x.get('actual') is not None else ''} · **{usd(x['u'])}**"
+        fr = lambda r_: f"{r_['w']}-{r_['l']}{'-' + str(r_['p']) if r_['p'] else ''} · {usd(r_['u'])}"
+        parts = []
+        for ch, name in (("best", "🎯 Best bets (sportsbook)"), ("kalshi", "💸 Kalshi")):
+            L_ = [x for x in out if x["ch"] == ch]
+            if L_:
+                parts.append(f"**{name}** · all time {fr(rb[ch])}\n" + "\n".join(mark(x) for x in L_))
         good = sum(x["u"] for x in out) >= 0
-        e = {"title": f"📊 {len(out)} graded", "description": "\n".join(lines)[:3900], "color": COLORS["win" if good else "loss"],
-             "footer": {"text": f"Discord picks: {rec['w']}-{rec['l']}{'-' + str(rec['p']) if rec['p'] else ''} · {usd(rec['u'])} at ${UNIT:.0f} a unit"}}
+        e = {"title": f"📊 {len(out)} graded", "description": "\n\n".join(parts)[:3900], "color": COLORS["win" if good else "loss"],
+             "footer": {"text": f"All Discord picks: {fr(rec)} at ${UNIT:.0f} a unit"}}
         kr = ((PLD or {}).get("record") or {}).get("kalshi")
         if kr and (kr[0] + kr[1]):
             e["footer"]["text"] += f"\nEvery Kalshi rung the model liked (incl. ladders): {kr[0]}-{kr[1]} · {usd(kr[2])}"
