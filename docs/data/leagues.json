@@ -5,21 +5,14 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-22T15:58:56Z",
+   "at": "2026-11-22T16:08:56Z",
    "champ_pct": 19.6,
    "todo": [
     {
      "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Brock Bowers might not play (69%)",
-     "detail": "If he's ruled out, start Michael Mayer (7.7).",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at TE: Brock Bowers or Michael Mayer",
-     "detail": "Brock Bowers 6.8 vs Michael Mayer 7.7. Starting Michael Mayer raises your chance to beat BO liever from 52% to 53%.",
+     "detail": "Brock Bowers 8.4 vs Michael Mayer 7.7. Keeping Brock Bowers gives you a 52% chance to win vs 51% with Michael Mayer.",
      "tab": "home"
     }
    ]
@@ -29,7 +22,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T15:59:18Z",
+   "at": "2026-11-22T16:09:13Z",
    "champ_pct": 15.9,
    "todo": [
     {
@@ -43,7 +36,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.2%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.3%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     }
    ]
@@ -53,8 +46,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T15:59:28Z",
-   "champ_pct": 3.7,
+   "at": "2026-11-22T16:09:22Z",
+   "champ_pct": 3.6,
    "todo": [
     {
      "urgent": true,
@@ -84,7 +77,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T15:59:07Z",
+   "at": "2026-11-22T16:09:05Z",
    "champ_pct": 36.6,
    "todo": [
     {
