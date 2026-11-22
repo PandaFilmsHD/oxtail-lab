@@ -5,15 +5,15 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-22T19:54:20Z",
-   "champ_pct": 18.6,
+   "at": "2026-11-22T20:03:52Z",
+   "champ_pct": 18.1,
    "todo": [
     {
      "urgent": false,
-     "icon": "\u2705",
-     "title": "You're all set this week",
-     "detail": "Lineup is full, no must-have waiver claims, no trade worth forcing.",
-     "tab": "home"
+     "icon": "\u23f3",
+     "title": "Trade deadline in 10 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
+     "tab": "trades"
     }
    ]
   },
@@ -22,14 +22,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T19:54:38Z",
-   "champ_pct": 16.3,
+   "at": "2026-11-22T20:04:13Z",
+   "champ_pct": 16.5,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.1%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     },
     {
@@ -46,8 +46,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T19:54:46Z",
-   "champ_pct": 4.4,
+   "at": "2026-11-22T20:04:22Z",
+   "champ_pct": 4.5,
    "todo": [
     {
      "urgent": false,
@@ -63,14 +63,14 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-22T19:54:29Z",
-   "champ_pct": 36.3,
+   "at": "2026-11-22T20:04:02Z",
+   "champ_pct": 36.2,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Zay Flowers for Dak Prescott (Tyler's Talented Team)",
-     "detail": "Title odds +2.0%. Would you do Zay Flowers for Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and you're deep at QB so you can cover Prescott's spot.",
+     "detail": "Title odds +2.3%. Would you do Zay Flowers for Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and you're deep at QB so you can cover Prescott's spot.",
      "tab": "trades"
     },
     {
