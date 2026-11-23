@@ -929,7 +929,7 @@ seg('bpos', v => { BP = v; renderBoom(); }); seg('bown', v => { BO = v; renderBo
   $$('.navarr').forEach(b => b.addEventListener('click', () => nav.scrollBy({ left: (b.classList.contains('l') ? -1 : 1) * nav.clientWidth * 0.7, behavior: 'smooth' }))); })();
 
 // ---------------- Prop Lab ----------------
-let TDF = 'value', TDG = 'all';
+let TDF = 'all', TDG = 'all';
 let PLD = null, PLV = 'parlay', PLM = 'all', PLPICK = new Set(), PGS = 'bets', PPS = 'value';
 const odds = a => (a > 0 ? '+' : '') + a;
 const fairOf = p => { p = Math.min(Math.max(p, 0.01), 0.99); return p >= 0.5 ? Math.round(-100 * p / (1 - p)) : Math.round(100 * (1 - p) / p); };
@@ -1151,7 +1151,7 @@ async function renderProps() {
     L = [...L].sort((a, b) => TDF === 'value' ? (b.ev || 0) - (a.ev || 0) : b.p - a.p);
     const odds = v => v == null ? '' : (v > 0 ? '+' + v : '' + v);
     out = [h('div', { class: 'tip' }, '🔥 Anytime TD chance for every RB, WR and TE, from our TD model: red zone and goal line usage, end zone targets, Vegas team points, and how the defense handles his position. Trained on 2017 to 2022, tested on 2023 to now, where it beat a basic model at every position. Value = our chance beats the best book price by enough to matter.'),
-      h('div', { class: 'seg', style: 'margin:10px 0 6px' }, ...[['value', `💰 Value ${T.filter(x => x.value).length}`], ['all', `All ${T.length}`]].map(([v, t]) => h('button', { class: v === TDF ? 'on' : '', onclick: () => { TDF = v; renderProps(); } }, t))),
+      h('div', { class: 'seg', style: 'margin:10px 0 6px' }, ...[['all', `Everyone ${T.length}`], ['value', `💰 Value bets ${T.filter(x => x.value).length}`]].map(([v, t]) => h('button', { class: v === TDF ? 'on' : '', onclick: () => { TDF = v; renderProps(); } }, t))),
       gms.length > 1 ? h('div', { class: 'seg', style: 'margin:0 0 10px;flex-wrap:wrap' }, ...[['all', 'All games'], ...gms.map(g => [g, g])].map(([v, t]) => h('button', { class: v === TDG ? 'on' : '', onclick: () => { TDG = v; renderProps(); } }, t))) : '',
       h('div', { class: 'bgrid' }, ...L.slice(0, 60).map(x => h('div', { class: 'pcard tap', onclick: () => openWhy(`${x.player} anytime TD`, x.why, `${Math.round(x.p)}% ours${x.p_mkt != null ? ' vs ' + Math.round(x.p_mkt) + '% books' : ''} · fair ${odds(x.fair)}`) },
         h('div', { class: 'phead' }, h('div', { style: 'min-width:0' }, h('div', { class: 'bn' }, x.player), h('div', { class: 'k' }, `${x.pos} · ${x.team} vs ${x.opp} · ${kickT(x.kick)}`)), x.value ? h('span', { class: 'grade gA' }, '💰') : ''),
