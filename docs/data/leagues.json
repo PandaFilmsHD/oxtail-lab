@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-23T13:17:26Z",
+   "at": "2026-11-23T13:45:03Z",
    "champ_pct": 19.3,
    "todo": [
     {
@@ -22,16 +22,9 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-23T13:17:47Z",
+   "at": "2026-11-23T13:45:28Z",
    "champ_pct": 14.4,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Bhayshul Tuten",
-     "detail": "ACTIVE \u2192 QUESTIONABLE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -52,6 +45,13 @@
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
      "detail": "Title odds +1.8%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
+    },
+    {
+     "urgent": false,
+     "icon": "\u23f3",
+     "title": "Trade deadline in 9 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
+     "tab": "trades"
     }
    ]
   },
@@ -60,7 +60,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-23T13:17:58Z",
+   "at": "2026-11-23T13:45:40Z",
    "champ_pct": 3.7,
    "todo": [
     {
@@ -77,8 +77,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-23T13:17:36Z",
-   "champ_pct": 33.6,
+   "at": "2026-11-23T13:45:16Z",
+   "champ_pct": 33.5,
    "todo": [
     {
      "urgent": false,
