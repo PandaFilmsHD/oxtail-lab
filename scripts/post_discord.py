@@ -506,13 +506,20 @@ def live_results(S, now):
         win = hit == (x["side"] == "Yes")
         c_ = (x["cost"] + (x.get("fee") or 0)) / 100
         u = (1 / c_ - 1) if win else -1
-        done[k] = {"win": win, "u": round(u, 3), "actual": val}
+        done[k] = {"win": win, "u": round(u, 3), "actual": val, "kind": "player" if x.get("player") else "game"}
         rec["w" if win else "l"] += 1; rec["u"] = round(rec["u"] + u, 3)
         out.append((x, win, u, val))
     if out:
         lines = [f"{'✅' if w_ else '❌'} {x['label']} at {x['cost']}¢ (Q{x['q']} {x['clock']}) → {'had **' + format(v_, 'g') + '**' if x.get('player') else 'final **' + str(v_) + '**'} · **{uu(u_)}**" for x, w_, u_, v_ in out]
-        post("RESULTS", embeds=[{"title": f"⚡ Live: {len(out)} graded", "description": "\n".join(lines)[:3900], "color": COLORS["win" if sum(o[2] for o in out) >= 0 else "loss"],
-                                 "footer": {"text": f"⚡ Live record (tracked only, testing): {rec['w']}-{rec['l']} · {uu(rec['u'])} at ${UNIT:.0f} a bet"}}])
+        rk = lambda kd: [sum(1 for v in done.values() if v.get("kind", "player") == kd and v["win"]), sum(1 for v in done.values() if v.get("kind", "player") == kd and not v["win"]),
+                         sum(v["u"] for v in done.values() if v.get("kind", "player") == kd)]
+        gr, pr_ = rk("game"), rk("player")
+        g_lines = [l for (x, *_), l in zip(out, lines) if not x.get("player")]
+        p_lines = [l for (x, *_), l in zip(out, lines) if x.get("player")]
+        desc = (("**🏈 Game lines** (posted in #live)\n" + "\n".join(g_lines) + "\n\n" if g_lines else "") +
+                ("**👤 Players** (tracked quietly, not posted yet)\n" + "\n".join(p_lines) if p_lines else ""))
+        post("RESULTS", embeds=[{"title": f"⚡ Live: {len(out)} graded", "description": desc[:3900], "color": COLORS["win" if sum(o[2] for o in out) >= 0 else "loss"],
+                                 "footer": {"text": f"⚡ Live game lines: {gr[0]}-{gr[1]} · {uu(gr[2])}\n⚡ Live players (tracked): {pr_[0]}-{pr_[1]} · {uu(pr_[2])}"}}])
 
 
 def learn_report(S, now):
