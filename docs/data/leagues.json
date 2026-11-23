@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 11,
-   "at": "2026-11-23T11:54:25Z",
+   "at": "2026-11-23T12:49:42Z",
    "champ_pct": 19.2,
    "todo": [
     {
@@ -22,14 +22,21 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-23T11:54:49Z",
-   "champ_pct": 15.4,
+   "at": "2026-11-23T12:50:05Z",
+   "champ_pct": 14.8,
    "todo": [
+    {
+     "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Cam Little might not play (70%)",
+     "detail": "If he's ruled out, Chase McLaughlin is the best pickup.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.3%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     },
     {
@@ -46,8 +53,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-23T11:55:00Z",
-   "champ_pct": 3.8,
+   "at": "2026-11-23T12:50:16Z",
+   "champ_pct": 3.7,
    "todo": [
     {
      "urgent": false,
@@ -63,9 +70,16 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 11,
-   "at": "2026-11-23T11:54:37Z",
-   "champ_pct": 34.4,
+   "at": "2026-11-23T12:49:53Z",
+   "champ_pct": 33.4,
    "todo": [
+    {
+     "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Cam Little might not play (70%)",
+     "detail": "If he's ruled out, Cairo Santos is the best pickup.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
