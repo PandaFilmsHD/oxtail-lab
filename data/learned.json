@@ -1,5 +1,5 @@
 {
- "at": "2026-11-23T05:04:18+00:00",
+ "at": "2026-11-23T05:13:56+00:00",
  "buckets": {
   "GL|tot": {
    "evidence": 0.009,
@@ -225,6 +225,24 @@
    "price_pct": 39.7,
    "said_pct": 45.5,
    "u": -0.9
+  },
+  "LV|spread|Yes|25-50c": {
+   "evidence": 0.013,
+   "hit_pct": 100.0,
+   "k": 1.055,
+   "n": 1,
+   "price_pct": 41.0,
+   "said_pct": 52.4,
+   "u": 1.33
+  },
+  "LV|total|No|25-50c": {
+   "evidence": 0.011,
+   "hit_pct": 100.0,
+   "k": 1.045,
+   "n": 1,
+   "price_pct": 47.0,
+   "said_pct": 57.7,
+   "u": 1.04
   },
   "PR|Anytime TD|Yes": {
    "evidence": 0.006,
