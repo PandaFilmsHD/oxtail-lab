@@ -29,7 +29,8 @@ RAWP = "https://raw.githubusercontent.com/PandaFilmsHD/oxtail-lab/main/docs/data
 SERIES = {"KXNFLPASSYDS": "pass_yds", "KXNFLRSHYDS": "rush_yds", "KXNFLRECYDS": "rec_yds", "KXNFLREC": "rec", "KXNFLPASSTDS": "pass_tds", "KXNFLANYTD": "td"}
 LABEL = {"pass_yds": "pass yds", "rush_yds": "rush yds", "rec_yds": "rec yds", "rec": "catches", "pass_tds": "pass TDs", "td": "anytime TD"}
 CV = {"pass_yds": 0.35, "rush_yds": 0.70, "rec_yds": 0.80}   # full-game spread for yards; counts use NB / Poisson
-EDGE, MAX_GAME, IDLE_MIN = 0.10, 6, 12
+EDGE, MAX_GAME, IDLE_MIN = 0.10, 4, 12
+MAX_PRICE = 0.55   # only post at -120 or better (a share costing 55¢ or less)
 EFIX = {"WSH": "WAS", "LAR": "LA", "JAC": "JAX"}            # ESPN / Kalshi -> one spelling
 NK = lambda n: re.sub(r"[^a-z]", "", re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", (n or "").lower()))
 
@@ -236,7 +237,7 @@ def scan(PL, seen, per_game, dry=False):
 
         def consider(m, pp_yes, label_yes, label_no, extra):
             for side, pp, c in (("Yes", pp_yes, m["ask"]), ("No", 1 - pp_yes, m["no_ask"])):
-                if not c or not 0.05 <= c <= 0.92:
+                if not c or not 0.05 <= c <= MAX_PRICE:
                     continue
                 cost = c + kfee(c); edge = pp - c; ev = pp / cost - 1
                 key = f"{m['ticker']}|{side}"
