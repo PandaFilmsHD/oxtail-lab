@@ -54,6 +54,7 @@ jobs:
           DISCORD_KALSHI: ${{ secrets.DISCORD_KALSHI }}
           DISCORD_RESULTS: ${{ secrets.DISCORD_RESULTS }}
           DISCORD_RECEIPTS: ${{ secrets.DISCORD_RECEIPTS }}
+          DISCORD_TDS: ${{ secrets.DISCORD_TDS }}
         run: python -u scripts/post_discord.py || echo "discord failed"
       - name: Save results
         run: |

@@ -54,6 +54,67 @@ def key(n):
 def dec(am):
     return 1 + (am / 100 if am > 0 else 100 / -am)
 
+TDW = 0.35   # how far we move off the books' TD price toward our model (books are sharp on TDs; our model beats a basic baseline by 2-4% log loss)
+
+
+def fair_odds(p):
+    p = min(max(p, 0.005), 0.995)
+    return -round(100 * p / (1 - p)) if p >= 0.5 else round(100 * (1 - p) / p)
+
+
+def td_board(lines, kick, INJ, OUTS, RAW, now, cur):
+    """Every RB/WR/TE in this week's games: our anytime TD chance (fit_td model) vs the books, plus plain-English reasons."""
+    M = load(D / "td_model.json", {}) or {}
+    if not M.get("players"):
+        return []
+    feats = M["feats"]
+    mk = {key(nm): v.get("td") for nm, v in ((RAW.get("props") or {}).items() if str(RAW.get("week")) == str(cur) else []) if v.get("td")}
+    out = []
+    for pid, pl in M["players"].items():
+        tm = pl["team"]; L = lines.get(tm)
+        if not L or pl["pos"] not in M["pos"] or pl.get("games", 0) < 2 or (pl["car_sh"] < 0.08 and pl["tgt_sh"] < 0.06):
+            continue
+        if pl.get("week", 0) < int(cur) - 4 or INJ.get(key(pl["name"])) in OUTS:
+            continue
+        k_ = kick.get(tm)
+        if not k_ or datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) <= now:
+            continue
+        it = L.get("it") or 22.0; opp = L["opp"]
+        x = {"imp": math.log(min(40, max(8, it)) / 22.0), "team_rz": (M.get("team_rz") or {}).get(tm, 0.0), "opp": ((M.get("opp") or {}).get(opp) or {}).get(pl["pos"], 0.0),
+             "rz_car": pl["rz_car"], "gl_car": pl["gl_car"], "rz_tgt": pl["rz_tgt"], "ez_tgt": pl["ez_tgt"], "car_sh": pl["car_sh"], "tgt_sh": pl["tgt_sh"], "td_rate": pl["td_rate"]}
+        P_ = M["pos"][pl["pos"]]
+        z = sum(c * (x[f] - m) / sd for f, c, m, sd in zip(feats, P_["coef"], P_["mean"], P_["scale"]))
+        lam = math.exp(P_["icpt"] + z); pr = 1 - math.exp(-lam)
+        a_, b_ = P_.get("cal") or (1.0, 0.0)
+        lo = math.log(max(1e-4, min(1 - 1e-4, pr)) / (1 - max(1e-4, min(1 - 1e-4, pr))))
+        pm = 1 / (1 + math.exp(-(a_ * lo + b_)))
+        m_ = mk.get(key(pl["name"]))
+        p_mkt = m_.get("p") if m_ else None
+        fin = (p_mkt + TDW * (pm - p_mkt)) if p_mkt else pm
+        best = m_.get("yes") if m_ else None
+        dk = ((m_ or {}).get("dk") or {}).get("yes")
+        ev = round(100 * (fin * dec(best) - 1), 1) if best else None
+        why = []
+        if pl["pos"] == "RB":
+            why.append(f"🏃 Gets {round(100 * pl['car_sh'])}% of his team's carries, {round(100 * pl['rz_car'])}% inside the 20 and {round(100 * pl['gl_car'])}% inside the 5.")
+            if pl["tgt_sh"] >= 0.08:
+                why.append(f"🙌 Also {round(100 * pl['tgt_sh'])}% of the targets.")
+        else:
+            why.append(f"🎯 Gets {round(100 * pl['tgt_sh'])}% of his team's targets, {round(100 * pl['rz_tgt'])}% inside the 20 and {round(100 * pl['ez_tgt'])}% of end zone shots.")
+        why.append(f"🏈 Vegas has {tm} scoring {it:g} points vs {opp}.")
+        of = x["opp"]
+        if abs(of) >= 0.12:
+            why.append(f"🛡️ {opp} gives up {abs(round(100 * (math.exp(of) - 1)))}% {'more' if of > 0 else 'fewer'} {pl['pos']} TDs than average lately.")
+        why.append(f"📈 Averaging {pl['td_rate']:.2f} TDs a game lately (recent games count more).")
+        if p_mkt:
+            why.append(f"📊 Books: {round(100 * p_mkt)}%. Our model: {round(100 * pm)}%. We move {round(100 * TDW)}% of the way toward ours = {round(100 * fin)}%.")
+        out.append({"player": pl["name"], "team": tm, "opp": opp, "pos": pl["pos"], "kick": k_, "p_model": round(100 * pm, 1), "p_mkt": round(100 * p_mkt, 1) if p_mkt else None,
+                    "p": round(100 * fin, 1), "fair": fair_odds(fin), "best": best, "dk": dk, "ev": ev, "edge": round(100 * (fin - p_mkt), 1) if p_mkt else None,
+                    "value": bool(ev is not None and ev >= 5 and p_mkt and fin - p_mkt >= 0.015), "why": why})
+    out.sort(key=lambda r: (r["kick"], -r["p"]))
+    return out
+
+
 
 def imp_p(am):
     return (100 / (am + 100) if am > 0 else -am / (-am + 100)) if am else None
@@ -1355,7 +1416,11 @@ def main():
             for l_ in pl_.get("legs", [pl_]):
                 _mark(l_.get("label", ""))
     out_why = {k_: WHYS[k_] for k_ in shown}
-    out = {"unit": UNIT, "kalshi": kal_out, "whys": out_why, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
+    try:
+        tds = td_board(lines, kick, INJ, OUTS, RAW, now, cur)
+    except Exception as e:
+        print("props_lab: td board failed", type(e).__name__, e); tds = []
+    out = {"unit": UNIT, "tds": tds, "kalshi": kal_out, "whys": out_why, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
            "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR_RAW.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),

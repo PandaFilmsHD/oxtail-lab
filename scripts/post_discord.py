@@ -21,7 +21,7 @@ D = ROOT / "data"
 PT = ZoneInfo("America/Los_Angeles")
 UNIT = 25.0
 SITE = "https://pandafilmshd.github.io/oxtail-lab/"
-HOOK = {c: os.environ.get(f"DISCORD_{c}", "").strip() for c in ("BEST", "PARLAYS", "KALSHI", "RESULTS", "RECEIPTS")}
+HOOK = {c: os.environ.get(f"DISCORD_{c}", "").strip() for c in ("BEST", "PARLAYS", "KALSHI", "RESULTS", "RECEIPTS", "TDS")}
 LEAD_MIN = 100          # post a window this many minutes before kickoff (runs are 10 to 30 min apart)
 MAX_BEST, MAX_KAL = 5, 5
 PING_EV, PING_EDGE, PING_PER_DAY = 15.0, 6.0, 3   # @everyone only for big Kalshi edges, at most 3 a day
@@ -351,6 +351,63 @@ def big_edges(S, PLD, wk, now):
             kk = f"KA|{x['ticker']}|{x['side']}"
             pinged[kk] = {"day": day, "week": str(wk), "who": who or x.get("game"), "at": now.isoformat()}
             posted.setdefault(kk, dict(week=str(wk), ch="kalshi", text=x["label"], cost=x["cost"], fee=fee, units=1, kick=x["kick"], at=now.isoformat()))
+
+
+def tds_post(S, PLD, wk, now):
+    """Before each slate: TD value plays (tracked) plus the most likely scorers."""
+    if not HOOK.get("TDS"):
+        return
+    done = S.setdefault("tds_done", {})
+    for k in windows(PLD, now):
+        if done.get(k):
+            continue
+        L = [x for x in PLD.get("tds") or [] if x.get("kick") == k]
+        done[k] = now.isoformat()
+        if not L:
+            continue
+        val = sorted([x for x in L if x.get("value")], key=lambda x: -(x.get("ev") or 0))[:5]
+        top = sorted(L, key=lambda x: -x["p"])[:6]
+        names = ", ".join(sorted({" vs ".join(sorted((x["team"], x["opp"]))) for x in L}))
+        flds = [{"name": trim(f"💰 {x['player']} anytime TD ({am(x['best'])})", 250),
+                 "value": trim(f"**{round(x['p'])}% to score vs books {round(x['p_mkt'])}% · +{x['ev']}% EV · ½u ({usd(0.5)[1:]})**\n" + "\n".join(trim(w) for w in x["why"][:3]), 1020), "inline": False} for x in val]
+        desc = (f"*{names}*\n\n" + ("**Value plays** below: our TD model likes them more than the books' price.\n" if val else "No TD value this slate, the books have these priced right.\n") +
+                "\n**Most likely to score**\n" + "\n".join(f"{'💰' if x.get('value') else '•'} {x['player']} ({x['pos']}, {x['team']}) **{round(x['p'])}%** · fair {am(x['fair'])}" + (f" · best book {am(x['best'])}" if x.get("best") else "") for x in top))
+        e = {"title": f"🔥 Touchdowns · {pt(k)} PT", "description": desc, "fields": flds, "color": 0xFF8A3D,
+             "footer": {"text": "TD model: red zone + goal line usage, end zone targets, Vegas points, defense. Only bet value plays at the odds shown or better."}}
+        if post("TDS", embeds=[e]):
+            for x in val:
+                S.setdefault("td_posted", []).append({"player": x["player"], "team": x["team"], "week": str(wk), "kick": k, "price": x["best"], "p": x["p"], "units": 0.5})
+
+
+def td_results(S, now):
+    U = load(D / "usage.json", {})
+    if not U or not S.get("td_posted"):
+        return
+    rec = S.setdefault("td_rec", {"w": 0, "l": 0, "u": 0.0})
+    NKs = lambda n: re.sub(r"[^a-z]", "", re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", (n or "").lower()))
+    by = {NKs(v.get("name")): v for v in (U.get("players") or {}).values()}
+    out = []
+    for x in S["td_posted"]:
+        if x.get("result"):
+            continue
+        pl = by.get(NKs(x["player"]))
+        row = next((w for w in (pl or {}).get("weeks", []) if str(w.get("w")) == x["week"] and "pts" in w), None)
+        if not row:
+            team_in = any(str(w.get("w")) == x["week"] and "pts" in w and v.get("team") == x["team"] for v in (U.get("players") or {}).values() for w in v.get("weeks", []))
+            if team_in and iso(x["kick"]) < now - datetime.timedelta(days=1):
+                x.update(result="void", u=0); out.append(x)
+            continue
+        n = row.get("td", 0) or 0
+        x["actual"] = n
+        win = n > 0
+        u = x["units"] * (win_units(x["price"]) if win else -1)
+        x.update(result="win" if win else "loss", u=round(u, 3))
+        rec["w" if win else "l"] += 1; rec["u"] = round(rec["u"] + u, 3)
+        out.append(x)
+    if out:
+        lines = [f"{'✅' if x['result'] == 'win' else '❌' if x['result'] == 'loss' else '➖'} {x['player']} anytime TD ({am(x['price'])})" + (f" → {x['actual']} TD" if x.get("actual") is not None else " (didn't play)") + f" · **{uu(x['u'])}**" for x in out]
+        post("RESULTS", embeds=[{"title": f"🔥 TDs: {len(out)} graded", "description": "\n".join(lines)[:3900], "color": COLORS["win" if sum(x["u"] for x in out) >= 0 else "loss"],
+                                 "footer": {"text": f"TD value plays all time: {rec['w']}-{rec['l']} · {uu(rec['u'])} at ½ unit each"}}])
 
 
 def parlays(S, PLD, now, force=False):
@@ -688,7 +745,8 @@ def main():
                       ("PARLAYS", "🎲 Oxtail Parlays is connected. Parlays post here before the first game each day."),
                       ("KALSHI", "💸 Oxtail Kalshi is connected. Kalshi buys post here before each kickoff."),
                       ("RESULTS", "📊 Oxtail Results is connected. Every posted pick gets graded here, wins and losses."),
-                      ("RECEIPTS", "🧾 Oxtail Receipts is connected. Every locked pick gets posted here with a fingerprint before kickoff.")]:
+                      ("RECEIPTS", "🧾 Oxtail Receipts is connected. Every locked pick gets posted here with a fingerprint before kickoff."),
+                      ("TDS", "🔥 Oxtail TDs is connected. The touchdown board posts here about 90 minutes before each kickoff.")]:
             print(ch, "ok" if post(ch, content=t) else "FAILED")
         return
     if not any(HOOK.values()):
@@ -733,8 +791,8 @@ def main():
             backfill(S, PK, wk, now)
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
-    for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, PK, wk, now), lambda: big_edges(S, PLD, wk, now),
-                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: parlay_results(S, PLD, now), lambda: slate_recap(S, PK, PLD, now)):
+    for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, PK, wk, now), lambda: big_edges(S, PLD, wk, now), lambda: tds_post(S, PLD, wk, now),
+                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: parlay_results(S, PLD, now), lambda: td_results(S, now), lambda: slate_recap(S, PK, PLD, now)):
         try:
             step()
         except Exception as e:

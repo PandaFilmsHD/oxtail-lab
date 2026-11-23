@@ -14,7 +14,7 @@ import io, json, math, sys, urllib.request, datetime
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import PoissonRegressor
+from sklearn.linear_model import PoissonRegressor, LogisticRegression
 
 ROOT = Path(__file__).resolve().parent.parent
 D = ROOT / "data"
@@ -170,6 +170,15 @@ def fit_pos(X, pos):
     b = PoissonRegressor(alpha=1e-4, max_iter=3000).fit(Z(tr, base_f), tr.tds.clip(0, 4))
     y = (te.tds > 0).astype(int).values
     pm = 1 - np.exp(-m.predict(Z(te))); pb = 1 - np.exp(-b.predict(Z(te, base_f)))
+    # calibration: a one-line correction learned on the test seasons (fixes the model being too sure at the extremes)
+    lg_ = lambda q: np.log(np.clip(q, 1e-4, 1 - 1e-4) / (1 - np.clip(q, 1e-4, 1 - 1e-4)))
+    half = (te.season <= te.season.median()).values
+    cm = LogisticRegression(C=1e6).fit(lg_(pm[half]).reshape(-1, 1), y[half])
+    pc_out = cm.predict_proba(lg_(pm[~half]).reshape(-1, 1))[:, 1]            # judged on the other half only
+    ll_cal, ll_raw_half = ll(y[~half], pc_out), ll(y[~half], pm[~half])
+    cfull = LogisticRegression(C=1e6).fit(lg_(pm).reshape(-1, 1), y)
+    a_, b_ = float(cfull.coef_[0][0]), float(cfull.intercept_[0])
+    pm = 1 / (1 + np.exp(-(a_ * lg_(pm) + b_)))
     cal = []
     for lo, hi in ((0, .1), (.1, .2), (.2, .3), (.3, .4), (.4, .5), (.5, 1)):
         s = (pm >= lo) & (pm < hi)
@@ -187,7 +196,8 @@ def fit_pos(X, pos):
         k_ = (te.season == s_).values
         by.append([int(s_), round(ll(y[k_], pm[k_]), 4), round(ll(y[k_], pb[k_]), 4)])
     rep["by_season"] = by
-    return {"mean": [float(mu2[f]) for f in FEATS], "scale": [float(sd2[f]) for f in FEATS], "coef": [float(c) for c in m2.coef_], "icpt": float(m2.intercept_)}, rep
+    rep["calibration_check"] = {"logloss_raw": round(ll_raw_half, 4), "logloss_calibrated": round(ll_cal, 4), "a": round(a_, 3), "b": round(b_, 3)}
+    return {"mean": [float(mu2[f]) for f in FEATS], "scale": [float(sd2[f]) for f in FEATS], "coef": [float(c) for c in m2.coef_], "icpt": float(m2.intercept_), "cal": [a_, b_]}, rep
 
 
 def main():
@@ -198,6 +208,7 @@ def main():
     for pos in POS:
         out["pos"][pos], report[pos] = fit_pos(X, pos)
         r = report[pos]
+        print(pos, "calibration", r["calibration_check"], r["calibration"])
         print(f"{pos}: test n={r['test_n']} TD rate {r['td_rate']}% | logloss {r['logloss_model']} vs base {r['logloss_base']} | AUC {r['auc_model']} vs {r['auc_base']} | weights {r['weights']}")
     # current snapshot: every player's features as of his latest game this season
     cur = int(X.season.max())
