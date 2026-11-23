@@ -282,6 +282,12 @@
   "KA|KXNFLTOTAL-26NOV23CINWAS-53|Yes",
   "KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes"
  ],
+ "live_done": {},
+ "live_rec": {
+  "l": 0,
+  "u": 0.0,
+  "w": 0
+ },
  "msgs": [
   {
    "at": "2026-11-22T21:57:29.813997+00:00",
