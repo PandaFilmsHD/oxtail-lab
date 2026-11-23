@@ -124,6 +124,7 @@ F_LEFT = 1.0
 
 import numpy as np
 LM = {}
+RANGE = None   # (25%, median, 75%) of what's left for the last player priced
 GSER = {"KXNFLTOTAL": "total", "KXNFLSPREAD": "spread", "KXNFLGAME": "ml"}
 
 
@@ -177,6 +178,8 @@ def player_p(st, pos, base, cur, need, f, margin):
     q = M["q"].get(f"{mb}{fb}") or next(iter(M["q"].values()))
     thr = need / max(mu, 1e-6)
     p = 1 - float(np.interp(thr, q, LM["qs"], left=0.0, right=1.0))
+    global RANGE
+    RANGE = (mu * float(np.interp(0.25, LM["qs"], q)), mu * float(np.interp(0.5, LM["qs"], q)), mu * float(np.interp(0.75, LM["qs"], q)))
     return min(0.995, max(0.005, p)), mu
 
 
@@ -292,30 +295,42 @@ def scan(PL, seen, per_game, dry=False):
                 continue   # already over: Kalshi will settle it
             m_full = pj[st]
             margin = mar if pj.get("team") == g["home"] else -mar
+            RANGE_ = None
             py, m_left = player_p(st, pj.get("pos"), m_full, cur, need, f, margin) if LM else (None, None)
+            if py is not None:
+                RANGE_ = RANGE
             if py is None:
                 pace = cur / max(0.15, 1 - f)
                 m_left = f * (0.75 * m_full + 0.25 * min(pace, 2 * m_full))
                 py = p_over(st, m_left, need)
             n_ = int(round(m["strike"] + 0.5))
             consider(m, py, f"{m['player']} {n_}+ {LABEL[st]}", f"{m['player']} under {n_} {LABEL[st]}",
-                     {"player": m["player"], "team": pj.get("team"), "had": cur, "proj_full": round(m_full, 1), "proj_left": round(m_left, 1)})
+                     {"player": m["player"], "team": pj.get("team"), "had": cur, "proj_full": round(m_full, 1), "proj_left": round(m_left, 1), "line": n_,
+                      "need": round(need, 1), "range": [round(v, 1) for v in RANGE_] if RANGE_ else None})
     return picks
 
 
 def post(x):
+    yes = x["side"] == "Yes"
     if x.get("player"):
-        unit = LABEL[x["stat"]]
-        mid = (f"{x['player'].split()[-1]} has **{x['had']:g} {unit}** so far. Pregame we had him at {x['proj_full']:g}; for the rest of the game we expect about **{x['proj_left']:g} more**.\n")
+        unit = LABEL[x["stat"]]; last = x["player"].split()[-1]; L_ = x.get("line")
+        exp_fin = x["had"] + x["proj_left"]
+        rng = x.get("range")
+        mid = (f"🎯 **The line:** {L_}+ {unit}. {last} has **{x['had']:g}**, so he needs **{x['need'] + 0.5:g} more** to get there.\n"
+               f"🧮 **What we expect:** about **{x['proj_left']:g} more**" + (f" (usually {rng[0]:g} to {rng[2]:g}, most often around {rng[1]:g})" if rng else "") +
+               f", so he finishes around **{exp_fin:.0f}** on average.\n"
+               f"📊 **So:** he gets to {L_}+ about **{round(x['p'] if yes else 100 - x['p'])}%** of the time, and stays under about **{round(100 - x['p'] if yes else x['p'])}%**." +
+               ("" if yes else " (Yards are lopsided: a few huge games pull the average up, so he lands under the average more often than not.)" if x["stat"] in ("rec_yds", "rush_yds", "pass_yds") else "") + "\n")
+        bet = f"👉 **Buy {'YES' if yes else 'NO'} on \"{last} {L_}+ {unit}\"** ({'he goes over' if yes else 'he stays under'}) at **{x['cost']}¢** or less."
     else:
-        mid = "We re-ran the rest of the game 20,000 times from this score and clock.\n"
+        mid = "🧮 We re-ran the rest of the game 20,000 times from this score and clock.\n" + f"📊 **{x['label']}** happens about **{round(x['p'])}%** of the time.\n"
+        bet = f"👉 Buy **{x['side'].upper()}** at **{x['cost']}¢** or less."
     desc = (f"**{x['score']}** · Q{x['q']} {x['clock']}\n{x['how']}\n\n{mid}"
-            f"That makes it **{round(x['p'])}%**, but Kalshi is selling it at **{x['cost']}¢**: **+{x['edge']}% edge**, +{x['ev']}% EV.\n\n"
-            f"👉 Buy **{x['side']}** at **{x['cost']}¢** or less.")
+            f"💸 Kalshi is pricing our side at **{x['cost']}¢** (like a {x['cost']}% shot) → **+{x['edge']}% edge**, +{x['ev']}% EV.\n\n{bet}")
     e = {"title": f"⚡ Live: {x['label']}", "description": desc, "color": 0xFFD23D,
          "footer": {"text": "Tracked only for now (testing the live model). Graded in #results under ⚡ Live."}}
     if not HOOK:
-        print("would post:", x["label"], x["cost"], x["p"]); return
+        print("would post:", x["label"], x["cost"], x["p"]); print(desc); return
     try:
         r = requests.post(HOOK + "?wait=true", json={"embeds": [e], "allowed_mentions": {"parse": []}}, timeout=20)
         print("discord live", r.status_code, x["label"])
