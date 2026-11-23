@@ -90,6 +90,7 @@
   "11|KA|KXNFLPASSYDS-26NOV22JACNYG-JACTLAWRENCE16-250|Yes",
   "11|KA|KXNFLPASSYDS-26NOV22JACNYG-NYGJMCCARTHY9-225|Yes",
   "11|KA|KXNFLPASSYDS-26NOV22LVDEN-DENBNIX10-200|No",
+  "11|KA|KXNFLPASSYDS-26NOV22MINSF-SFBPURDY13-225|Yes",
   "11|KA|KXNFLPASSYDS-26NOV22NOCHI-CHICWILLIAMS18-175|Yes",
   "11|KA|KXNFLREC-26NOV22ARIKC-KCNGRAY83-2|Yes",
   "11|KA|KXNFLREC-26NOV22ARIKC-KCRRICE4-2|Yes",
@@ -104,6 +105,9 @@
   "11|KA|KXNFLREC-26NOV22LVDEN-DENJWADDLE17-4|No",
   "11|KA|KXNFLREC-26NOV22LVDEN-LVAJEANTY2-6|Yes",
   "11|KA|KXNFLREC-26NOV22LVDEN-LVAJEANTY2-7|Yes",
+  "11|KA|KXNFLREC-26NOV22MINSF-MINJJEFFERSON18-5|No",
+  "11|KA|KXNFLREC-26NOV22MINSF-SFGKITTLE85-6|Yes",
+  "11|KA|KXNFLREC-26NOV22MINSF-SFGKITTLE85-7|Yes",
   "11|KA|KXNFLREC-26NOV22NOCHI-CHICLOVELAND84-7|Yes",
   "11|KA|KXNFLREC-26NOV22TENDAL-DALCLAMB88-10|Yes",
   "11|KA|KXNFLREC-26NOV22TENDAL-DALCLAMB88-11|Yes",
@@ -143,6 +147,12 @@
   "11|KA|KXNFLRECYDS-26NOV22LVDEN-DENJCOLEMAN20-10|Yes",
   "11|KA|KXNFLRECYDS-26NOV22LVDEN-LVAJEANTY2-60|No",
   "11|KA|KXNFLRECYDS-26NOV22LVDEN-LVAJEANTY2-70|No",
+  "11|KA|KXNFLRECYDS-26NOV22MINSF-MINJJEFFERSON18-70|No",
+  "11|KA|KXNFLRECYDS-26NOV22MINSF-MINJJENNINGS14-25|No",
+  "11|KA|KXNFLRECYDS-26NOV22MINSF-MINJJENNINGS14-30|No",
+  "11|KA|KXNFLRECYDS-26NOV22MINSF-MINJJENNINGS14-40|No",
+  "11|KA|KXNFLRECYDS-26NOV22MINSF-MINJJENNINGS14-50|No",
+  "11|KA|KXNFLRECYDS-26NOV22MINSF-SFGKITTLE85-25|Yes",
   "11|KA|KXNFLRECYDS-26NOV22NOCHI-CHIRODUNZE15-20|Yes",
   "11|KA|KXNFLRECYDS-26NOV22TBDET-DETITESLAA18-40|No",
   "11|KA|KXNFLRECYDS-26NOV22TBDET-TBTJOHNSON15-10|Yes",
@@ -165,6 +175,13 @@
   "11|KA|KXNFLRSHYDS-26NOV22MIABUF-BUFJALLEN17-25|Yes",
   "11|KA|KXNFLRSHYDS-26NOV22MIABUF-BUFJCOOK4-120|Yes",
   "11|KA|KXNFLRSHYDS-26NOV22MIABUF-BUFJCOOK4-130|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV22MINSF-MINJMASON27-25|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV22MINSF-MINJMASON27-40|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV22MINSF-MINJMASON27-60|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV22MINSF-SFBPURDY13-30|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV22MINSF-SFCMCCAFFREY23-30|No",
+  "11|KA|KXNFLRSHYDS-26NOV22MINSF-SFDSAMUEL19-20|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV22MINSF-SFKBLACK26-30|No",
   "11|KA|KXNFLRSHYDS-26NOV22NOCHI-NOAKAMARA41-10|No",
   "11|KA|KXNFLRSHYDS-26NOV22NYJLAC-LACJHERBERT10-60|No",
   "11|KA|KXNFLRSHYDS-26NOV22NYJLAC-LACKMITCHELL34-15|No",
@@ -319,6 +336,48 @@
   "KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes"
  ],
  "live_done": {
+  "KXNFLPASSYDS-26NOV22MINSF-MINKCOUSINS8-250|No": {
+   "actual": 235,
+   "kind": "player",
+   "u": 2.571,
+   "win": true
+  },
+  "KXNFLREC-26NOV22MINSF-MINJJEFFERSON18-7|No": {
+   "actual": 7,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV22MINSF-MINJJEFFERSON18-60|No": {
+   "actual": 86,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV22MINSF-MINAJONES33-30|No": {
+   "actual": 30,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV22MINSF-MINKCOUSINS8-5|Yes": {
+   "actual": 0,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV22MINSF-SFBPURDY13-5|No": {
+   "actual": 0,
+   "kind": "player",
+   "u": 1.703,
+   "win": true
+  },
+  "KXNFLRSHYDS-26NOV22MINSF-SFKBLACK26-20|No": {
+   "actual": 8,
+   "kind": "player",
+   "u": 0.887,
+   "win": true
+  },
   "KXNFLSPREAD-26NOV22MINSF-SF8|Yes": {
    "actual": "10.0-35.0",
    "kind": "game",
@@ -333,9 +392,9 @@
   }
  },
  "live_rec": {
-  "l": 0,
-  "u": 2.367,
-  "w": 2
+  "l": 4,
+  "u": 3.528,
+  "w": 5
  },
  "msgs": [
   {
@@ -517,6 +576,36 @@
    "at": "2026-11-23T05:32:35.637673+00:00",
    "ch": "RECEIPTS",
    "id": "1574296587641950248"
+  },
+  {
+   "at": "2026-11-23T06:09:09.440144+00:00",
+   "ch": "RESULTS",
+   "id": "1574305789206863914"
+  },
+  {
+   "at": "2026-11-23T06:09:10.314215+00:00",
+   "ch": "RESULTS",
+   "id": "1574305792771887237"
+  },
+  {
+   "at": "2026-11-23T06:09:11.242363+00:00",
+   "ch": "RESULTS",
+   "id": "1574305796517404734"
+  },
+  {
+   "at": "2026-11-23T06:09:12.066208+00:00",
+   "ch": "RESULTS",
+   "id": "1574305800271302829"
+  },
+  {
+   "at": "2026-11-23T06:09:12.965566+00:00",
+   "ch": "RESULTS",
+   "id": "1574305803987460108"
+  },
+  {
+   "at": "2026-11-23T06:09:16.781990+00:00",
+   "ch": "RESULTS",
+   "id": "1574305807749611562"
   }
  ],
  "parlay_days": {
@@ -525,54 +614,64 @@
  },
  "parlay_rec": {
   "l": 0,
-  "u": 0.0,
-  "w": 0
+  "u": 1.146,
+  "w": 2
  },
  "parlays": [
   {
    "at": "2026-11-22T22:32:32.466802+00:00",
    "day": "2026-11-22",
    "fair": -174,
+   "graded_at": "2026-11-23T06:09:09.187062+00:00",
    "legs": [
     {
+     "actual": 3,
      "kick": "2026-11-23T01:20:00Z",
      "label": "Jauan Jennings Under 3.5 catches",
      "p": 75.9,
-     "res": null,
+     "res": true,
      "type": "prop"
     },
     {
+     "actual": 86,
      "kick": "2026-11-23T01:20:00Z",
      "label": "Justin Jefferson Under 135.5 rec yds",
      "p": 83.5,
-     "res": null,
+     "res": true,
      "type": "prop"
     }
    ],
    "p": 63.5,
+   "result": "win",
+   "u": 0.575,
    "week": "11"
   },
   {
    "at": "2026-11-22T22:32:32.466802+00:00",
    "day": "2026-11-22",
    "fair": -175,
+   "graded_at": "2026-11-23T06:09:09.187062+00:00",
    "legs": [
     {
+     "actual": 3,
      "kick": "2026-11-23T01:20:00Z",
      "label": "Jauan Jennings Under 3.5 catches",
      "p": 75.9,
-     "res": null,
+     "res": true,
      "type": "prop"
     },
     {
+     "actual": 38,
      "kick": "2026-11-23T01:20:00Z",
      "label": "Jordan Mason Under 78.5 rush yds",
      "p": 83.7,
-     "res": null,
+     "res": true,
      "type": "prop"
     }
    ],
    "p": 63.6,
+   "result": "win",
+   "u": 0.571,
    "week": "11"
   },
   {
@@ -736,11 +835,15 @@
    "week": "11"
   },
   "Jauan Jennings|Catches": {
+   "actual": 3,
    "at": "2026-11-22T21:53:31.282611+00:00",
    "ch": "best",
+   "graded_at": "2026-11-23T06:09:09.187062+00:00",
    "kick": "2026-11-23T01:20:00Z",
    "price": -130,
+   "result": "loss",
    "text": "Jauan Jennings Under 2.5 catches",
+   "u": -0.5,
    "units": 0.5,
    "week": "11"
   },
@@ -1555,9 +1658,9 @@
   "KA|KXNFLTOTAL-26NOV23CINWAS-55|Yes"
  ],
  "record": {
-  "l": 10,
+  "l": 11,
   "p": 0,
-  "u": 1.37,
+  "u": 0.87,
   "w": 8
  },
  "record_by": {
@@ -1578,6 +1681,7 @@
   "2026-11-20T01:15:00Z": "2026-11-22T22:30:02.031627+00:00",
   "2026-11-22T18:00:00Z": "2026-11-22T22:30:02.031627+00:00",
   "2026-11-22T21:05:00Z": "2026-11-23T01:06:23.271484+00:00",
-  "2026-11-22T21:25:00Z": "2026-11-23T03:10:05.355737+00:00"
+  "2026-11-22T21:25:00Z": "2026-11-23T03:10:05.355737+00:00",
+  "2026-11-23T01:20:00Z": "2026-11-23T06:09:09.187062+00:00"
  }
 }
