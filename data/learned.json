@@ -1,5 +1,5 @@
 {
- "at": "2026-11-23T11:56:00+00:00",
+ "at": "2026-11-23T12:23:35+00:00",
  "buckets": {
   "GL|tot": {
    "evidence": 0.009,
@@ -344,13 +344,13 @@
    "u": -2.06
   },
   "PR|Catches|Under": {
-   "evidence": 0.005,
-   "hit_pct": 20.0,
-   "k": 0.937,
-   "n": 5,
-   "price_pct": 54.6,
-   "said_pct": 57.9,
-   "u": -3.35
+   "evidence": 0.006,
+   "hit_pct": 33.3,
+   "k": 0.957,
+   "n": 6,
+   "price_pct": 52.6,
+   "said_pct": 55.8,
+   "u": -2.13
   },
   "PR|Pass TDs|Under": {
    "evidence": 0.002,
