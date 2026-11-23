@@ -24,7 +24,8 @@ SITE = "https://pandafilmshd.github.io/oxtail-lab/"
 HOOK = {c: os.environ.get(f"DISCORD_{c}", "").strip() for c in ("BEST", "PARLAYS", "KALSHI", "RESULTS", "RECEIPTS", "TDS")}
 LEAD_MIN = 100          # post a window this many minutes before kickoff (runs are 10 to 30 min apart)
 MAX_BEST, MAX_KAL = 5, 5
-PING_EV, PING_EDGE, PING_PER_DAY = 15.0, 6.0, 3   # @everyone only for big Kalshi edges, at most 3 a day
+PING_EV, PING_EDGE, PING_PER_DAY = 0.0, 8.0, 3   # @everyone: a best rung with an 8%+ edge, at most 3 a day
+BEST_EDGE, BEST_PER_GAME = 5.0, 3                  # ⭐ Kalshi Best: one rung per player (biggest edge), 5%+ edge, max 3 per game
 PROP_EDGE, GAME_EDGE, KAL_EDGE = 3.5, 2.5, 4.0   # strict: below this it doesn't make the channel
 MSGS = []   # ids of everything posted this run, saved to state so posts can be deleted or fixed later
 COLORS = dict(best=0x5B7CFF, parlay=0xFFC83D, kalshi=0x3DDC84, win=0x3DDC84, loss=0xFF5A6E, receipt=0x8A8FB8, push=0x8A8FB8)
@@ -249,9 +250,56 @@ def ka_line(x, show_res=False):
     return f"{res} {x.get('label')} at **{x.get('cost')}¢** · {round(x.get('p') or 0)}% · +{x.get('edge')}% edge · +{x.get('ev')}% EV{had}{money}"
 
 
-def ka_fields(rows, show_res=False, whys=None):
+def kal_best_pick(rows):
+    """⭐ rule: per player (or game line) keep the rung with the biggest edge, need 5%+, then at most 3 per game. Uses only pregame numbers."""
+    best = {}
+    for k, x in rows:
+        w_ = ka_who(x)
+        if (x.get("edge") or 0) >= BEST_EDGE and (w_ not in best or (x.get("edge") or 0) > (best[w_][1].get("edge") or 0)):
+            best[w_] = (k, x)
+    per, out = {}, []
+    for k, x in sorted(best.values(), key=lambda kv: -(kv[1].get("edge") or 0)):
+        g_ = x.get("game") or f"{x.get('away')}@{x.get('home')}"
+        if per.get(g_, 0) < BEST_PER_GAME:
+            per[g_] = per.get(g_, 0) + 1; out.append(k)
+    return out
+
+
+def kal_best_record(S, PK):
+    w = l = 0; u = 0.0; op = 0
+    for wk_k in S.get("kal_best", []):
+        w_, k = wk_k.split("|", 1)
+        x = (PK.get(w_) or {}).get(k)
+        if not x:
+            continue
+        if not x.get("graded"):
+            op += 1; continue
+        if x.get("result") is None:
+            continue
+        w += bool(x["result"]); l += (x["result"] is False); u += ka_u(x)
+    return w, l, u, op
+
+
+def backfill_best(S, PK):
+    """Apply the ⭐ rule once to slates that kicked off before the rule existed (picks were already locked before kickoff)."""
+    if S.get("kal_best_backfilled"):
+        return
+    bset = set(S.setdefault("kal_best", []))
+    for w_, pk in PK.items():
+        kicks = {x.get("kick") for k, x in pk.items() if k.startswith("KA|") and x.get("kick")}
+        for kk in kicks:
+            if iso(kk) > now_utc():
+                continue
+            rows = [(k, x) for k, x in pk.items() if k.startswith("KA|") and x.get("kick") == kk]
+            bset |= {f"{w_}|{k}" for k in kal_best_pick(rows)}
+    S["kal_best"] = sorted(bset); S["kal_best_backfilled"] = True
+
+
+def ka_fields(rows, show_res=False, whys=None, star=None):
+    star = star or set()
     groups = {}
     for k, x in rows:
+        x = dict(x, _star=(k in star or k.split("|", 1)[-1] in star))
         groups.setdefault(ka_who(x), []).append(x)
     flds = []
     for who, xs in groups.items():
@@ -264,12 +312,12 @@ def ka_fields(rows, show_res=False, whys=None):
                 lab = (x.get("label") or "").replace(who + " ", "")
                 r = {True: "✅", False: "❌"}.get(x.get("result"), "➖" if x.get("graded") else "⏳")
                 had = f" → had **{x['actual']}**" if x.get("actual") is not None else ""
-                return f"{r} {lab} at {x.get('cost')}¢{had}" + (f" · {uu(ka_u(x))}" if x.get("graded") else "")
+                return f"{r} {'⭐ ' if x.get('_star') else ''}{lab} at {x.get('cost')}¢{had}" + (f" · {uu(ka_u(x))}" if x.get("graded") else "")
             val = "\n".join(short(x) for x in xs)
         else:
             top = (whys or {}).get(who)
             name = f"💸 {who}"
-            val = "\n".join(ka_line(x, show_res) for x in xs) + (f"\n{trim(top, 200)}" if top else "")
+            val = "\n".join(("⭐ " if x.get("_star") else "") + ka_line(x, show_res) for x in xs) + (f"\n{trim(top, 200)}" if top else "")
         flds.append({"name": trim(name, 250), "value": trim(val, 1020), "inline": False})
     return flds
 
@@ -311,8 +359,12 @@ def kalshi(S, PLD, PK, wk, now):
         done[k] = now.isoformat()
         if not rows:
             continue
-        if post_fields("KALSHI", f"💸 Kalshi buys · {pt(k)} PT", f"Every share we'd buy for this slate ({len(rows)}). A share pays $1 if it hits. We buy when our chance is higher than the price.\nLadders (50+, 60+, 70+) on one player ride on the same game, so size down if you take several.",
-                       ka_fields(rows, whys=whys), COLORS["kalshi"], "Only buy at the price shown or lower. Prices move fast. All of these get graded in #results."):
+        bk = kal_best_pick(rows)
+        S["kal_best"] = sorted(set(S.get("kal_best", [])) | {f"{wk}|{kk}" for kk in bk})
+        bx = [x for kk, x in rows if kk in bk]
+        top = "\n".join(f"⭐ **{x['label']}** at **{x['cost']}¢** · {round(x['p'])}% · +{x['edge']}% edge" for x in bx) or "No rung clears a 5% edge this slate."
+        if post_fields("KALSHI", f"💸 Kalshi buys · {pt(k)} PT", f"**⭐ Best bets (one per player, biggest edge, max {BEST_PER_GAME} a game)**\n{top}\n\n**Every buy ({len(rows)})** below, for the full tracker. Ladders on one player win or lose together, so stick to the ⭐ if you're betting real money.",
+                       ka_fields(rows, whys=whys, star=set(bk)), COLORS["kalshi"], "Only buy at the price shown or lower. Prices move fast. All graded in #results: ⭐ Best and All tracked separately."):
             shown |= {kk for kk, _ in rows}
     # buys locked after their slate was already posted
     late = ka_rows(PK, wk, lambda x: x.get("kick") and done.get(x["kick"]) and iso(x["kick"]) > now)
@@ -331,11 +383,11 @@ def big_edges(S, PLD, wk, now):
     if len(today) >= PING_PER_DAY:
         return
     seen_players = {v.get("who") for v in pinged.values() if v.get("week") == str(wk)}
-    L = [x for x in (K.get("buys") or []) + (K.get("safe") or []) if x.get("ticker") and (x.get("ev") or 0) >= PING_EV and (x.get("edge") or 0) >= PING_EDGE
-         and x.get("kick") and iso(x["kick"]) - now > datetime.timedelta(minutes=10)]
-    L = one_per(L, lambda x: x.get("player") or x.get("game") or x["label"], lambda x: x.get("ev") or 0)
+    L = [x for x in (K.get("buys") or []) + (K.get("safe") or []) if x.get("ticker") and x.get("kick") and iso(x["kick"]) - now > datetime.timedelta(minutes=10)]
+    L = one_per(L, lambda x: x.get("player") or x.get("game") or x["label"], lambda x: x.get("edge") or 0)   # the best rung per player, same as ⭐
+    L = [x for x in L if (x.get("edge") or 0) >= PING_EDGE and (x.get("ev") or 0) > PING_EV]
     L = [x for x in L if f"KA|{x['ticker']}|{x['side']}" not in pinged and (x.get("player") or x.get("game")) not in seen_players]
-    L.sort(key=lambda x: -(x.get("ev") or 0))
+    L.sort(key=lambda x: -(x.get("edge") or 0))
     posted = S.setdefault("posted", {})
     for x in L[:PING_PER_DAY - len(today)]:
         fee = x.get("fee") or 0
@@ -344,10 +396,10 @@ def big_edges(S, PLD, wk, now):
         line = (f"Our sims ran this game 50,000 times and this hits **{round(x['p'])}%** of the time, but Kalshi is selling it at **{x['cost']}¢**, like it's only a {x['cost']}% shot. "
                 f"That's **+{x['ev']}% EV**: every $1 in is worth about ${1 + x['ev'] / 100:.2f} on average.")
         why = [trim(l) for l in (x.get("why") or []) if l.startswith(("🧮", "⬆️", "⬇️", "📈"))][:3]
-        e = {"title": f"🚨 +{x['ev']}% EV on Kalshi: {x['label']}", "color": 0xFF5A6E,
+        e = {"title": f"🚨 +{x['edge']}% edge on Kalshi: {x['label']}", "color": 0xFF5A6E,
              "description": line + "\n\n" + f"👉 Buy **{x['side']}** at **{x['cost']}¢**, worth it up to **{cap}¢**. Pays {usd(1 / ((x['cost'] + fee) / 100) - 1)} on {usd(1)[1:]}.\n🕒 Kickoff {pt(x['kick'])} PT" + ("\n\n" + "\n".join(why) if why else ""),
              "footer": {"text": "Prices move fast. If it's above the max price, skip it. Locked in #receipts."}}
-        if post("KALSHI", content=f"@everyone **+{x['ev']}% EV** on Kalshi 🚨", embeds=[e], ping=True):
+        if post("KALSHI", content=f"@everyone ⭐ **+{x['edge']}% edge** on Kalshi 🚨", embeds=[e], ping=True):
             kk = f"KA|{x['ticker']}|{x['side']}"
             pinged[kk] = {"day": day, "week": str(wk), "who": who or x.get("game"), "at": now.isoformat()}
             posted.setdefault(kk, dict(week=str(wk), ch="kalshi", text=x["label"], cost=x["cost"], fee=fee, units=1, kick=x["kick"], at=now.isoformat()))
@@ -543,6 +595,7 @@ def results(S, PK, now, PLD=None):
         x.update(result=res, u=round(u, 3), actual=g.get("actual"), graded_at=now.isoformat())
         rec["w" if res == "win" else "l" if res == "loss" else "p"] += 1; rec["u"] = round(rec["u"] + u, 3)
         out.append(x)
+    backfill_best(S, PK)
     said = set(S.setdefault("kal_said", []))
     kal = [(f"{w_}|{k}", x) for w_, pk in PK.items() for k, x in pk.items() if k.startswith("KA|") and x.get("graded") and f"{w_}|{k}" not in said]
     kal.sort(key=lambda kv: (kv[1].get("kick") or "", kv[1].get("label") or ""))
@@ -556,8 +609,10 @@ def results(S, PK, now, PLD=None):
                                  "footer": {"text": f"Best bets all time: {rec['w']}-{rec['l']} · {uu(rec['u'])} at ${UNIT:.0f} a unit"}}])
     if kal:
         kw = sum(1 for _, x in kal if x.get("result")); kl = sum(1 for _, x in kal if x.get("result") is False)
-        if post_fields("RESULTS", f"💸 Kalshi: {len(kal)} graded ({kw}-{kl})", "", ka_fields(kal, show_res=True), COLORS["win" if kw >= kl else "loss"],
-                       f"Kalshi all time (every bet, same as the site's Record tab): {kr[0]}-{kr[1]} · {uu(kr[2])}" + (f" · {kopen} open" if kopen else "")):
+        bw_, bl_, bu_, bo_ = kal_best_record(S, PK)
+        bs = set(S.get("kal_best", []))
+        if post_fields("RESULTS", f"💸 Kalshi: {len(kal)} graded ({kw}-{kl})", "⭐ = the one best rung per player", ka_fields(kal, show_res=True, star=bs), COLORS["win" if kw >= kl else "loss"],
+                       f"⭐ Kalshi Best: {bw_}-{bl_} · {uu(bu_)}\nAll Kalshi (every rung, same as the site): {kr[0]}-{kr[1]} · {uu(kr[2])}" + (f" · {kopen} open" if kopen else "")):
             S["kal_said"] = sorted(said | {kk for kk, _ in kal})
     # daily recap: the morning after, for picks graded the day before
     today = now.astimezone(PT).date()
@@ -728,13 +783,16 @@ def slate_recap(S, PK, PLD, now):
             games = sorted({f"{g['away']} @ {g['home']}" for g in PLD.get("games", []) if g.get("kick") == k})
             top = sorted([(ka_u(x), f"💸 {x.get('label')} at {x.get('cost')}¢") for x in kg] + [(x["u"], f"🎯 {x['text']}") for x in bg], reverse=True)[:3]
             left = tot - g_
-            desc = (f"🎯 **Best bets:** {bw}-{bl} · **{uu(bu)}**\n💸 **Kalshi:** {kw}-{kl} · **{uu(ku)}**\n➕ **Slate total:** {bw + kw}-{bl + kl} · **{uu(bu + ku)}**\n\n"
+            bs_ = set(S.get("kal_best", []))
+            kb = [x for kk, x in pk.items() if kk.startswith("KA|") and x.get("kick") == k and x.get("graded") and f"{w_}|{kk}" in bs_]
+            sw, sl, su = sum(1 for x in kb if x.get("result")), sum(1 for x in kb if x.get("result") is False), sum(ka_u(x) for x in kb)
+            desc = (f"🎯 **Best bets:** {bw}-{bl} · **{uu(bu)}**\n⭐ **Kalshi Best (one per player):** {sw}-{sl} · **{uu(su)}**\n💸 **All Kalshi (every rung):** {kw}-{kl} · **{uu(ku)}**\n\n"
                     + ("🔥 **Best hits**\n" + "\n".join(f"{t} · {uu(u)}" for u, t in top if u > 0) if any(u > 0 for u, _ in top) else "")
                     + (f"\n\n⏳ {left} still waiting on stats; they'll show up in the results feed." if left > 0 else ""))
             kr = (PLD.get("record") or {}).get("kalshi") or [0, 0, 0]
             rec = S.get("record") or {"w": 0, "l": 0, "u": 0}
             e = {"title": f"🧾 {iso(k).astimezone(PT).strftime('%a %-I:%M %p')} slate recap · Week {w_}", "description": desc, "color": COLORS["win" if bu + ku >= 0 else "loss"],
-                 "footer": {"text": f"{', '.join(games)[:200]}\nAll time: Kalshi {kr[0]}-{kr[1]} {uu(kr[2])} · Best bets {rec['w']}-{rec['l']} {uu(rec['u'])} · 1u = ${UNIT:.0f}"}}
+                 "footer": {"text": f"{', '.join(games)[:200]}\nAll time: ⭐ Kalshi Best {kal_best_record(S, PK)[0]}-{kal_best_record(S, PK)[1]} {uu(kal_best_record(S, PK)[2])} · All Kalshi {kr[0]}-{kr[1]} {uu(kr[2])} · Best bets {rec['w']}-{rec['l']} {uu(rec['u'])} · 1u = ${UNIT:.0f}"}}
             if post("RESULTS", embeds=[e]):
                 done[k] = now.isoformat()
 
@@ -761,6 +819,20 @@ def main():
     if "--kalshi-redo" in sys.argv:
         try:
             kalshi_redo(S, PLD, PK, wk, now)
+        finally:
+            S.setdefault("msgs", []).extend(MSGS); MSGS.clear()
+            (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
+        return
+    if "--best-summary" in sys.argv:
+        try:
+            backfill_best(S, PK)
+            bw_, bl_, bu_, bo_ = kal_best_record(S, PK)
+            kr = (PLD.get("record") or {}).get("kalshi") or [0, 0, 0]
+            rows = [(f"{w_}|{k}", x) for w_, pk in PK.items() for k, x in pk.items() if f"{w_}|{k}" in set(S["kal_best"])]
+            rows.sort(key=lambda kv: (kv[1].get("kick") or "", kv[1].get("label") or ""))
+            post_fields("RESULTS", f"⭐ New: Kalshi Best record · {bw_}-{bl_} · {uu(bu_)}",
+                        f"From now on Kalshi is tracked two ways:\n⭐ **Kalshi Best:** one rung per player (the biggest edge, 5%+, max {BEST_PER_GAME} a game). This is what to bet for real. **{bw_}-{bl_} · {uu(bu_)}**, {bo_} open.\n💸 **All Kalshi:** every rung, same as the site. **{kr[0]}-{kr[1]} · {uu(kr[2])}**.\n\nThe ⭐ rule was applied to this week's earlier slates using only the pregame numbers already locked in #receipts.",
+                        ka_fields([(k.split("|", 1)[1], x) for k, x in rows], show_res=True, star={k.split("|", 1)[1] for k, _ in rows}), COLORS["kalshi"])
         finally:
             S.setdefault("msgs", []).extend(MSGS); MSGS.clear()
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
