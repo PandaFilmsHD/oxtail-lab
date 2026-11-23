@@ -709,8 +709,9 @@ def main():
                 if f"{st}|{p['pos']}" not in DIST:
                     continue
                 k_ = kick.get(tm)
-                if k_ and datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) <= now:
-                    continue
+                started = bool(k_ and datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) <= now)
+                if started and (k_ and datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) < now - datetime.timedelta(hours=4) or PROJ.get(nm, {}).get(st) is not None):
+                    continue   # game over, or already projected: nothing to do
                 def proj(model):
                     om_ = None
                     if model is not None:
@@ -793,6 +794,8 @@ def main():
                 fin = mm + W * (base_m - mm) + 0.8 * (ours_m - base_m)   # news part trusted, the rest at W
                 if RAT is None:
                     PROJ.setdefault(nm, {"team": tm, "pos": p["pos"]})[st] = round(float(fin), 3)
+                if started:
+                    continue   # game already on: keep the projection for the live watcher, but no new pregame picks
                 big_gap = bool(abs(ours_m - mm) > MAX_GAP * max(mm, 0.5)) and not why_news
                 po = P(fin)
                 if st == "rec" and V2A and p["pos"] != "QB" and key(nm) in LATR:   # same latent as his rec yds (QB link), NB marginal unchanged
