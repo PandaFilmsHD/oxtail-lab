@@ -127,8 +127,20 @@ LM = {}
 GSER = {"KXNFLTOTAL": "total", "KXNFLSPREAD": "spread", "KXNFLGAME": "ml"}
 
 
+LEARNED = {}
+
+
+def load_learned():
+    global LEARNED
+    try:
+        LEARNED = requests.get("https://raw.githubusercontent.com/PandaFilmsHD/oxtail-lab/main/data/learned.json", timeout=30).json().get("buckets", {})
+    except Exception:
+        LEARNED = {}
+
+
 def load_lm():
     global LM
+    load_learned()
     try:
         LM = requests.get("https://raw.githubusercontent.com/PandaFilmsHD/oxtail-lab/main/data/live_model.json", timeout=30).json()
     except Exception:
@@ -225,7 +237,8 @@ def scan(PL, seen, per_game, dry=False):
                     continue
                 cost = c + kfee(c); edge = pp - c; ev = pp / cost - 1
                 key = f"{m['ticker']}|{side}"
-                if edge < EDGE or ev <= 0 or key in seen or per_game.get(g["id"], 0) >= MAX_GAME:
+                k_learn = (LEARNED.get(f"LV|{m['stat']}|{side}|{'<25c' if c < .25 else '25-50c' if c < .5 else '50-75c' if c < .75 else '75c+'}") or {}).get("k", 1.0)
+                if edge * k_learn < EDGE or ev <= 0 or key in seen or per_game.get(g["id"], 0) >= MAX_GAME:
                     continue
                 if any(x.startswith(m["ticker"].rsplit("-", 1)[0]) for x in seen):   # one bet per player per stat (or per game line) per game
                     continue
@@ -352,7 +365,7 @@ def run():
             seen.add(f"{x['ticker']}|{x['side']}")
     while time.time() - t0 < 5.6 * 3600:
         if time.time() - loaded > 1800:
-            PL, loaded = load_pl(), time.time()
+            PL, loaded = load_pl(), time.time(); load_learned()
         try:
             got = scan(PL, seen, per_game)
             buf += got

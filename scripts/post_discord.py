@@ -15,6 +15,7 @@ import csv, datetime, hashlib, io, json, os, re, sys, time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import requests
+import learnlib
 
 ROOT = Path(__file__).resolve().parent.parent
 D = ROOT / "data"
@@ -27,6 +28,7 @@ MAX_BEST, MAX_KAL = 5, 5
 PING_EV, PING_EDGE, PING_PER_DAY = 0.0, 8.0, 3   # @everyone: a best rung with an 8%+ edge, at most 3 a day
 BEST_EDGE, BEST_PER_GAME = 5.0, 3                  # ⭐ Kalshi Best: one rung per player (biggest edge), 5%+ edge, max 3 per game
 PROP_EDGE, GAME_EDGE, KAL_EDGE = 3.5, 2.5, 4.0   # strict: below this it doesn't make the channel
+LEARN = {}  # bucket -> how well that bet type has really done (learnlib); edges get multiplied by its k
 MSGS = []   # ids of everything posted this run, saved to state so posts can be deleted or fixed later
 COLORS = dict(best=0x5B7CFF, parlay=0xFFC83D, kalshi=0x3DDC84, win=0x3DDC84, loss=0xFF5A6E, receipt=0x8A8FB8, push=0x8A8FB8)
 
@@ -206,16 +208,16 @@ def best_bets(S, PLD, PK, wk, now, ahead=None):
         cands = []
         for g in games:
             for pl in g.get("plays") or []:
-                if (pl.get("units") or 0) > 0 and (pl.get("edge") or 0) >= GAME_EDGE and pl.get("pick"):
+                if (pl.get("units") or 0) > 0 and adj("game", pl, pl.get("edge")) >= GAME_EDGE and pl.get("pick"):
                     side = pl["pick"].split()[0] if pl["kind"] == "tot" else pl["pick"].split()[0]
                     key = f"G|{g['home']}|{pl['kind']}|{side}"
                     auto = next((a for a in g.get("auto") or [] if a.get("kind") == pl["kind"]), {})
                     cands.append(dict(id=key, kind="game", icon="🏈", text=f"{g['away']} @ {g['home']}: {pl['pick']}", price=auto.get("price") or -110,
-                                      p=pl["p"], edge=pl["edge"], why=why_game(pl, g), units=pl.get("units") or 0.5))
+                                      p=pl["p"], edge=round(adj("game", pl, pl["edge"]), 1), why=why_game(pl, g), units=pl.get("units") or 0.5))
         for x in PLD.get("props") or []:
-            if x.get("kick") == k and ((x.get("edge") or 0) >= PROP_EDGE or x.get("grade") in ("A", "B")):
+            if x.get("kick") == k and adj("prop", x, x.get("edge")) >= PROP_EDGE:
                 cands.append(dict(id=f"{x['player']}|{x['market']}", kind="prop", icon="👤", text=prop_text(x), price=x.get("price"),
-                                  p=x["p"], edge=x["edge"], why=why_prop(x), units=1 if x.get("grade") in ("A", "B") else 0.5))
+                                  p=x["p"], edge=round(adj("prop", x, x["edge"]), 1), why=why_prop(x), units=1 if x.get("grade") in ("A", "B") else 0.5))
         cands.sort(key=lambda c: -(c["edge"] or 0))
         cands = cands[:MAX_BEST]
         if cands:
@@ -250,15 +252,19 @@ def ka_line(x, show_res=False):
     return f"{res} {x.get('label')} at **{x.get('cost')}¢** · {round(x.get('p') or 0)}% · +{x.get('edge')}% edge · +{x.get('ev')}% EV{had}{money}"
 
 
+def adj(kind, x, edge):
+    return (edge or 0) * learnlib.k_for(LEARN, learnlib.bucket(kind, x))
+
+
 def kal_best_pick(rows):
     """⭐ rule: per player (or game line) keep the rung with the biggest edge, need 5%+, then at most 3 per game. Uses only pregame numbers."""
     best = {}
     for k, x in rows:
         w_ = ka_who(x)
-        if (x.get("edge") or 0) >= BEST_EDGE and (w_ not in best or (x.get("edge") or 0) > (best[w_][1].get("edge") or 0)):
+        if adj("kalshi", x, x.get("edge")) >= BEST_EDGE and (w_ not in best or adj("kalshi", x, x.get("edge")) > adj("kalshi", best[w_][1], best[w_][1].get("edge"))):
             best[w_] = (k, x)
     per, out = {}, []
-    for k, x in sorted(best.values(), key=lambda kv: -(kv[1].get("edge") or 0)):
+    for k, x in sorted(best.values(), key=lambda kv: -adj("kalshi", kv[1], kv[1].get("edge"))):
         g_ = x.get("game") or f"{x.get('away')}@{x.get('home')}"
         if per.get(g_, 0) < BEST_PER_GAME:
             per[g_] = per.get(g_, 0) + 1; out.append(k)
@@ -384,8 +390,8 @@ def big_edges(S, PLD, wk, now):
         return
     seen_players = {v.get("who") for v in pinged.values() if v.get("week") == str(wk)}
     L = [x for x in (K.get("buys") or []) + (K.get("safe") or []) if x.get("ticker") and x.get("kick") and iso(x["kick"]) - now > datetime.timedelta(minutes=10)]
-    L = one_per(L, lambda x: x.get("player") or x.get("game") or x["label"], lambda x: x.get("edge") or 0)   # the best rung per player, same as ⭐
-    L = [x for x in L if (x.get("edge") or 0) >= PING_EDGE and (x.get("ev") or 0) > PING_EV]
+    L = one_per(L, lambda x: x.get("player") or x.get("game") or x["label"], lambda x: adj("kalshi", x, x.get("edge")))   # the best rung per player, same as ⭐
+    L = [x for x in L if adj("kalshi", x, x.get("edge")) >= PING_EDGE and (x.get("ev") or 0) > PING_EV]
     L = [x for x in L if f"KA|{x['ticker']}|{x['side']}" not in pinged and (x.get("player") or x.get("game")) not in seen_players]
     L.sort(key=lambda x: -(x.get("edge") or 0))
     posted = S.setdefault("posted", {})
@@ -504,6 +510,28 @@ def live_results(S, now):
         lines = [f"{'✅' if w_ else '❌'} {x['label']} at {x['cost']}¢ (Q{x['q']} {x['clock']}) → {'had **' + format(v_, 'g') + '**' if x.get('player') else 'final **' + str(v_) + '**'} · **{uu(u_)}**" for x, w_, u_, v_ in out]
         post("RESULTS", embeds=[{"title": f"⚡ Live: {len(out)} graded", "description": "\n".join(lines)[:3900], "color": COLORS["win" if sum(o[2] for o in out) >= 0 else "loss"],
                                  "footer": {"text": f"⚡ Live record (tracked only, testing): {rec['w']}-{rec['l']} · {uu(rec['u'])} at ${UNIT:.0f} a bet"}}])
+
+
+def learn_report(S, now):
+    """Tuesday morning: what the results taught the model this week, in plain English."""
+    t = now.astimezone(PT)
+    wkkey = t.strftime("%G-W%V")
+    if t.weekday() != 1 or t.hour < 9 or S.get("learn_week") == wkkey or not LEARN:
+        return
+    rows = sorted(LEARN.items(), key=lambda kv: -kv[1]["n"])
+    name = lambda k: k.replace("KA|", "Kalshi ").replace("PR|", "Props ").replace("GL|", "Game lines ").replace("LV|", "Live ").replace("|", " · ")
+    trims = [(k, v) for k, v in rows if v["n"] >= 15 and v["k"] < 0.8]
+    good = [(k, v) for k, v in rows if v["n"] >= 15 and v["k"] >= 1.0]
+    lines = ["How each bet type has really done vs what the model said. Types that underdeliver get their edges cut (×k), so fewer of them make Discord.\n"]
+    if trims:
+        lines.append("**📉 Trimmed**\n" + "\n".join(f"{name(k)}: said {v['said_pct']}%, hit {v['hit_pct']}% ({v['n']} bets, {uu(v['u'])}) → edges ×{v['k']}" for k, v in trims[:8]))
+    if good:
+        lines.append("**📈 Delivering**\n" + "\n".join(f"{name(k)}: said {v['said_pct']}%, hit {v['hit_pct']}% ({v['n']} bets, {uu(v['u'])}) → full credit" for k, v in good[:8]))
+    if not trims and not good:
+        lines.append("Not enough graded bets in any one type yet (needs 15+). It keeps learning every update.")
+    lines.append("\nAlso retrained this week on the newest games: TD model, live in-game model, D/ST and kicker model.")
+    if post("RESULTS", embeds=[{"title": "🧠 Weekly model check", "description": "\n\n".join(lines)[:3900], "color": 0x8A5BFF}]):
+        S["learn_week"] = wkkey
 
 
 def parlays(S, PLD, now, force=False):
@@ -860,6 +888,12 @@ def main():
     S = load(D / "discord_state.json", {})
     now = now_utc()
     wk = PLD.get("week")
+    global LEARN
+    try:
+        LEARN = learnlib.compute(PK, load(D / "live_bets.json", []), S.get("live_done"))
+        learnlib.save(LEARN)
+    except Exception as e:
+        print("discord: learning failed", type(e).__name__, e)
     if "--kalshi-redo" in sys.argv:
         try:
             kalshi_redo(S, PLD, PK, wk, now)
@@ -908,7 +942,7 @@ def main():
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
     for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, PK, wk, now), lambda: big_edges(S, PLD, wk, now), lambda: tds_post(S, PLD, wk, now),
-                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: parlay_results(S, PLD, now), lambda: td_results(S, now), lambda: live_results(S, now), lambda: slate_recap(S, PK, PLD, now)):
+                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: parlay_results(S, PLD, now), lambda: td_results(S, now), lambda: live_results(S, now), lambda: slate_recap(S, PK, PLD, now), lambda: learn_report(S, now)):
         try:
             step()
         except Exception as e:
