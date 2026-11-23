@@ -389,7 +389,7 @@ def run():
             idle = 0 if live_games() else idle + 1
         except Exception as ex:
             print("scan failed", type(ex).__name__, ex)
-        if buf and time.time() - last_save > 300:
+        if buf:   # save right away so a restart never re-posts
             save(buf); buf, last_save = [], time.time()
         if idle >= 10 and not should_run():
             break
