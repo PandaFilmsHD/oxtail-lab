@@ -1,5 +1,5 @@
 {
- "at": "2026-11-23T03:00:26+00:00",
+ "at": "2026-11-23T03:10:05+00:00",
  "buckets": {
   "GL|tot": {
    "evidence": 0.008,
@@ -20,13 +20,13 @@
    "u": 0.14
   },
   "KA|Catches|Yes|25-50c": {
-   "evidence": 0.032,
-   "hit_pct": 50.0,
-   "k": 1.023,
-   "n": 4,
-   "price_pct": 35.0,
-   "said_pct": 43.6,
-   "u": 1.36
+   "evidence": 0.033,
+   "hit_pct": 40.0,
+   "k": 0.985,
+   "n": 5,
+   "price_pct": 35.8,
+   "said_pct": 43.7,
+   "u": 0.36
   },
   "KA|Catches|Yes|75c+": {
    "evidence": 0.006,
@@ -38,13 +38,13 @@
    "u": 0.38
   },
   "KA|Catches|Yes|<25c": {
-   "evidence": 0.049,
-   "hit_pct": 40.0,
-   "k": 1.084,
-   "n": 5,
-   "price_pct": 18.6,
-   "said_pct": 26.5,
-   "u": 4.87
+   "evidence": 0.05,
+   "hit_pct": 28.6,
+   "k": 1.012,
+   "n": 7,
+   "price_pct": 20.0,
+   "said_pct": 27.0,
+   "u": 2.87
   },
   "KA|Pass TDs|No|75c+": {
    "evidence": 0.007,
@@ -63,6 +63,15 @@
    "price_pct": 38.0,
    "said_pct": 42.7,
    "u": -1.0
+  },
+  "KA|Pass yds|Yes|25-50c": {
+   "evidence": 0.005,
+   "hit_pct": 50.0,
+   "k": 1.004,
+   "n": 2,
+   "price_pct": 41.5,
+   "said_pct": 46.5,
+   "u": 0.34
   },
   "KA|Pass yds|Yes|75c+": {
    "evidence": 0.004,
@@ -83,49 +92,49 @@
    "u": 2.66
   },
   "KA|Rec yds|No|50-75c": {
-   "evidence": 0.007,
-   "hit_pct": 100.0,
-   "k": 1.034,
-   "n": 2,
-   "price_pct": 68.0,
-   "said_pct": 73.6,
-   "u": 0.88
+   "evidence": 0.011,
+   "hit_pct": 66.7,
+   "k": 0.987,
+   "n": 3,
+   "price_pct": 67.7,
+   "said_pct": 73.3,
+   "u": -0.12
   },
   "KA|Rec yds|No|75c+": {
-   "evidence": 0.052,
-   "hit_pct": 83.3,
-   "k": 0.925,
-   "n": 12,
-   "price_pct": 85.4,
-   "said_pct": 90.2,
-   "u": -0.34
+   "evidence": 0.057,
+   "hit_pct": 81.2,
+   "k": 0.909,
+   "n": 16,
+   "price_pct": 84.0,
+   "said_pct": 88.5,
+   "u": -0.66
   },
   "KA|Rec yds|Yes|25-50c": {
-   "evidence": 0.024,
+   "evidence": 0.046,
    "hit_pct": 25.0,
-   "k": 0.932,
-   "n": 4,
-   "price_pct": 39.2,
-   "said_pct": 46.9,
-   "u": -1.9
+   "k": 0.876,
+   "n": 8,
+   "price_pct": 37.6,
+   "said_pct": 45.2,
+   "u": -3.51
   },
   "KA|Rec yds|Yes|50-75c": {
-   "evidence": 0.046,
-   "hit_pct": 83.3,
-   "k": 1.081,
-   "n": 6,
-   "price_pct": 59.0,
-   "said_pct": 67.8,
-   "u": 2.2
+   "evidence": 0.047,
+   "hit_pct": 85.7,
+   "k": 1.11,
+   "n": 7,
+   "price_pct": 58.0,
+   "said_pct": 66.3,
+   "u": 3.06
   },
   "KA|Rec yds|Yes|75c+": {
-   "evidence": 0.009,
-   "hit_pct": 66.7,
-   "k": 0.969,
-   "n": 3,
-   "price_pct": 77.7,
-   "said_pct": 82.3,
-   "u": -0.47
+   "evidence": 0.014,
+   "hit_pct": 80.0,
+   "k": 0.989,
+   "n": 5,
+   "price_pct": 79.2,
+   "said_pct": 83.5,
+   "u": -0.05
   },
   "KA|Rec yds|Yes|<25c": {
    "evidence": 0.023,
@@ -155,13 +164,13 @@
    "u": -0.17
   },
   "KA|Rush yds|No|75c+": {
-   "evidence": 0.015,
-   "hit_pct": 75.0,
-   "k": 0.949,
-   "n": 4,
-   "price_pct": 85.2,
-   "said_pct": 89.7,
-   "u": -0.63
+   "evidence": 0.022,
+   "hit_pct": 83.3,
+   "k": 0.971,
+   "n": 6,
+   "price_pct": 84.7,
+   "said_pct": 89.1,
+   "u": -0.25
   },
   "KA|Rush yds|Yes|25-50c": {
    "evidence": 0.058,
@@ -245,13 +254,13 @@
    "u": -2.35
   },
   "PR|Pass TDs|Under": {
-   "evidence": 0.001,
+   "evidence": 0.002,
    "hit_pct": 100.0,
-   "k": 1.011,
-   "n": 1,
-   "price_pct": 63.2,
-   "said_pct": 66.1,
-   "u": 0.52
+   "k": 1.022,
+   "n": 2,
+   "price_pct": 63.5,
+   "said_pct": 66.5,
+   "u": 0.99
   },
   "PR|Pass yds|Over": {
    "evidence": 0.001,
@@ -299,13 +308,13 @@
    "u": -0.25
   },
   "PR|Rush yds|Under": {
-   "evidence": 0.003,
-   "hit_pct": 0.0,
-   "k": 0.938,
-   "n": 4,
-   "price_pct": 50.0,
-   "said_pct": 52.9,
-   "u": -4.0
+   "evidence": 0.004,
+   "hit_pct": 20.0,
+   "k": 0.952,
+   "n": 5,
+   "price_pct": 49.9,
+   "said_pct": 52.8,
+   "u": -3.08
   }
  },
  "prior_bets": 40
