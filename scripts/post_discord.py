@@ -462,6 +462,40 @@ def td_results(S, now):
                                  "footer": {"text": f"TD value plays all time: {rec['w']}-{rec['l']} · {uu(rec['u'])} at ½ unit each"}}])
 
 
+LIVE_STAT = {"rush_yds": "rushyd", "rec_yds": "recyd", "rec": "rec", "pass_yds": "passyd", "pass_tds": "ptd", "td": "td"}
+
+
+def live_results(S, now):
+    """Grade ⚡ live Kalshi picks (data/live_bets.json, written by live_kalshi.py) from the final box scores."""
+    LB = load(D / "live_bets.json", [])
+    U = load(D / "usage.json", {})
+    if not LB or not U:
+        return
+    done = S.setdefault("live_done", {})
+    rec = S.setdefault("live_rec", {"w": 0, "l": 0, "u": 0.0})
+    NKs = lambda n: re.sub(r"[^a-z]", "", re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", (n or "").lower()))
+    by = {NKs(v.get("name")): v for v in (U.get("players") or {}).values()}
+    out = []
+    for x in LB:
+        k = f"{x['ticker']}|{x['side']}"
+        if k in done:
+            continue
+        row = next((w for w in (by.get(NKs(x["player"])) or {}).get("weeks", []) if str(w.get("w")) == str(x.get("week")) and "pts" in w), None)
+        if not row:
+            continue
+        val = row.get(LIVE_STAT[x["stat"]], 0) or 0
+        win = (val > x["strike"]) == (x["side"] == "Yes")
+        c_ = (x["cost"] + (x.get("fee") or 0)) / 100
+        u = (1 / c_ - 1) if win else -1
+        done[k] = {"win": win, "u": round(u, 3), "actual": val}
+        rec["w" if win else "l"] += 1; rec["u"] = round(rec["u"] + u, 3)
+        out.append((x, win, u, val))
+    if out:
+        lines = [f"{'✅' if w_ else '❌'} {x['label']} at {x['cost']}¢ (Q{x['q']} {x['clock']}) → had **{v_:g}** · **{uu(u_)}**" for x, w_, u_, v_ in out]
+        post("RESULTS", embeds=[{"title": f"⚡ Live: {len(out)} graded", "description": "\n".join(lines)[:3900], "color": COLORS["win" if sum(o[2] for o in out) >= 0 else "loss"],
+                                 "footer": {"text": f"⚡ Live record (tracked only, testing): {rec['w']}-{rec['l']} · {uu(rec['u'])} at ${UNIT:.0f} a bet"}}])
+
+
 def parlays(S, PLD, now, force=False):
     """Once per game day: top 2-leg and 3-leg parlays whose legs haven't started."""
     ks = [k for k in sorted({g["kick"] for g in PLD.get("games", [])}) if iso(k) > now]
@@ -864,7 +898,7 @@ def main():
         finally:
             (D / "discord_state.json").write_text(json.dumps(S, indent=1, sort_keys=True))
     for step in (lambda: receipts(S, PK, wk, now), lambda: best_bets(S, PLD, PK, wk, now), lambda: kalshi(S, PLD, PK, wk, now), lambda: big_edges(S, PLD, wk, now), lambda: tds_post(S, PLD, wk, now),
-                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: parlay_results(S, PLD, now), lambda: td_results(S, now), lambda: slate_recap(S, PK, PLD, now)):
+                 lambda: parlays(S, PLD, now), lambda: results(S, PK, now, PLD), lambda: parlay_results(S, PLD, now), lambda: td_results(S, now), lambda: live_results(S, now), lambda: slate_recap(S, PK, PLD, now)):
         try:
             step()
         except Exception as e:
