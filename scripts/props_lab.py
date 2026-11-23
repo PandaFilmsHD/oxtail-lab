@@ -1423,6 +1423,13 @@ def main():
         tds = td_board(lines, kick, INJ, OUTS, RAW, now, cur)
     except Exception as e:
         print("props_lab: td board failed", type(e).__name__, e); tds = []
+    # keep each player's last pregame projection after his game kicks off (the live Kalshi watcher needs it during the game)
+    _old = load(ROOT / "docs" / "data" / "props_lab.json", {}) or {}
+    if str(_old.get("week")) == str(cur):
+        for nm_, v_ in (_old.get("proj") or {}).items():
+            k_ = kick.get(v_.get("team"))
+            if nm_ not in PROJ and k_ and datetime.datetime.fromisoformat(k_.replace("Z", "+00:00")) <= now:
+                PROJ[nm_] = v_
     out = {"unit": UNIT, "proj": PROJ, "tds": tds, "kalshi": kal_out, "whys": out_why, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
            "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR_RAW.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
