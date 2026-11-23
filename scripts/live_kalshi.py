@@ -155,6 +155,7 @@ def scan(PL, seen, per_game, dry=False):
         return []
     proj = {NK(k): v for k, v in (PL.get("proj") or {}).items()}
     mk = kalshi_markets({(g["away"], g["home"]) for g in games})
+    print(f"{nowu():%H:%M:%S} live games {[g['short'] for g in games]} · kalshi markets {len(mk)} · with projections {sum(1 for x in mk if NK(x['player']) in proj)}")
     picks = []
     for g in games:
         f = frac_left(g); F_LEFT = max(f, 1e-3)
