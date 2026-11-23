@@ -155,7 +155,7 @@ def team_rem(g, f, imp_h, imp_a, n=20000):
 def player_p(st, pos, base, cur, need, f, margin):
     """Chance he gets more than `need` in the rest of the game, from the play-by-play model. None if no model for him."""
     M = ((LM.get("players") or {}).get(st) or {}).get(pos)
-    if not M or base <= 0:
+    if st == "td" or not M or base <= 0:   # the TD part trained on a biased sample: TDs stay on the simple version
         return None, None
     c = M["c"]; today = math.log((cur + c) / (base * (1 - f) + c)); d7 = max(-24, min(24, margin)) / 7
     x = np.array([d7, d7 * (1 - f), math.log(max(f, 1e-3)), today, today * (1 - f)])
