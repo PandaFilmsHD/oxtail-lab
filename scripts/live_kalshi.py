@@ -281,7 +281,10 @@ def run():
 
 
 if __name__ == "__main__":
-    if "--should-run" in sys.argv:
+    if "--test" in sys.argv:
+        r = requests.post(HOOK + "?wait=true", json={"content": "⚡ Oxtail Live is connected. During games, big live Kalshi edges post here (tracked only for now, graded in #results under ⚡ Live)."}, timeout=20) if HOOK else None
+        print("live test", r.status_code if r is not None else "no webhook")
+    elif "--should-run" in sys.argv:
         print("yes" if should_run() else "no")
     elif "--dry" in sys.argv:
         for x in scan(load_pl(), set(), {}, dry=True):

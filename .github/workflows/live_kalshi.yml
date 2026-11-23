@@ -7,12 +7,16 @@ on:
         description: "one pass, print what it would flag, no posting"
         type: boolean
         default: false
+      test:
+        description: "send a hello to #live"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 concurrency:
-  group: live-kalshi-${{ inputs.dry }}
+  group: live-kalshi-${{ inputs.dry || inputs.test }}
   cancel-in-progress: false
 
 jobs:
@@ -32,4 +36,5 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: |
           git config user.name "oxtail-bot"; git config user.email "oxtail-bot@users.noreply.github.com"
-          if [ "${{ inputs.dry }}" = "true" ]; then python -u scripts/live_kalshi.py --dry; else python -u scripts/live_kalshi.py; fi
+          if [ "${{ inputs.test }}" = "true" ]; then python -u scripts/live_kalshi.py --test
+          elif [ "${{ inputs.dry }}" = "true" ]; then python -u scripts/live_kalshi.py --dry; else python -u scripts/live_kalshi.py; fi
