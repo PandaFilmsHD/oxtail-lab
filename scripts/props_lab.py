@@ -319,6 +319,7 @@ def main():
     U = load(D / "usage.json", {}); DIST = load(D / "prop_dists.json", {}); RAW = load(D / "props_raw.json", {}) or {}
     KAL = load(D / "kalshi.json", {}) or {}   # real Kalshi share prices (pull_kalshi.py)
     KBUY = []                                 # every Kalshi rung where our chance beats what a share costs
+    PROJ = {}                                 # final pregame average per player and stat, for the live Kalshi watcher
     SL = load(D / "sleeper_proj.json", {}) or {}; GO = load(D / "game_odds.json", {}) or {}
     M = next((load(p) for p in sorted(D.glob("*/model.json"))), {}) or {}
     cur = str(M.get("cur") or RAW.get("week") or "")
@@ -790,6 +791,8 @@ def main():
                         RAT.setdefault(st, []).append(ours_raw / mm)
                     continue
                 fin = mm + W * (base_m - mm) + 0.8 * (ours_m - base_m)   # news part trusted, the rest at W
+                if RAT is None:
+                    PROJ.setdefault(nm, {"team": tm, "pos": p["pos"]})[st] = round(float(fin), 3)
                 big_gap = bool(abs(ours_m - mm) > MAX_GAP * max(mm, 0.5)) and not why_news
                 po = P(fin)
                 if st == "rec" and V2A and p["pos"] != "QB" and key(nm) in LATR:   # same latent as his rec yds (QB link), NB marginal unchanged
@@ -1420,7 +1423,7 @@ def main():
         tds = td_board(lines, kick, INJ, OUTS, RAW, now, cur)
     except Exception as e:
         print("props_lab: td board failed", type(e).__name__, e); tds = []
-    out = {"unit": UNIT, "tds": tds, "kalshi": kal_out, "whys": out_why, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
+    out = {"unit": UNIT, "proj": PROJ, "tds": tds, "kalshi": kal_out, "whys": out_why, "week": int(cur), "at": now.isoformat(timespec="seconds"), "sims": N, "trust": W, "min_edge": MIN_EDGE * 100, "pickem_cut": PICKEM,
            "parlays": parlays, "longshots": longshots, "teasers": [{k: (round(100 * v, 1) if k == "p" else v) for k, v in t.items() if k != "game"} for t in TEASERS], "legs": legs_out, "bias": {k: round(v, 3) for k, v in CORR_RAW.items()},
            "pickem_plays": sorted([x for x in props if x["pickem"]], key=lambda x: -x["p"])[:25],
            "lines_at": RAW.get("at"), "prices_at": GO.get("at"), "games": sorted(games, key=lambda g: g["kick"] or ""),

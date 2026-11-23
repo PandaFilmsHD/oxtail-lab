@@ -79,6 +79,17 @@ jobs:
             if [ "$a" = 0 ] && [ "$b" = 0 ]; then gh workflow run live.yml --ref main -R "$GITHUB_REPOSITORY" && echo "live watcher started"; else echo "live watcher already running"; fi
           fi
 
+      - name: Start the live Kalshi watcher when any game is on
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(python scripts/live_kalshi.py --should-run 2>/dev/null)" = "yes" ]; then
+            a=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/live_kalshi.yml/runs?status=in_progress" --jq '.total_count')
+            b=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/live_kalshi.yml/runs?status=queued" --jq '.total_count')
+            if [ "$a" = 0 ] && [ "$b" = 0 ]; then gh workflow run live_kalshi.yml --ref main -R "$GITHUB_REPOSITORY" && echo "live kalshi started"; else echo "live kalshi already running"; fi
+          fi
+
   next:
     needs: update
     if: always()
