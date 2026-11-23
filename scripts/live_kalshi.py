@@ -29,7 +29,8 @@ RAWP = "https://raw.githubusercontent.com/PandaFilmsHD/oxtail-lab/main/docs/data
 SERIES = {"KXNFLPASSYDS": "pass_yds", "KXNFLRSHYDS": "rush_yds", "KXNFLRECYDS": "rec_yds", "KXNFLREC": "rec", "KXNFLPASSTDS": "pass_tds", "KXNFLANYTD": "td"}
 LABEL = {"pass_yds": "pass yds", "rush_yds": "rush yds", "rec_yds": "rec yds", "rec": "catches", "pass_tds": "pass TDs", "td": "anytime TD"}
 CV = {"pass_yds": 0.35, "rush_yds": 0.70, "rec_yds": 0.80}   # full-game spread for yards; counts use NB / Poisson
-EDGE, MAX_GAME, IDLE_MIN = 0.10, 4, 12
+EDGE, MAX_GAME, IDLE_MIN = 0.10, 8, 12
+PER_PHASE = {"break": 3, "play": 2}   # each quarter break / halftime gets up to 3, live play up to 2 per quarter, 8 a game max
 MAX_PRICE = 0.55   # only post at -120 or better (a share costing 55¢ or less)
 EFIX = {"WSH": "WAS", "LAR": "LA", "JAC": "JAX"}            # ESPN / Kalshi -> one spelling
 NK = lambda n: re.sub(r"[^a-z]", "", re.sub(r"\b(jr|sr|ii|iii|iv|v)\b\.?", "", (n or "").lower()))
@@ -231,6 +232,8 @@ def scan(PL, seen, per_game, dry=False):
         if f < 5 / 60:
             continue
         brk = {"STATUS_HALFTIME": "Halftime", "STATUS_END_PERIOD": f"End of Q{g['period']}"}.get(g["stname"])
+        phase = f"{g['id']}|{'B' if brk else 'P'}{g['period']}"
+        cap_ph = PER_PHASE["break" if brk else "play"]
         how = (f"🧮 {brk} re-sim: the rest of the game from {g['away']} {g['as']}, {g['home']} {g['hs']}" if brk else "⚡ Live update") + (" (model trained on 10 seasons of play-by-play)" if LM else "")
         base_g = {"q": g["period"], "clock": f"{int(g['clock'] // 60)}:{int(g['clock'] % 60):02d}", "score": f"{g['away']} {g['as']}, {g['home']} {g['hs']}",
                   "game": g["short"], "home": g["home"], "away": g["away"], "week": PL.get("week"), "how": how}
@@ -242,14 +245,14 @@ def scan(PL, seen, per_game, dry=False):
                 cost = c + kfee(c); edge = pp - c; ev = pp / cost - 1
                 key = f"{m['ticker']}|{side}"
                 k_learn = (LEARNED.get(f"LV|{m['stat']}|{side}|{'<25c' if c < .25 else '25-50c' if c < .5 else '50-75c' if c < .75 else '75c+'}") or {}).get("k", 1.0)
-                if edge * k_learn < EDGE or ev <= 0 or key in seen or per_game.get(g["id"], 0) >= MAX_GAME:
+                if edge * k_learn < EDGE or ev <= 0 or key in seen or per_game.get(g["id"], 0) >= MAX_GAME or per_game.get(phase, 0) >= cap_ph:
                     continue
                 if any(x.startswith(m["ticker"].rsplit("-", 1)[0]) for x in seen):   # one bet per player per stat (or per game line) per game
                     continue
                 pick = {"ticker": m["ticker"], "side": side, "label": label_yes if side == "Yes" else label_no, "stat": m["stat"], "strike": m["strike"],
                         "cost": round(100 * c), "fee": round(100 * kfee(c), 1), "p": round(100 * pp, 1), "edge": round(100 * edge, 1), "ev": round(100 * ev, 1),
                         "at": stamp(), "date": today_pt(), **base_g, **extra}
-                picks.append(pick); seen.add(key); per_game[g["id"]] = per_game.get(g["id"], 0) + 1
+                picks.append(pick); seen.add(key); per_game[g["id"]] = per_game.get(g["id"], 0) + 1; per_game[phase] = per_game.get(phase, 0) + 1
                 if not dry:
                     pick["msg"] = post(pick)
                 return
@@ -380,6 +383,7 @@ def run():
     for x in (json.loads((D / "live_bets.json").read_text()) if (D / "live_bets.json").exists() else []):
         if x.get("date") == nowu().astimezone(datetime.timezone(datetime.timedelta(hours=-8))).strftime("%Y-%m-%d"):
             seen.add(f"{x['ticker']}|{x['side']}")
+            per_game[x.get("game", "")] = per_game.get(x.get("game", ""), 0)
     while time.time() - t0 < 5.6 * 3600:
         if time.time() - loaded > 1800:
             PL, loaded = load_pl(), time.time(); load_learned()
