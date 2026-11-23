@@ -1,14 +1,14 @@
 {
- "at": "2026-11-23T04:54:01+00:00",
+ "at": "2026-11-23T05:04:18+00:00",
  "buckets": {
   "GL|tot": {
-   "evidence": 0.008,
-   "hit_pct": 66.7,
-   "k": 1.018,
-   "n": 3,
-   "price_pct": 49.8,
-   "said_pct": 55.1,
-   "u": 0.82
+   "evidence": 0.009,
+   "hit_pct": 75.0,
+   "k": 1.037,
+   "n": 4,
+   "price_pct": 50.1,
+   "said_pct": 54.8,
+   "u": 1.73
   },
   "KA|Catches|No|25-50c": {
    "evidence": 0.006,
@@ -218,13 +218,13 @@
    "u": -1.0
   },
   "KA|total_no|Yes|25-50c": {
-   "evidence": 0.004,
-   "hit_pct": 100.0,
-   "k": 1.031,
-   "n": 1,
-   "price_pct": 46.0,
-   "said_pct": 52.5,
-   "u": 1.1
+   "evidence": 0.011,
+   "hit_pct": 33.3,
+   "k": 0.978,
+   "n": 3,
+   "price_pct": 39.7,
+   "said_pct": 45.5,
+   "u": -0.9
   },
   "PR|Anytime TD|Yes": {
    "evidence": 0.006,

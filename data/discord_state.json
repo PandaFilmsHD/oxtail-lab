@@ -169,6 +169,8 @@
   "11|KA|KXNFLRSHYDS-26NOV22TBDET-TBBMAYFIELD6-15|Yes",
   "11|KA|KXNFLSPREAD-26NOV19INDHOU-HOU21|Yes",
   "11|KA|KXNFLSPREAD-26NOV19INDHOU-HOU24|Yes",
+  "11|KA|KXNFLTOTAL-26NOV22MINSF-40|Yes",
+  "11|KA|KXNFLTOTAL-26NOV22MINSF-43|Yes",
   "11|KA|KXNFLTOTAL-26NOV22NOCHI-47|Yes"
  ],
  "kal_shown": [
@@ -311,11 +313,24 @@
   "KA|KXNFLTOTAL-26NOV23CINWAS-53|Yes",
   "KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes"
  ],
- "live_done": {},
+ "live_done": {
+  "KXNFLSPREAD-26NOV22MINSF-SF8|Yes": {
+   "actual": "10.0-35.0",
+   "kind": "game",
+   "u": 1.326,
+   "win": true
+  },
+  "KXNFLTOTAL-26NOV22MINSF-55|No": {
+   "actual": "10.0-35.0",
+   "kind": "game",
+   "u": 1.041,
+   "win": true
+  }
+ },
  "live_rec": {
   "l": 0,
-  "u": 0.0,
-  "w": 0
+  "u": 2.367,
+  "w": 2
  },
  "msgs": [
   {
@@ -477,6 +492,21 @@
    "at": "2026-11-23T04:25:58.127144+00:00",
    "ch": "RECEIPTS",
    "id": "1574279820366323714"
+  },
+  {
+   "at": "2026-11-23T05:04:18.446064+00:00",
+   "ch": "RESULTS",
+   "id": "1574289468733661366"
+  },
+  {
+   "at": "2026-11-23T05:04:19.351425+00:00",
+   "ch": "RESULTS",
+   "id": "1574289472974094579"
+  },
+  {
+   "at": "2026-11-23T05:04:20.398474+00:00",
+   "ch": "RESULTS",
+   "id": "1574289477336301640"
   }
  ],
  "parlay_days": {
@@ -674,11 +704,15 @@
    "week": "11"
   },
   "G|SF|tot|Under": {
+   "actual": null,
    "at": "2026-11-22T21:53:31.282611+00:00",
    "ch": "best",
+   "graded_at": "2026-11-23T05:04:18.142629+00:00",
    "kick": "2026-11-23T01:20:00Z",
    "price": -112,
+   "result": "win",
    "text": "MIN @ SF: Under 46.5",
+   "u": 0.446,
    "units": 0.5,
    "week": "11"
   },
@@ -1512,8 +1546,8 @@
  "record": {
   "l": 10,
   "p": 0,
-  "u": 0.924,
-  "w": 7
+  "u": 1.37,
+  "w": 8
  },
  "record_by": {
   "best": {
