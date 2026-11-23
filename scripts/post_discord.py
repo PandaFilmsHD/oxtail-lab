@@ -26,7 +26,8 @@ HOOK = {c: os.environ.get(f"DISCORD_{c}", "").strip() for c in ("BEST", "PARLAYS
 LEAD_MIN = 100          # post a window this many minutes before kickoff (runs are 10 to 30 min apart)
 MAX_BEST, MAX_KAL = 5, 5
 PING_EV, PING_EDGE, PING_PER_DAY = 0.0, 8.0, 3   # @everyone: a best rung with an 8%+ edge, at most 3 a day
-BEST_EDGE, BEST_PER_GAME = 5.0, 3                  # ⭐ Kalshi Best: one rung per player (biggest edge), 5%+ edge, max 3 per game
+BEST_EDGE, BEST_PER_GAME = 5.0, 3
+KAL_MAX_C = 60   # pregame Kalshi in Discord: -150 or better (a share costing 60¢ or less)                  # ⭐ Kalshi Best: one rung per player (biggest edge), 5%+ edge, max 3 per game
 PROP_EDGE, GAME_EDGE, KAL_EDGE = 3.5, 2.5, 4.0   # strict: below this it doesn't make the channel
 LEARN = {}  # bucket -> how well that bet type has really done (learnlib); edges get multiplied by its k
 MSGS = []   # ids of everything posted this run, saved to state so posts can be deleted or fixed later
@@ -261,6 +262,8 @@ def kal_best_pick(rows):
     best = {}
     for k, x in rows:
         w_ = ka_who(x)
+        if (x.get("cost") or 100) > KAL_MAX_C:
+            continue
         if adj("kalshi", x, x.get("edge")) >= BEST_EDGE and (w_ not in best or adj("kalshi", x, x.get("edge")) > adj("kalshi", best[w_][1], best[w_][1].get("edge"))):
             best[w_] = (k, x)
     per, out = {}, []
@@ -361,7 +364,7 @@ def kalshi(S, PLD, PK, wk, now):
     for k in windows(PLD, now):
         if done.get(k):
             continue
-        rows = ka_rows(PK, wk, lambda x: x.get("kick") == k)
+        rows = ka_rows(PK, wk, lambda x: x.get("kick") == k and (x.get("cost") or 100) <= KAL_MAX_C)
         done[k] = now.isoformat()
         if not rows:
             continue
@@ -369,11 +372,11 @@ def kalshi(S, PLD, PK, wk, now):
         S["kal_best"] = sorted(set(S.get("kal_best", [])) | {f"{wk}|{kk}" for kk in bk})
         bx = [x for kk, x in rows if kk in bk]
         top = "\n".join(f"⭐ **{x['label']}** at **{x['cost']}¢** · {round(x['p'])}% · +{x['edge']}% edge" for x in bx) or "No rung clears a 5% edge this slate."
-        if post_fields("KALSHI", f"💸 Kalshi buys · {pt(k)} PT", f"**⭐ Best bets (one per player, biggest edge, max {BEST_PER_GAME} a game)**\n{top}\n\n**Every buy ({len(rows)})** below, for the full tracker. Ladders on one player win or lose together, so stick to the ⭐ if you're betting real money.",
+        if post_fields("KALSHI", f"💸 Kalshi buys · {pt(k)} PT", f"**⭐ Best bets (one per player, biggest edge, max {BEST_PER_GAME} a game)**\n{top}\n\n**Every buy at -150 or better ({len(rows)})** below. Ladders on one player win or lose together, so stick to the ⭐ if you're betting real money.",
                        ka_fields(rows, whys=whys, star=set(bk)), COLORS["kalshi"], "Only buy at the price shown or lower. Prices move fast. All graded in #results: ⭐ Best and All tracked separately."):
             shown |= {kk for kk, _ in rows}
     # buys locked after their slate was already posted
-    late = ka_rows(PK, wk, lambda x: x.get("kick") and done.get(x["kick"]) and iso(x["kick"]) > now)
+    late = ka_rows(PK, wk, lambda x: x.get("kick") and done.get(x["kick"]) and iso(x["kick"]) > now and (x.get("cost") or 100) <= KAL_MAX_C)
     late = [(kk, x) for kk, x in late if kk not in shown]
     if late:
         if post_fields("KALSHI", "➕ New Kalshi buys", "Prices moved and these just turned into buys.", ka_fields(late, whys=whys), COLORS["kalshi"]):
@@ -389,7 +392,7 @@ def big_edges(S, PLD, wk, now):
     if len(today) >= PING_PER_DAY:
         return
     seen_players = {v.get("who") for v in pinged.values() if v.get("week") == str(wk)}
-    L = [x for x in (K.get("buys") or []) + (K.get("safe") or []) if x.get("ticker") and x.get("kick") and iso(x["kick"]) - now > datetime.timedelta(minutes=10)]
+    L = [x for x in (K.get("buys") or []) + (K.get("safe") or []) if x.get("ticker") and x.get("kick") and iso(x["kick"]) - now > datetime.timedelta(minutes=10) and (x.get("cost") or 100) <= KAL_MAX_C]
     L = one_per(L, lambda x: x.get("player") or x.get("game") or x["label"], lambda x: adj("kalshi", x, x.get("edge")))   # the best rung per player, same as ⭐
     L = [x for x in L if adj("kalshi", x, x.get("edge")) >= PING_EDGE and (x.get("ev") or 0) > PING_EV]
     L = [x for x in L if f"KA|{x['ticker']}|{x['side']}" not in pinged and (x.get("player") or x.get("game")) not in seen_players]

@@ -251,7 +251,7 @@ def scan(PL, seen, per_game, dry=False):
                         "at": stamp(), "date": today_pt(), **base_g, **extra}
                 picks.append(pick); seen.add(key); per_game[g["id"]] = per_game.get(g["id"], 0) + 1
                 if not dry:
-                    post(pick)
+                    pick["msg"] = post(pick)
                 return
 
         # game lines: total, spread, moneyline from 20,000 runs of the rest of the game
@@ -335,6 +335,7 @@ def post(x):
     try:
         r = requests.post(HOOK + "?wait=true", json={"embeds": [e], "allowed_mentions": {"parse": []}}, timeout=20)
         print("discord live", r.status_code, x["label"])
+        return r.json().get("id") if r.ok else None
     except Exception as ex:
         print("discord live failed", type(ex).__name__)
 
@@ -397,7 +398,14 @@ def run():
 
 
 if __name__ == "__main__":
-    if "--test" in sys.argv:
+    if "--clear" in sys.argv:
+        LB = json.loads((D / "live_bets.json").read_text()) if (D / "live_bets.json").exists() else []
+        n = 0
+        for x in LB:
+            if x.get("msg") and HOOK:
+                r = requests.delete(f"{HOOK}/messages/{x['msg']}", timeout=20); n += r.status_code == 204; time.sleep(0.4)
+        print("deleted", n)
+    elif "--test" in sys.argv:
         r = requests.post(HOOK + "?wait=true", json={"content": "⚡ Oxtail Live is connected. During games, big live Kalshi edges post here (tracked only for now, graded in #results under ⚡ Live)."}, timeout=20) if HOOK else None
         print("live test", r.status_code if r is not None else "no webhook")
     elif "--should-run" in sys.argv:
