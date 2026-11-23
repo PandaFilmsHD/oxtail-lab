@@ -161,10 +161,12 @@ def fit_players(parts, base, gmap, TS):
         J["frac"] = J["T"] / 3600
         bsl = J["b_" + st].values
         c = 1.0 if st in ("rec", "td", "pass_tds") else 10.0
-        J["today"] = np.log((J.so_far + c) / (bsl * (1 - J.frac) + c))
+        J["today"] = np.log((np.maximum(J.so_far, 0) + c) / (np.maximum(bsl, 0) * (1 - J.frac) + c))
         d7 = np.clip(J.m, -24, 24) / 7
         X = np.column_stack([d7, d7 * (1 - J.frac), np.log(J.frac), J.today, J.today * (1 - J.frac)])
         expo = np.maximum(bsl * J.frac.values, 1e-3); y = J.rem.clip(lower=0).values; se = J.season.values
+        ok = np.isfinite(X).all(axis=1) & np.isfinite(y)
+        X, expo, y, se, J = X[ok], expo[ok], y[ok], se[ok], J[ok]
         pos_out, pos_rep = {}, {}
         for pos in poss:
             k = (J.position == pos).values

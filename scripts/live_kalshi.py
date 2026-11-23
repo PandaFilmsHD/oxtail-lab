@@ -54,7 +54,7 @@ def live_games():
                     "away": EFIX.get(tm["away"]["team"]["abbreviation"], tm["away"]["team"]["abbreviation"]),
                     "hs": int(tm["home"].get("score") or 0), "as": int(tm["away"].get("score") or 0),
                     "period": int(st.get("period") or 1), "clock": float(st.get("clock") or 0), "short": e.get("shortName", ""),
-                    "half": st["type"].get("name") == "STATUS_HALFTIME"})
+                    "half": st["type"].get("name") == "STATUS_HALFTIME", "stname": st["type"].get("name", "")})
     return out
 
 
@@ -122,11 +122,57 @@ def p_over(stat, mean_left, need):
 
 F_LEFT = 1.0
 
+import numpy as np
+LM = {}
+GSER = {"KXNFLTOTAL": "total", "KXNFLSPREAD": "spread", "KXNFLGAME": "ml"}
+
+
+def load_lm():
+    global LM
+    try:
+        LM = requests.get("https://raw.githubusercontent.com/PandaFilmsHD/oxtail-lab/main/data/live_model.json", timeout=30).json()
+    except Exception:
+        p = D / "live_model.json"
+        LM = json.loads(p.read_text()) if p.exists() else {}
+    print("live model", "loaded" if LM else "missing (using the simple version)")
+
+
+def team_rem(g, f, imp_h, imp_a, n=20000):
+    """20,000 runs of the rest of the game from the real score and clock: points left for each team."""
+    T = LM["team"]; c = np.array(T["coef"])
+    def mu(side):
+        m = (g["hs"] - g["as"]) if side == "h" else (g["as"] - g["hs"])
+        d7 = max(-24, min(24, m)) / 7
+        x = np.array([d7, d7 * (1 - f), math.log(max(f, 1e-3)), abs(max(-24, min(24, m))) / 7 * (1 - f)])
+        return math.exp(T["icpt"] + float(c @ x)) * max(0.5, (imp_h if side == "h" else imp_a) * f)
+    sec = f * 3600
+    near = min(LM["check"], key=lambda t: abs(t - sec))
+    pr = np.array(T["pairs"][str(near)])
+    idx = np.random.default_rng(int(sec)).integers(0, len(pr), n)
+    return mu("h") * pr[idx, 0], mu("a") * pr[idx, 1]
+
+
+def player_p(st, pos, base, cur, need, f, margin):
+    """Chance he gets more than `need` in the rest of the game, from the play-by-play model. None if no model for him."""
+    M = ((LM.get("players") or {}).get(st) or {}).get(pos)
+    if not M or base <= 0:
+        return None, None
+    c = M["c"]; today = math.log((cur + c) / (base * (1 - f) + c)); d7 = max(-24, min(24, margin)) / 7
+    x = np.array([d7, d7 * (1 - f), math.log(max(f, 1e-3)), today, today * (1 - f)])
+    mu = math.exp(M["icpt"] + float(np.array(M["coef"]) @ x)) * base * f
+    mb = 0 if mu < M["mu_cut"][0] else 1 if mu < M["mu_cut"][1] else 2
+    fb = 0 if f < 0.3 else 1 if f < 0.6 else 2
+    q = M["q"].get(f"{mb}{fb}") or next(iter(M["q"].values()))
+    thr = need / max(mu, 1e-6)
+    p = 1 - float(np.interp(thr, q, LM["qs"], left=0.0, right=1.0))
+    return min(0.995, max(0.005, p)), mu
+
+
 
 def kalshi_markets(teams):
-    """Open Kalshi player markets for the live games."""
+    """Open Kalshi player and game markets for the live games."""
     out = []
-    for ser, stat in SERIES.items():
+    for ser, stat in {**SERIES, **GSER}.items():
         cur = ""
         for _ in range(5):
             try:
@@ -139,8 +185,11 @@ def kalshi_markets(teams):
                 if (a, h) not in teams:
                     continue
                 f_ = lambda x: float(x) if x not in (None, "") else None
-                out.append({"stat": stat, "player": (m.get("title") or "").split(":")[0].strip(), "strike": m.get("floor_strike"), "ticker": m["ticker"],
-                            "ask": f_(m.get("yes_ask_dollars")), "no_ask": f_(m.get("no_ask_dollars")), "game": (a, h)})
+                tsuf = m["ticker"].rsplit("-", 1)[-1]
+                tm_ = re.match(r"[A-Z]+", tsuf).group(0) if re.match(r"[A-Z]+", tsuf) else None
+                tm_ = EFIX.get(KFIX.get(tm_, tm_), KFIX.get(tm_, tm_)) if tm_ else None
+                out.append({"stat": stat, "player": (m.get("title") or "").split(":")[0].strip() if stat in SERIES.values() else None, "team": tm_,
+                            "strike": m.get("floor_strike"), "ticker": m["ticker"], "ask": f_(m.get("yes_ask_dollars")), "no_ask": f_(m.get("no_ask_dollars")), "game": (a, h)})
             cur = j.get("cursor") or ""
             if not cur:
                 break
@@ -154,21 +203,68 @@ def scan(PL, seen, per_game, dry=False):
     if not games:
         return []
     proj = {NK(k): v for k, v in (PL.get("proj") or {}).items()}
+    gl = {(x["away"], x["home"]): x for x in PL.get("games") or []}
     mk = kalshi_markets({(g["away"], g["home"]) for g in games})
-    print(f"{nowu():%H:%M:%S} live games {[g['short'] for g in games]} · kalshi markets {len(mk)} · with projections {sum(1 for x in mk if NK(x['player']) in proj)}")
+    print(f"{nowu():%H:%M:%S} live games {[g['short'] for g in games]} · kalshi markets {len(mk)} · with projections {sum(1 for x in mk if x['player'] and NK(x['player']) in proj)}")
     picks = []
+    stamp = lambda: nowu().isoformat(timespec="seconds")
+    today_pt = lambda: nowu().astimezone(datetime.timezone(datetime.timedelta(hours=-8))).strftime("%Y-%m-%d")
     for g in games:
         f = frac_left(g); F_LEFT = max(f, 1e-3)
         mar = g["hs"] - g["as"]
-        if f < 5 / 60 or (g["period"] >= 3 and abs(mar) > 17):
+        if f < 5 / 60:
             continue
+        brk = {"STATUS_HALFTIME": "Halftime", "STATUS_END_PERIOD": f"End of Q{g['period']}"}.get(g["stname"])
+        how = (f"🧮 {brk} re-sim: the rest of the game from {g['away']} {g['as']}, {g['home']} {g['hs']}" if brk else "⚡ Live update") + (" (model trained on 10 seasons of play-by-play)" if LM else "")
+        base_g = {"q": g["period"], "clock": f"{int(g['clock'] // 60)}:{int(g['clock'] % 60):02d}", "score": f"{g['away']} {g['as']}, {g['home']} {g['hs']}",
+                  "game": g["short"], "home": g["home"], "away": g["away"], "week": PL.get("week"), "how": how}
+
+        def consider(m, pp_yes, label_yes, label_no, extra):
+            for side, pp, c in (("Yes", pp_yes, m["ask"]), ("No", 1 - pp_yes, m["no_ask"])):
+                if not c or not 0.05 <= c <= 0.92:
+                    continue
+                cost = c + kfee(c); edge = pp - c; ev = pp / cost - 1
+                key = f"{m['ticker']}|{side}"
+                if edge < EDGE or ev <= 0 or key in seen or per_game.get(g["id"], 0) >= MAX_GAME:
+                    continue
+                if any(x.startswith(m["ticker"].rsplit("-", 1)[0]) for x in seen):   # one bet per player per stat (or per game line) per game
+                    continue
+                pick = {"ticker": m["ticker"], "side": side, "label": label_yes if side == "Yes" else label_no, "stat": m["stat"], "strike": m["strike"],
+                        "cost": round(100 * c), "fee": round(100 * kfee(c), 1), "p": round(100 * pp, 1), "edge": round(100 * edge, 1), "ev": round(100 * ev, 1),
+                        "at": stamp(), "date": today_pt(), **base_g, **extra}
+                picks.append(pick); seen.add(key); per_game[g["id"]] = per_game.get(g["id"], 0) + 1
+                if not dry:
+                    post(pick)
+                return
+
+        # game lines: total, spread, moneyline from 20,000 runs of the rest of the game
+        G_ = gl.get((g["away"], g["home"]))
+        if LM and G_ and G_.get("total") is not None:
+            imp_h = (G_["total"] + G_["spread"]) / 2; imp_a = (G_["total"] - G_["spread"]) / 2
+            rh, ra = team_rem(g, f, imp_h, imp_a)
+            fh, fa = g["hs"] + rh, g["as"] + ra
+            for m in [x for x in mk if x["game"] == (g["away"], g["home"]) and x["stat"] in ("total", "spread", "ml")]:
+                if m["stat"] == "total" and m["strike"] is not None:
+                    py = float(np.mean(fh + fa > m["strike"]))
+                    consider(m, py, f"{g['away']} @ {g['home']} over {m['strike']:g}", f"{g['away']} @ {g['home']} under {m['strike']:g}", {"player": None, "team": None})
+                elif m["stat"] == "spread" and m["strike"] is not None and m["team"] in (g["home"], g["away"]):
+                    mg = (fh - fa) if m["team"] == g["home"] else (fa - fh)
+                    py = float(np.mean(mg > m["strike"]))
+                    consider(m, py, f"{m['team']} by {int(m['strike'] + 0.5)}+", f"{m['team']} not by {int(m['strike'] + 0.5)}+", {"player": None, "team": m["team"]})
+                elif m["stat"] == "ml" and m["team"] in (g["home"], g["away"]):
+                    mg = (fh - fa) if m["team"] == g["home"] else (fa - fh)
+                    py = float(np.mean(mg > 0.5) + 0.5 * np.mean(np.abs(mg) <= 0.5))
+                    consider(m, py, f"{m['team']} to win", f"{m['team']} to lose", {"player": None, "team": m["team"]})
+
+        if g["period"] >= 3 and abs(mar) > 17:
+            continue   # blowout: player usage gets weird
         try:
             s = get(SUM.format(g["id"]))
         except Exception as ex:
             print("summary failed", ex); continue
         B, PLAYS = box(s), involvement(s)
         elapsed = (1 - f) * 3600
-        for m in [x for x in mk if x["game"] == (g["away"], g["home"])]:
+        for m in [x for x in mk if x["game"] == (g["away"], g["home"]) and x["player"]]:
             k = NK(m["player"]); pj = proj.get(k); st = m["stat"]
             if not pj or st not in pj or m["strike"] is None:
                 continue
@@ -182,35 +278,25 @@ def scan(PL, seen, per_game, dry=False):
             if need < 0:
                 continue   # already over: Kalshi will settle it
             m_full = pj[st]
-            pace = cur / max(0.15, 1 - f)                                  # what he's on pace for today
-            m_left = f * (0.75 * m_full + 0.25 * min(pace, 2 * m_full))
-            py = p_over(st, m_left, need)
-            for side, pp, c in (("Yes", py, m["ask"]), ("No", 1 - py, m["no_ask"])):
-                if not c or not 0.05 <= c <= 0.92:
-                    continue
-                cost = c + kfee(c); edge = pp - c; ev = pp / cost - 1
-                key = f"{m['ticker']}|{side}"
-                if edge < EDGE or ev <= 0 or key in seen or per_game.get(g["id"], 0) >= MAX_GAME:
-                    continue
-                if any(x.startswith(m["ticker"].rsplit("-", 1)[0]) for x in seen):   # one bet per player per stat per game
-                    continue
-                n_ = int(round(m["strike"] + 0.5))
-                label = f"{m['player']} {n_}+ {LABEL[st]}" if side == "Yes" else f"{m['player']} under {n_} {LABEL[st]}"
-                pick = {"ticker": m["ticker"], "side": side, "label": label, "player": m["player"], "team": pj.get("team"), "stat": st, "strike": m["strike"],
-                        "cost": round(100 * c), "fee": round(100 * kfee(c), 1), "p": round(100 * pp, 1), "edge": round(100 * edge, 1), "ev": round(100 * ev, 1),
-                        "had": cur, "proj_full": round(m_full, 1), "proj_left": round(m_left, 1), "q": g["period"], "clock": f"{int(g['clock'] // 60)}:{int(g['clock'] % 60):02d}",
-                        "score": f"{g['away']} {g['as']}, {g['home']} {g['hs']}", "game": g["short"], "week": PL.get("week"), "at": nowu().isoformat(timespec="seconds"),
-                        "date": nowu().astimezone(datetime.timezone(datetime.timedelta(hours=-8))).strftime("%Y-%m-%d")}
-                picks.append(pick); seen.add(key); per_game[g["id"]] = per_game.get(g["id"], 0) + 1
-                if not dry:
-                    post(pick)
+            margin = mar if pj.get("team") == g["home"] else -mar
+            py, m_left = player_p(st, pj.get("pos"), m_full, cur, need, f, margin) if LM else (None, None)
+            if py is None:
+                pace = cur / max(0.15, 1 - f)
+                m_left = f * (0.75 * m_full + 0.25 * min(pace, 2 * m_full))
+                py = p_over(st, m_left, need)
+            n_ = int(round(m["strike"] + 0.5))
+            consider(m, py, f"{m['player']} {n_}+ {LABEL[st]}", f"{m['player']} under {n_} {LABEL[st]}",
+                     {"player": m["player"], "team": pj.get("team"), "had": cur, "proj_full": round(m_full, 1), "proj_left": round(m_left, 1)})
     return picks
 
 
 def post(x):
-    unit = LABEL[x["stat"]]
-    desc = (f"**{x['score']}** · Q{x['q']} {x['clock']}\n"
-            f"{x['player'].split()[-1]} has **{x['had']:g} {unit}** so far. Pregame we had him at {x['proj_full']:g}; for the time left we expect about **{x['proj_left']:g} more**.\n"
+    if x.get("player"):
+        unit = LABEL[x["stat"]]
+        mid = (f"{x['player'].split()[-1]} has **{x['had']:g} {unit}** so far. Pregame we had him at {x['proj_full']:g}; for the rest of the game we expect about **{x['proj_left']:g} more**.\n")
+    else:
+        mid = "We re-ran the rest of the game 20,000 times from this score and clock.\n"
+    desc = (f"**{x['score']}** · Q{x['q']} {x['clock']}\n{x['how']}\n\n{mid}"
             f"That makes it **{round(x['p'])}%**, but Kalshi is selling it at **{x['cost']}¢**: **+{x['edge']}% edge**, +{x['ev']}% EV.\n\n"
             f"👉 Buy **{x['side']}** at **{x['cost']}¢** or less.")
     e = {"title": f"⚡ Live: {x['label']}", "description": desc, "color": 0xFFD23D,
@@ -258,6 +344,7 @@ def should_run():
 
 
 def run():
+    load_lm()
     t0, PL, loaded = time.time(), load_pl(), time.time()
     seen, per_game, buf, last_save, idle = set(), {}, [], time.time(), 0
     for x in (json.loads((D / "live_bets.json").read_text()) if (D / "live_bets.json").exists() else []):
@@ -287,6 +374,7 @@ if __name__ == "__main__":
     elif "--should-run" in sys.argv:
         print("yes" if should_run() else "no")
     elif "--dry" in sys.argv:
+        load_lm()
         for x in scan(load_pl(), set(), {}, dry=True):
             print(x)
     else:

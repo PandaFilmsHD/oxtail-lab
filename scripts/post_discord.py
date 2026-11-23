@@ -480,18 +480,28 @@ def live_results(S, now):
         k = f"{x['ticker']}|{x['side']}"
         if k in done:
             continue
-        row = next((w for w in (by.get(NKs(x["player"])) or {}).get("weeks", []) if str(w.get("w")) == str(x.get("week")) and "pts" in w), None)
-        if not row:
-            continue
-        val = row.get(LIVE_STAT[x["stat"]], 0) or 0
-        win = (val > x["strike"]) == (x["side"] == "Yes")
+        if x.get("player"):
+            row = next((w for w in (by.get(NKs(x["player"])) or {}).get("weeks", []) if str(w.get("w")) == str(x.get("week")) and "pts" in w), None)
+            if not row:
+                continue
+            val = row.get(LIVE_STAT[x["stat"]], 0) or 0
+            hit = val > x["strike"]
+        else:   # game lines: total, spread, moneyline from the final score
+            L_ = ((U.get("lines") or {}).get(str(x.get("week"))) or {})
+            ph, pa = (L_.get(x.get("home")) or {}).get("pts"), (L_.get(x.get("away")) or {}).get("pts")
+            if ph is None or pa is None:
+                continue
+            mg = (ph - pa) if x.get("team") == x.get("home") else (pa - ph)
+            val = f"{pa}-{ph}"
+            hit = (ph + pa > x["strike"]) if x["stat"] == "total" else (mg > x["strike"]) if x["stat"] == "spread" else (mg > 0)
+        win = hit == (x["side"] == "Yes")
         c_ = (x["cost"] + (x.get("fee") or 0)) / 100
         u = (1 / c_ - 1) if win else -1
         done[k] = {"win": win, "u": round(u, 3), "actual": val}
         rec["w" if win else "l"] += 1; rec["u"] = round(rec["u"] + u, 3)
         out.append((x, win, u, val))
     if out:
-        lines = [f"{'✅' if w_ else '❌'} {x['label']} at {x['cost']}¢ (Q{x['q']} {x['clock']}) → had **{v_:g}** · **{uu(u_)}**" for x, w_, u_, v_ in out]
+        lines = [f"{'✅' if w_ else '❌'} {x['label']} at {x['cost']}¢ (Q{x['q']} {x['clock']}) → {'had **' + format(v_, 'g') + '**' if x.get('player') else 'final **' + str(v_) + '**'} · **{uu(u_)}**" for x, w_, u_, v_ in out]
         post("RESULTS", embeds=[{"title": f"⚡ Live: {len(out)} graded", "description": "\n".join(lines)[:3900], "color": COLORS["win" if sum(o[2] for o in out) >= 0 else "loss"],
                                  "footer": {"text": f"⚡ Live record (tracked only, testing): {rec['w']}-{rec['l']} · {uu(rec['u'])} at ${UNIT:.0f} a bet"}}])
 
