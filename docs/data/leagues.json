@@ -131,6 +131,13 @@
     },
     {
      "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Saquon Barkley might not play (70%)",
+     "detail": "If he's ruled out, start Jaylen Warren (12.9).",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Jaguars D/ST",
      "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.5%.",
@@ -139,16 +146,9 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at RB: Jaylen Warren or Rhamondre Stevenson",
-     "detail": "Jaylen Warren 12.9 vs Rhamondre Stevenson 12.3. Keeping Jaylen Warren gives you a 51% chance to win vs 51% with Rhamondre Stevenson.",
+     "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
+     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Matchups: DeVonta Smith vs #31, Jaylen Warren vs #15 (32 = easiest).",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +7.8%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
-     "tab": "trades"
     }
    ]
   }
