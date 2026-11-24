@@ -5,9 +5,16 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-24T11:34:05Z",
-   "champ_pct": 14.6,
+   "at": "2026-11-24T13:00:47Z",
+   "champ_pct": 14.9,
    "todo": [
+    {
+     "urgent": true,
+     "icon": "\ud83d\udce3",
+     "title": "Status change: Brock Bowers",
+     "detail": "OUT \u2192 QUESTIONABLE. Recheck your lineup.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
@@ -17,23 +24,16 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Brock Bowers might not play (70%)",
-     "detail": "If he's ruled out, start Michael Mayer (7.2).",
-     "tab": "home"
+     "icon": "\u2702\ufe0f",
+     "title": "Brock Bowers is back: drop Michael Mayer",
+     "detail": "Michael Mayer was your fill-in while Brock Bowers sat. You only need one TE, so free up the spot.",
+     "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot.",
-     "tab": "trades"
-    },
-    {
-     "urgent": false,
-     "icon": "\u23f3",
-     "title": "Trade deadline in 8 days",
-     "detail": "After that, trades lock for the season. Send any offers you want before then.",
+     "detail": "Title odds +1.9%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot.",
      "tab": "trades"
     }
    ]
@@ -43,8 +43,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T12:31:26Z",
-   "champ_pct": 14.4,
+   "at": "2026-11-24T13:01:07Z",
+   "champ_pct": 14.0,
    "todo": [
     {
      "urgent": false,
@@ -57,14 +57,14 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Bhayshul Tuten might not play (70%)",
-     "detail": "If he's ruled out, start Emmett Johnson (10.8).",
+     "detail": "If he's ruled out, start Travis Etienne Jr. (10.8).",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Deshaun Watson, drop DeMario Douglas",
-     "detail": "Fills a hole this week (+3.5 pts). You can drop him again after.",
+     "detail": "Fills a hole this week (+3.4 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
@@ -81,7 +81,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T12:31:37Z",
+   "at": "2026-11-24T13:01:17Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -95,7 +95,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Chargers D/ST, drop Bills D/ST",
-     "detail": "Fills a hole this week (+3.1 pts). You can drop him again after.",
+     "detail": "Fills a hole this week (+3.0 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
@@ -119,9 +119,16 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T12:31:15Z",
-   "champ_pct": 22.7,
+   "at": "2026-11-24T13:00:57Z",
+   "champ_pct": 23.6,
    "todo": [
+    {
+     "urgent": true,
+     "icon": "\ud83d\udce3",
+     "title": "Status change: Kenneth Walker III",
+     "detail": "OUT \u2192 QUESTIONABLE. Recheck your lineup.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
@@ -133,22 +140,15 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.5%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +2.0%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at RB: Jaylen Warren or Rhamondre Stevenson",
-     "detail": "Jaylen Warren 12.9 vs Rhamondre Stevenson 12.3. Keeping Jaylen Warren gives you a 51% chance to win vs 50% with Rhamondre Stevenson.",
+     "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
+     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Keeping DeVonta Smith gives you a 60% chance to win vs 59% with Jaylen Warren.",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +7.8%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
-     "tab": "trades"
     }
    ]
   }
