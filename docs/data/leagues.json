@@ -43,7 +43,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T11:34:31Z",
+   "at": "2026-11-24T12:31:26Z",
    "champ_pct": 14.4,
    "todo": [
     {
@@ -81,7 +81,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T11:34:43Z",
+   "at": "2026-11-24T12:31:37Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -119,7 +119,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T11:34:18Z",
+   "at": "2026-11-24T12:31:15Z",
    "champ_pct": 22.7,
    "todo": [
     {
@@ -127,13 +127,6 @@
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Thu 10:00 AM PT",
      "detail": "Colston Loveland, Luther Burden III play first. Players lock when their game starts.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Saquon Barkley might not play (70%)",
-     "detail": "If he's ruled out, start Jaylen Warren (12.9).",
      "tab": "home"
     },
     {
@@ -146,9 +139,16 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
-     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Matchups: DeVonta Smith vs #31, Jaylen Warren vs #15 (32 = easiest).",
+     "title": "Toss-up at RB: Jaylen Warren or Rhamondre Stevenson",
+     "detail": "Jaylen Warren 12.9 vs Rhamondre Stevenson 12.3. Keeping Jaylen Warren gives you a 51% chance to win vs 50% with Rhamondre Stevenson.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
+     "detail": "Title odds +7.8%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
+     "tab": "trades"
     }
    ]
   }
