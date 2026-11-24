@@ -141,6 +141,8 @@
  "kal_said": [
   "11|KA|KXNFLPASSTDS-26NOV19INDHOU-INDDJONES17-2|No",
   "11|KA|KXNFLPASSTDS-26NOV22LVDEN-LVFMENDOZA15-2|No",
+  "11|KA|KXNFLPASSTDS-26NOV23CINWAS-CINJBURROW9-2|No",
+  "11|KA|KXNFLPASSTDS-26NOV23CINWAS-CINJBURROW9-3|No",
   "11|KA|KXNFLPASSYDS-26NOV22JACNYG-JACTLAWRENCE16-250|Yes",
   "11|KA|KXNFLPASSYDS-26NOV22JACNYG-NYGJMCCARTHY9-225|Yes",
   "11|KA|KXNFLPASSYDS-26NOV22LVDEN-DENBNIX10-200|No",
@@ -165,6 +167,8 @@
   "11|KA|KXNFLREC-26NOV22NOCHI-CHICLOVELAND84-7|Yes",
   "11|KA|KXNFLREC-26NOV22TENDAL-DALCLAMB88-10|Yes",
   "11|KA|KXNFLREC-26NOV22TENDAL-DALCLAMB88-11|Yes",
+  "11|KA|KXNFLREC-26NOV23CINWAS-CINCBROWN30-7|Yes",
+  "11|KA|KXNFLREC-26NOV23CINWAS-WASSDIGGS3-4|No",
   "11|KA|KXNFLRECYDS-26NOV19INDHOU-HOUKBOUTTE14-60|No",
   "11|KA|KXNFLRECYDS-26NOV19INDHOU-HOUKBOUTTE14-90|No",
   "11|KA|KXNFLRECYDS-26NOV19INDHOU-INDADULIN16-10|Yes",
@@ -213,6 +217,10 @@
   "11|KA|KXNFLRECYDS-26NOV22TBDET-TBTJOHNSON15-15|Yes",
   "11|KA|KXNFLRECYDS-26NOV22TENDAL-DALRFLOURNOY19-20|Yes",
   "11|KA|KXNFLRECYDS-26NOV22TENDAL-TENTPOLLARD20-10|No",
+  "11|KA|KXNFLRECYDS-26NOV23CINWAS-CINJCHASE1-70|No",
+  "11|KA|KXNFLRECYDS-26NOV23CINWAS-CINJCHASE1-80|No",
+  "11|KA|KXNFLRECYDS-26NOV23CINWAS-CINMGESICKI88-70|No",
+  "11|KA|KXNFLRECYDS-26NOV23CINWAS-WASSDIGGS3-25|No",
   "11|KA|KXNFLRSHYDS-26NOV19INDHOU-HOUCSTROUD7-10|Yes",
   "11|KA|KXNFLRSHYDS-26NOV19INDHOU-HOUCSTROUD7-15|Yes",
   "11|KA|KXNFLRSHYDS-26NOV22BALCAR-CARBYOUNG9-20|No",
@@ -243,6 +251,12 @@
   "11|KA|KXNFLRSHYDS-26NOV22NYJLAC-LACOHAMPTON8-60|No",
   "11|KA|KXNFLRSHYDS-26NOV22TBDET-TBBMAYFIELD6-10|Yes",
   "11|KA|KXNFLRSHYDS-26NOV22TBDET-TBBMAYFIELD6-15|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV23CINWAS-CINCBROWN30-70|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV23CINWAS-CINSPERINE34-10|Yes",
+  "11|KA|KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-30|No",
+  "11|KA|KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-50|No",
+  "11|KA|KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-60|No",
+  "11|KA|KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-70|No",
   "11|KA|KXNFLSPREAD-26NOV19INDHOU-HOU21|Yes",
   "11|KA|KXNFLSPREAD-26NOV19INDHOU-HOU24|Yes",
   "11|KA|KXNFLSPREAD-26NOV23CINWAS-CIN3|Yes",
@@ -419,14 +433,50 @@
    "u": 2.571,
    "win": true
   },
+  "KXNFLPASSYDS-26NOV23CINWAS-CINJBURROW9-375|Yes": {
+   "actual": 300,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLPASSYDS-26NOV23CINWAS-WASJDANIELS5-200|No": {
+   "actual": 289,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLREC-26NOV22MINSF-MINJJEFFERSON18-7|No": {
    "actual": 7,
    "kind": "player",
    "u": -1,
    "win": false
   },
+  "KXNFLREC-26NOV23CINWAS-CINJCHASE1-6|No": {
+   "actual": 5,
+   "kind": "player",
+   "u": 6.143,
+   "win": true
+  },
+  "KXNFLREC-26NOV23CINWAS-WASSDIGGS3-4|No": {
+   "actual": 4,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLRECYDS-26NOV22MINSF-MINJJEFFERSON18-60|No": {
    "actual": 86,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV23CINWAS-CINJCHASE1-60|No": {
+   "actual": 31,
+   "kind": "player",
+   "u": 3.762,
+   "win": true
+  },
+  "KXNFLRECYDS-26NOV23CINWAS-WASSDIGGS3-30|No": {
+   "actual": 45,
    "kind": "player",
    "u": -1,
    "win": false
@@ -455,6 +505,18 @@
    "u": 0.887,
    "win": true
   },
+  "KXNFLRSHYDS-26NOV23CINWAS-CINCBROWN30-15|No": {
+   "actual": 6,
+   "kind": "player",
+   "u": 2.125,
+   "win": true
+  },
+  "KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-40|No": {
+   "actual": 55,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLSPREAD-26NOV22MINSF-SF8|Yes": {
    "actual": "10.0-35.0",
    "kind": "game",
@@ -481,9 +543,9 @@
   }
  },
  "live_rec": {
-  "l": 6,
-  "u": 4.232,
-  "w": 6
+  "l": 11,
+  "u": 11.262,
+  "w": 9
  },
  "msgs": [
   {
@@ -785,6 +847,31 @@
    "at": "2026-11-24T05:06:47.854544+00:00",
    "ch": "RESULTS",
    "id": "1574652483630932080"
+  },
+  {
+   "at": "2026-11-24T06:08:22.591417+00:00",
+   "ch": "RESULTS",
+   "id": "1574667980678111243"
+  },
+  {
+   "at": "2026-11-24T06:08:23.426954+00:00",
+   "ch": "RESULTS",
+   "id": "1574667984012714026"
+  },
+  {
+   "at": "2026-11-24T06:08:24.154470+00:00",
+   "ch": "RESULTS",
+   "id": "1574667987338657833"
+  },
+  {
+   "at": "2026-11-24T06:08:24.952302+00:00",
+   "ch": "RESULTS",
+   "id": "1574667990258028588"
+  },
+  {
+   "at": "2026-11-24T06:08:25.763000+00:00",
+   "ch": "RESULTS",
+   "id": "1574667993944817805"
   }
  ],
  "parlay_days": {
@@ -793,8 +880,8 @@
  },
  "parlay_rec": {
   "l": 0,
-  "u": 1.146,
-  "w": 2
+  "u": 2.047,
+  "w": 4
  },
  "parlays": [
   {
@@ -857,46 +944,56 @@
    "at": "2026-11-22T22:32:32.466802+00:00",
    "day": "2026-11-23",
    "fair": -251,
+   "graded_at": "2026-11-24T06:08:22.391208+00:00",
    "legs": [
     {
+     "actual": 5,
      "kick": "2026-11-24T01:15:00Z",
      "label": "Ja'Marr Chase Under 11.5 catches",
      "p": 81.2,
-     "res": null,
+     "res": true,
      "type": "prop"
     },
     {
+     "actual": 300,
      "kick": "2026-11-24T01:15:00Z",
      "label": "Joe Burrow Under 381.5 pass yds",
      "p": 83.2,
-     "res": null,
+     "res": true,
      "type": "prop"
     }
    ],
    "p": 71.5,
+   "result": "win",
+   "u": 0.398,
    "week": "11"
   },
   {
    "at": "2026-11-22T22:32:32.466802+00:00",
    "day": "2026-11-23",
    "fair": -199,
+   "graded_at": "2026-11-24T06:08:22.391208+00:00",
    "legs": [
     {
+     "actual": 5,
      "kick": "2026-11-24T01:15:00Z",
      "label": "Ja'Marr Chase Under 10.5 catches",
      "p": 74.5,
-     "res": null,
+     "res": true,
      "type": "prop"
     },
     {
+     "actual": 300,
      "kick": "2026-11-24T01:15:00Z",
      "label": "Joe Burrow Under 381.5 pass yds",
      "p": 83.2,
-     "res": null,
+     "res": true,
      "type": "prop"
     }
    ],
    "p": 66.5,
+   "result": "win",
+   "u": 0.503,
    "week": "11"
   }
  ],
@@ -1882,6 +1979,7 @@
   "2026-11-22T18:00:00Z": "2026-11-22T22:30:02.031627+00:00",
   "2026-11-22T21:05:00Z": "2026-11-23T01:06:23.271484+00:00",
   "2026-11-22T21:25:00Z": "2026-11-23T03:10:05.355737+00:00",
-  "2026-11-23T01:20:00Z": "2026-11-23T06:09:09.187062+00:00"
+  "2026-11-23T01:20:00Z": "2026-11-23T06:09:09.187062+00:00",
+  "2026-11-24T01:15:00Z": "2026-11-24T06:08:22.391208+00:00"
  }
 }

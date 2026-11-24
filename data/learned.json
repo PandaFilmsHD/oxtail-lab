@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24T05:58:59+00:00",
+ "at": "2026-11-24T06:08:22+00:00",
  "buckets": {
   "GL|tot": {
    "evidence": 0.011,
@@ -11,13 +11,13 @@
    "u": 2.64
   },
   "KA|Catches|No|25-50c": {
-   "evidence": 0.006,
-   "hit_pct": 50.0,
-   "k": 1.009,
-   "n": 2,
-   "price_pct": 36.5,
-   "said_pct": 41.6,
-   "u": 0.14
+   "evidence": 0.008,
+   "hit_pct": 33.3,
+   "k": 0.989,
+   "n": 3,
+   "price_pct": 35.0,
+   "said_pct": 40.1,
+   "u": -0.86
   },
   "KA|Catches|No|<25c": {
    "evidence": 0.005,
@@ -47,13 +47,22 @@
    "u": 0.38
   },
   "KA|Catches|Yes|<25c": {
-   "evidence": 0.056,
-   "hit_pct": 25.0,
-   "k": 0.987,
-   "n": 8,
-   "price_pct": 19.7,
-   "said_pct": 26.6,
-   "u": 1.87
+   "evidence": 0.057,
+   "hit_pct": 22.2,
+   "k": 0.964,
+   "n": 9,
+   "price_pct": 19.8,
+   "said_pct": 26.3,
+   "u": 0.87
+  },
+  "KA|Pass TDs|No|25-50c": {
+   "evidence": 0.003,
+   "hit_pct": 100.0,
+   "k": 1.029,
+   "n": 1,
+   "price_pct": 44.0,
+   "said_pct": 49.6,
+   "u": 1.19
   },
   "KA|Pass TDs|No|75c+": {
    "evidence": 0.007,
@@ -63,6 +72,15 @@
    "price_pct": 80.5,
    "said_pct": 85.1,
    "u": -0.78
+  },
+  "KA|Pass TDs|No|<25c": {
+   "evidence": 0.002,
+   "hit_pct": 0.0,
+   "k": 0.985,
+   "n": 1,
+   "price_pct": 20.0,
+   "said_pct": 24.0,
+   "u": -1.0
   },
   "KA|Pass yds|No|25-50c": {
    "evidence": 0.002,
@@ -101,13 +119,13 @@
    "u": 0.19
   },
   "KA|Rec yds|No|25-50c": {
-   "evidence": 0.007,
-   "hit_pct": 50.0,
-   "k": 1.017,
-   "n": 2,
-   "price_pct": 31.0,
-   "said_pct": 36.6,
-   "u": 1.66
+   "evidence": 0.013,
+   "hit_pct": 66.7,
+   "k": 1.062,
+   "n": 3,
+   "price_pct": 31.3,
+   "said_pct": 37.6,
+   "u": 3.65
   },
   "KA|Rec yds|No|50-75c": {
    "evidence": 0.024,
@@ -119,13 +137,22 @@
    "u": 1.09
   },
   "KA|Rec yds|No|75c+": {
-   "evidence": 0.074,
-   "hit_pct": 83.3,
-   "k": 0.921,
-   "n": 18,
-   "price_pct": 83.7,
-   "said_pct": 88.6,
-   "u": -0.22
+   "evidence": 0.076,
+   "hit_pct": 78.9,
+   "k": 0.843,
+   "n": 19,
+   "price_pct": 84.1,
+   "said_pct": 88.9,
+   "u": -1.22
+  },
+  "KA|Rec yds|No|<25c": {
+   "evidence": 0.012,
+   "hit_pct": 50.0,
+   "k": 1.043,
+   "n": 2,
+   "price_pct": 21.0,
+   "said_pct": 27.4,
+   "u": 1.95
   },
   "KA|Rec yds|Yes|25-50c": {
    "evidence": 0.046,
@@ -164,31 +191,31 @@
    "u": -2.0
   },
   "KA|Rush yds|No|25-50c": {
-   "evidence": 0.019,
-   "hit_pct": 33.3,
-   "k": 0.949,
-   "n": 6,
-   "price_pct": 42.8,
-   "said_pct": 48.4,
-   "u": -1.89
+   "evidence": 0.023,
+   "hit_pct": 28.6,
+   "k": 0.925,
+   "n": 7,
+   "price_pct": 41.4,
+   "said_pct": 47.2,
+   "u": -2.89
   },
   "KA|Rush yds|No|50-75c": {
-   "evidence": 0.006,
-   "hit_pct": 50.0,
-   "k": 0.988,
-   "n": 2,
-   "price_pct": 56.0,
-   "said_pct": 61.3,
-   "u": -0.17
+   "evidence": 0.009,
+   "hit_pct": 33.3,
+   "k": 0.949,
+   "n": 3,
+   "price_pct": 58.3,
+   "said_pct": 63.8,
+   "u": -1.17
   },
   "KA|Rush yds|No|75c+": {
-   "evidence": 0.022,
-   "hit_pct": 83.3,
-   "k": 0.971,
-   "n": 6,
-   "price_pct": 84.7,
-   "said_pct": 89.1,
-   "u": -0.25
+   "evidence": 0.029,
+   "hit_pct": 87.5,
+   "k": 0.997,
+   "n": 8,
+   "price_pct": 83.4,
+   "said_pct": 87.9,
+   "u": 0.24
   },
   "KA|Rush yds|No|<25c": {
    "evidence": 0.001,
@@ -209,22 +236,22 @@
    "u": -0.65
   },
   "KA|Rush yds|Yes|50-75c": {
-   "evidence": 0.014,
-   "hit_pct": 66.7,
-   "k": 1.002,
-   "n": 3,
-   "price_pct": 58.7,
-   "said_pct": 65.5,
-   "u": 0.23
+   "evidence": 0.017,
+   "hit_pct": 75.0,
+   "k": 1.016,
+   "n": 4,
+   "price_pct": 62.5,
+   "said_pct": 68.8,
+   "u": 0.55
   },
   "KA|Rush yds|Yes|<25c": {
-   "evidence": 0.009,
-   "hit_pct": 33.3,
-   "k": 1.013,
-   "n": 3,
-   "price_pct": 22.0,
-   "said_pct": 26.7,
-   "u": 1.5
+   "evidence": 0.011,
+   "hit_pct": 25.0,
+   "k": 0.997,
+   "n": 4,
+   "price_pct": 21.7,
+   "said_pct": 26.1,
+   "u": 0.5
   },
   "KA|spread_no|Yes|25-50c": {
    "evidence": 0.001,
@@ -371,13 +398,13 @@
    "u": -2.06
   },
   "PR|Catches|Under": {
-   "evidence": 0.006,
-   "hit_pct": 33.3,
-   "k": 0.957,
-   "n": 6,
-   "price_pct": 52.6,
-   "said_pct": 55.8,
-   "u": -2.13
+   "evidence": 0.007,
+   "hit_pct": 42.9,
+   "k": 0.971,
+   "n": 7,
+   "price_pct": 52.9,
+   "said_pct": 56.0,
+   "u": -1.41
   },
   "PR|Pass TDs|Under": {
    "evidence": 0.002,
