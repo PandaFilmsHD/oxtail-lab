@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-24T17:34:24Z",
-   "champ_pct": 15.0,
+   "at": "2026-11-24T18:01:49Z",
+   "champ_pct": 15.1,
    "todo": [
     {
      "urgent": false,
@@ -26,7 +26,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +2.3%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -43,8 +43,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T17:34:42Z",
-   "champ_pct": 14.2,
+   "at": "2026-11-24T18:02:11Z",
+   "champ_pct": 14.3,
    "todo": [
     {
      "urgent": false,
@@ -57,7 +57,7 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Bhayshul Tuten might not play (70%)",
-     "detail": "If he's ruled out, start Travis Etienne Jr. (10.8).",
+     "detail": "If he's ruled out, start Travis Etienne Jr. (10.9).",
      "tab": "home"
     },
     {
@@ -81,7 +81,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T17:34:50Z",
+   "at": "2026-11-24T18:02:21Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -93,16 +93,9 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Chargers D/ST, drop Bills D/ST",
-     "detail": "Fills a hole this week (+3.0 pts). You can drop him again after.",
-     "tab": "waivers"
-    },
-    {
-     "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
-     "detail": "Kyren Williams 15.1 vs Tony Pollard 14.8. Keeping Kyren Williams gives you a 68% chance to win vs 67% with Tony Pollard.",
+     "detail": "Kyren Williams 15.2 vs Tony Pollard 14.8. Keeping Kyren Williams gives you a 68% chance to win vs 67% with Tony Pollard.",
      "tab": "home"
     },
     {
@@ -119,7 +112,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T17:34:33Z",
+   "at": "2026-11-24T18:02:00Z",
    "champ_pct": 23.6,
    "todo": [
     {
@@ -133,14 +126,14 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.4%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
-     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Keeping DeVonta Smith gives you a 59% chance to win vs 59% with Jaylen Warren.",
+     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Matchups: DeVonta Smith vs #31, Jaylen Warren vs #15 (32 = easiest).",
      "tab": "home"
     },
     {
