@@ -1,56 +1,56 @@
 {
  "RB": {
-  "test_n": 5361,
+  "test_n": 5392,
   "test_seasons": "2023-2026",
-  "td_rate": 24.2,
-  "logloss_model": 0.4767,
-  "logloss_base": 0.4981,
-  "brier_model": 0.1556,
-  "brier_base": 0.1619,
-  "auc_model": 0.756,
+  "td_rate": 24.1,
+  "logloss_model": 0.4763,
+  "logloss_base": 0.4978,
+  "brier_model": 0.1555,
+  "brier_base": 0.1618,
+  "auc_model": 0.757,
   "auc_base": 0.733,
   "calibration": [
    [
     7.6,
-    4.9,
-    1072
+    5.0,
+    1086
    ],
    [
-    14.3,
+    14.2,
     14.9,
-    1881
+    1882
    ],
    [
     24.5,
-    28.7,
-    797
+    28.6,
+    809
    ],
    [
-    34.6,
-    36.1,
-    595
+    34.7,
+    36.4,
+    599
    ],
    [
-    44.8,
-    42.4,
-    446
+    44.9,
+    42.6,
+    444
    ],
    [
     60.6,
     57.7,
-    570
+    572
    ]
   ],
   "weights": {
    "car_sh": 0.496,
    "imp": 0.192,
-   "tgt_sh": 0.15,
+   "tgt_sh": 0.151,
    "td_rate": 0.141,
-   "ez_tgt": -0.047,
+   "ez_tgt": -0.048,
+   "rz_car": -0.043,
    "opp": 0.043,
-   "rz_car": -0.042,
-   "team_rz": 0.036,
-   "gl_car": -0.024,
+   "team_rz": 0.035,
+   "gl_car": -0.023,
    "rz_tgt": -0.005
   },
   "by_season": [
@@ -71,69 +71,69 @@
    ],
    [
     2026,
-    0.4715,
-    0.489
+    0.4689,
+    0.4876
    ]
   ],
   "calibration_check": {
-   "logloss_raw": 0.4783,
-   "logloss_calibrated": 0.4775,
-   "a": 1.26,
+   "logloss_raw": 0.4774,
+   "logloss_calibrated": 0.4765,
+   "a": 1.263,
    "b": 0.308
   }
  },
  "WR": {
-  "test_n": 8705,
+  "test_n": 8750,
   "test_seasons": "2023-2026",
   "td_rate": 18.2,
-  "logloss_model": 0.4319,
+  "logloss_model": 0.4321,
   "logloss_base": 0.4466,
   "brier_model": 0.1364,
   "brier_base": 0.1402,
   "auc_model": 0.717,
-  "auc_base": 0.69,
+  "auc_base": 0.689,
   "calibration": [
    [
-    7.6,
+    7.7,
     6.3,
-    2467
+    2469
    ],
    [
     14.1,
     14.2,
-    3391
+    3419
    ],
    [
     24.6,
-    28.4,
-    1403
+    28.3,
+    1412
    ],
    [
     34.2,
-    36.2,
-    872
+    36.4,
+    880
    ],
    [
     44.1,
-    38.0,
-    389
+    38.2,
+    390
    ],
    [
     55.9,
-    46.4,
-    183
+    46.1,
+    180
    ]
   ],
   "weights": {
-   "tgt_sh": 0.483,
-   "imp": 0.174,
+   "tgt_sh": 0.482,
+   "imp": 0.173,
    "td_rate": 0.119,
    "car_sh": 0.042,
    "ez_tgt": 0.035,
    "rz_tgt": -0.027,
    "gl_car": -0.023,
    "team_rz": -0.011,
-   "rz_car": -0.004,
+   "rz_car": -0.003,
    "opp": 0.002
   },
   "by_season": [
@@ -154,70 +154,70 @@
    ],
    [
     2026,
-    0.4202,
-    0.4395
+    0.4217,
+    0.4401
    ]
   ],
   "calibration_check": {
-   "logloss_raw": 0.4183,
-   "logloss_calibrated": 0.4181,
-   "a": 1.066,
-   "b": 0.046
+   "logloss_raw": 0.4189,
+   "logloss_calibrated": 0.4187,
+   "a": 1.064,
+   "b": 0.042
   }
  },
  "TE": {
-  "test_n": 4403,
+  "test_n": 4428,
   "test_seasons": "2023-2026",
   "td_rate": 15.0,
-  "logloss_model": 0.3959,
-  "logloss_base": 0.4066,
+  "logloss_model": 0.3958,
+  "logloss_base": 0.4065,
   "brier_model": 0.1204,
-  "brier_base": 0.1231,
-  "auc_model": 0.687,
-  "auc_base": 0.648,
+  "brier_base": 0.123,
+  "auc_model": 0.686,
+  "auc_base": 0.647,
   "calibration": [
    [
     8.0,
-    6.9,
-    1592
+    7.0,
+    1597
    ],
    [
     13.8,
-    14.7,
-    1813
+    14.6,
+    1831
    ],
    [
     24.3,
-    25.4,
-    684
+    25.3,
+    689
    ],
    [
     33.5,
-    36.4,
-    217
+    36.9,
+    214
    ],
    [
-    44.6,
+    44.5,
     34.7,
     75
    ]
   ],
   "weights": {
    "tgt_sh": 0.386,
-   "imp": 0.214,
+   "imp": 0.213,
    "car_sh": 0.106,
    "td_rate": 0.065,
-   "ez_tgt": 0.043,
-   "team_rz": -0.027,
+   "ez_tgt": 0.044,
+   "team_rz": -0.025,
    "rz_car": 0.024,
-   "gl_car": -0.02,
-   "opp": 0.011,
-   "rz_tgt": -0.008
+   "gl_car": -0.021,
+   "opp": 0.01,
+   "rz_tgt": -0.009
   },
   "by_season": [
    [
     2023,
-    0.3838,
+    0.3837,
     0.3905
    ],
    [
@@ -232,15 +232,15 @@
    ],
    [
     2026,
-    0.4109,
-    0.4267
+    0.41,
+    0.4255
    ]
   ],
   "calibration_check": {
-   "logloss_raw": 0.4148,
-   "logloss_calibrated": 0.416,
-   "a": 1.123,
-   "b": 0.099
+   "logloss_raw": 0.4144,
+   "logloss_calibrated": 0.4155,
+   "a": 1.119,
+   "b": 0.092
   }
  }
 }
