@@ -245,9 +245,12 @@
   "11|KA|KXNFLRSHYDS-26NOV22TBDET-TBBMAYFIELD6-15|Yes",
   "11|KA|KXNFLSPREAD-26NOV19INDHOU-HOU21|Yes",
   "11|KA|KXNFLSPREAD-26NOV19INDHOU-HOU24|Yes",
+  "11|KA|KXNFLSPREAD-26NOV23CINWAS-CIN3|Yes",
   "11|KA|KXNFLTOTAL-26NOV22MINSF-40|Yes",
   "11|KA|KXNFLTOTAL-26NOV22MINSF-43|Yes",
-  "11|KA|KXNFLTOTAL-26NOV22NOCHI-47|Yes"
+  "11|KA|KXNFLTOTAL-26NOV22NOCHI-47|Yes",
+  "11|KA|KXNFLTOTAL-26NOV23CINWAS-53|Yes",
+  "11|KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes"
  ],
  "kal_shown": [
   "KA|KXNFLPASSTDS-26NOV19INDHOU-INDDJONES17-2|No",
@@ -404,6 +407,12 @@
   "KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes"
  ],
  "live_done": {
+  "KXNFLGAME-26NOV23CINWAS-WAS|Yes": {
+   "actual": "20.0-22.0",
+   "kind": "game",
+   "u": 2.704,
+   "win": true
+  },
   "KXNFLPASSYDS-26NOV22MINSF-MINKCOUSINS8-250|No": {
    "actual": 235,
    "kind": "player",
@@ -452,17 +461,29 @@
    "u": 1.326,
    "win": true
   },
+  "KXNFLSPREAD-26NOV23CINWAS-CIN8|Yes": {
+   "actual": "20.0-22.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
+  },
   "KXNFLTOTAL-26NOV22MINSF-55|No": {
    "actual": "10.0-35.0",
    "kind": "game",
    "u": 1.041,
    "win": true
+  },
+  "KXNFLTOTAL-26NOV23CINWAS-55|Yes": {
+   "actual": "20.0-22.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
   }
  },
  "live_rec": {
-  "l": 4,
-  "u": 3.528,
-  "w": 5
+  "l": 6,
+  "u": 4.232,
+  "w": 6
  },
  "msgs": [
   {
@@ -749,6 +770,21 @@
    "at": "2026-11-24T01:04:54.487399+00:00",
    "ch": "KALSHI",
    "id": "1574591609419604030"
+  },
+  {
+   "at": "2026-11-24T05:06:46.273876+00:00",
+   "ch": "RESULTS",
+   "id": "1574652477289005147"
+  },
+  {
+   "at": "2026-11-24T05:06:47.018967+00:00",
+   "ch": "RESULTS",
+   "id": "1574652480443129928"
+  },
+  {
+   "at": "2026-11-24T05:06:47.854544+00:00",
+   "ch": "RESULTS",
+   "id": "1574652483630932080"
   }
  ],
  "parlay_days": {
@@ -969,11 +1005,15 @@
    "week": "11"
   },
   "G|WAS|tot|Under": {
+   "actual": null,
    "at": "2026-11-22T21:53:31.282611+00:00",
    "ch": "best",
+   "graded_at": "2026-11-24T05:06:46.116284+00:00",
    "kick": "2026-11-24T01:15:00Z",
    "price": -107,
+   "result": "win",
    "text": "CIN @ WAS: Under 54.5",
+   "u": 0.467,
    "units": 0.5,
    "week": "11"
   },
@@ -1820,8 +1860,8 @@
  "record": {
   "l": 11,
   "p": 0,
-  "u": 0.87,
-  "w": 8
+  "u": 1.337,
+  "w": 9
  },
  "record_by": {
   "best": {

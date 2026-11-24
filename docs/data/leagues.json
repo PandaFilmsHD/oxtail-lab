@@ -23,7 +23,7 @@
    "team": "Alex's Astounding Team",
    "week": 11,
    "at": "2026-11-24T04:39:13Z",
-   "champ_pct": 15.3,
+   "champ_pct": 15.2,
    "todo": [
     {
      "urgent": false,
@@ -36,13 +36,13 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.5%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.4%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     },
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 9 days",
+     "title": "Trade deadline in 8 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
@@ -59,7 +59,7 @@
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 9 days",
+     "title": "Trade deadline in 8 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
@@ -83,7 +83,7 @@
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 9 days",
+     "title": "Trade deadline in 8 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
