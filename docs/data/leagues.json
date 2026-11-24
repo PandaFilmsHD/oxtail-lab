@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-24T19:54:55Z",
+   "at": "2026-11-24T20:22:37Z",
    "champ_pct": 15.1,
    "todo": [
     {
@@ -64,7 +64,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Deshaun Watson, drop DeMario Douglas",
-     "detail": "Fills a hole this week (+3.5 pts). You can drop him again after.",
+     "detail": "Fills a hole this week (+3.6 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
@@ -81,7 +81,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T19:55:32Z",
+   "at": "2026-11-24T20:23:13Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -126,21 +126,21 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Kenneth Walker III might not play (70%)",
-     "detail": "If he's ruled out, start Jaylen Warren (12.9).",
+     "detail": "If he's ruled out, start Rhamondre Stevenson (12.3).",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.2%.",
+     "detail": "Real upgrade: about +1.3 pts a week in your lineup the rest of the way, title odds +1.2%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
-     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Matchups: DeVonta Smith vs #31, Jaylen Warren vs #15 (32 = easiest).",
+     "title": "Toss-up at FLEX: Jaylen Warren or DeVonta Smith",
+     "detail": "Jaylen Warren 13.5 vs DeVonta Smith 13.3. Matchups: Jaylen Warren vs #15, DeVonta Smith vs #31 (32 = easiest).",
      "tab": "home"
     }
    ]
