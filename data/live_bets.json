@@ -614,5 +614,40 @@
    3.0
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLPASSYDS-26NOV23CINWAS-WASJDANIELS5-200",
+  "side": "No",
+  "label": "Jayden Daniels under 200 pass yds",
+  "stat": "pass_yds",
+  "strike": 199.5,
+  "cost": 40,
+  "fee": 2.0,
+  "p": 52.2,
+  "edge": 12.2,
+  "ev": 24.4,
+  "at": "2026-11-24T02:57:23+00:00",
+  "date": "2026-11-23",
+  "q": 3,
+  "clock": "14:21",
+  "score": "CIN 10, WAS 7",
+  "game": "CIN @ WSH",
+  "home": "WAS",
+  "away": "CIN",
+  "week": 11,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": "Jayden Daniels",
+  "team": "WAS",
+  "had": 85.0,
+  "proj_full": 235.5,
+  "proj_left": 120.6,
+  "line": 200,
+  "need": 114.5,
+  "range": [
+   75.0,
+   111.1,
+   152.5
+  ],
+  "posted": false
  }
 ]
