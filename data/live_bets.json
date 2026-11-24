@@ -387,5 +387,31 @@
   "team": "CIN",
   "posted": true,
   "msg": "1574598266295812291"
+ },
+ {
+  "ticker": "KXNFLTOTAL-26NOV23CINWAS-55",
+  "side": "Yes",
+  "label": "CIN @ WAS over 54.5",
+  "stat": "total",
+  "strike": 54.5,
+  "cost": 29,
+  "fee": 2.0,
+  "p": 39.0,
+  "edge": 10.0,
+  "ev": 25.9,
+  "at": "2026-11-24T01:32:38+00:00",
+  "date": "2026-11-23",
+  "q": 1,
+  "clock": "8:49",
+  "score": "CIN 0, WAS 0",
+  "game": "CIN @ WSH",
+  "home": "WAS",
+  "away": "CIN",
+  "week": 11,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": null,
+  "posted": true,
+  "msg": "1574598588795846817"
  }
 ]
