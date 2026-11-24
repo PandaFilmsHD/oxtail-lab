@@ -4,46 +4,29 @@
    "id": "787523197",
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
-   "week": 11,
-   "at": "2026-11-24T07:35:25Z",
-   "champ_pct": 19.1,
+   "week": 12,
+   "at": "2026-11-24T08:02:35Z",
+   "champ_pct": 14.6,
    "todo": [
     {
      "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer D'Andre Swift for Tony Pollard + Dalton Kincaid (King Henrys BBC)",
-     "detail": "Title odds +1.6%. Would you do D'Andre Swift for Tony Pollard and Dalton Kincaid? I think Swift slides right into your RB spot, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
-     "tab": "trades"
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Thu 10:00 AM PT",
+     "detail": "D'Andre Swift, Jahmyr Gibbs, Rome Odunze play first. Players lock when their game starts.",
+     "tab": "home"
     },
     {
      "urgent": false,
-     "icon": "\u23f3",
-     "title": "Trade deadline in 9 days",
-     "detail": "After that, trades lock for the season. Send any offers you want before then.",
-     "tab": "trades"
-    }
-   ]
-  },
-  {
-   "id": "512125845",
-   "name": "Andrew League",
-   "team": "Alex's Astounding Team",
-   "week": 11,
-   "at": "2026-11-24T07:35:49Z",
-   "champ_pct": 15.2,
-   "todo": [
-    {
-     "urgent": false,
      "icon": "\ud83e\ude79",
-     "title": "Bhayshul Tuten might not play (69%)",
-     "detail": "Check his status before kickoff.",
+     "title": "Brock Bowers might not play (70%)",
+     "detail": "If he's ruled out, start Michael Mayer (7.2).",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
+     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot.",
      "tab": "trades"
     },
     {
@@ -56,13 +39,72 @@
    ]
   },
   {
+   "id": "512125845",
+   "name": "Andrew League",
+   "team": "Alex's Astounding Team",
+   "week": 12,
+   "at": "2026-11-24T08:02:55Z",
+   "champ_pct": 14.4,
+   "todo": [
+    {
+     "urgent": false,
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Thu 10:00 AM PT",
+     "detail": "Bears D/ST plays first. Players lock when their game starts.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Bhayshul Tuten might not play (70%)",
+     "detail": "If he's ruled out, start Travis Etienne Jr. (10.8).",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Deshaun Watson, drop DeMario Douglas",
+     "detail": "Fills a hole this week (+3.5 pts). You can drop him again after.",
+     "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Chargers D/ST, drop Bears D/ST",
+     "detail": "Fills a hole this week (+3.2 pts). You can drop him again after.",
+     "tab": "waivers"
+    }
+   ]
+  },
+  {
    "id": "395789116",
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
-   "week": 11,
-   "at": "2026-11-24T07:35:58Z",
-   "champ_pct": 3.9,
+   "week": 12,
+   "at": "2026-11-24T08:03:04Z",
+   "champ_pct": 0.1,
    "todo": [
+    {
+     "urgent": false,
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Wed 5:00 PM PT",
+     "detail": "Kyren Williams plays first. Players lock when their game starts.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Chargers D/ST, drop Bills D/ST",
+     "detail": "Fills a hole this week (+3.0 pts). You can drop him again after.",
+     "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
+     "detail": "Kyren Williams 15.1 vs Tony Pollard 14.8. Keeping Kyren Williams gives you a 68% chance to win vs 67% with Tony Pollard.",
+     "tab": "home"
+    },
     {
      "urgent": false,
      "icon": "\u23f3",
@@ -76,22 +118,36 @@
    "id": "1389243593",
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
-   "week": 11,
-   "at": "2026-11-24T07:35:37Z",
-   "champ_pct": 33.6,
+   "week": 12,
+   "at": "2026-11-24T08:02:45Z",
+   "champ_pct": 22.7,
    "todo": [
     {
      "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Zay Flowers + Trevor Lawrence for C.J. Stroud + Dak Prescott (Tyler's Talented Team)",
-     "detail": "Title odds +3.1%. Would you do Zay Flowers and Trevor Lawrence for C.J. Stroud and Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and Stroud is just sitting on your bench.",
-     "tab": "trades"
+     "icon": "\ud83d\udd12",
+     "title": "Set your lineup by Thu 10:00 AM PT",
+     "detail": "Colston Loveland, Luther Burden III play first. Players lock when their game starts.",
+     "tab": "home"
     },
     {
      "urgent": false,
-     "icon": "\u23f3",
-     "title": "Trade deadline in 8 days",
-     "detail": "After that, trades lock for the season. Send any offers you want before then.",
+     "icon": "\ud83d\udce5",
+     "title": "Claim 49ers D/ST, drop Jaguars D/ST",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.7%.",
+     "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at RB: Jaylen Warren or Rhamondre Stevenson",
+     "detail": "Jaylen Warren 12.9 vs Rhamondre Stevenson 12.3. Keeping Jaylen Warren gives you a 51% chance to win vs 51% with Rhamondre Stevenson.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
+     "detail": "Title odds +7.8%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
      "tab": "trades"
     }
    ]

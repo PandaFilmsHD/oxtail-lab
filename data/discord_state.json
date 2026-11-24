@@ -111,6 +111,11 @@
    "at": "2026-11-23T23:32:00.276574+00:00",
    "n": 1,
    "sha256": "c4ffcc9ed313dfe561e22bb3c6e741d84430c750c7ddef1ee0de76d78182b156"
+  },
+  {
+   "at": "2026-11-24T08:04:00.369804+00:00",
+   "n": 23,
+   "sha256": "86e4f6f0c45654ff123932347fc2604a8229e75aa5129ea821b3a498f1ff1ee0"
   }
  ],
  "kal_best": [
@@ -872,6 +877,26 @@
    "at": "2026-11-24T06:08:25.763000+00:00",
    "ch": "RESULTS",
    "id": "1574667993944817805"
+  },
+  {
+   "at": "2026-11-24T08:04:01.060613+00:00",
+   "ch": "RECEIPTS",
+   "id": "1574697080797011989"
+  },
+  {
+   "at": "2026-11-24T08:04:02.948787+00:00",
+   "ch": "KALSHI",
+   "id": "1574697085977108595"
+  },
+  {
+   "at": "2026-11-24T08:04:04.021201+00:00",
+   "ch": "KALSHI",
+   "id": "1574697094508449878"
+  },
+  {
+   "at": "2026-11-24T08:04:04.845308+00:00",
+   "ch": "KALSHI",
+   "id": "1574697098383855658"
   }
  ],
  "parlay_days": {
@@ -1015,6 +1040,24 @@
    "day": "2026-11-22",
    "week": "11",
    "who": "Jordan Mason"
+  },
+  "KA|KXNFLTOTAL-26NOV26KCBUF-48|Yes": {
+   "at": "2026-11-24T08:04:00.369804+00:00",
+   "day": "2026-11-24",
+   "week": "12",
+   "who": "BUF-KC"
+  },
+  "KA|KXNFLTOTAL-26NOV27DENPIT-29|Yes": {
+   "at": "2026-11-24T08:04:00.369804+00:00",
+   "day": "2026-11-24",
+   "week": "12",
+   "who": "DEN-PIT"
+  },
+  "KA|KXNFLTOTAL-26NOV29LVCLE-32|Yes": {
+   "at": "2026-11-24T08:04:00.369804+00:00",
+   "day": "2026-11-24",
+   "week": "12",
+   "who": "CLE-LV"
   }
  },
  "posted": {
@@ -1740,6 +1783,36 @@
    "units": 1,
    "week": "11"
   },
+  "KA|KXNFLTOTAL-26NOV26KCBUF-48|Yes": {
+   "at": "2026-11-24T08:04:00.369804+00:00",
+   "ch": "kalshi",
+   "cost": 48,
+   "fee": 1.7,
+   "kick": "2026-11-27T01:20:00Z",
+   "text": "KC @ BUF under 47.5",
+   "units": 1,
+   "week": "12"
+  },
+  "KA|KXNFLTOTAL-26NOV27DENPIT-29|Yes": {
+   "at": "2026-11-24T08:04:00.369804+00:00",
+   "ch": "kalshi",
+   "cost": 21,
+   "fee": 1.2,
+   "kick": "2026-11-27T20:00:00Z",
+   "text": "DEN @ PIT under 28.5",
+   "units": 1,
+   "week": "12"
+  },
+  "KA|KXNFLTOTAL-26NOV29LVCLE-32|Yes": {
+   "at": "2026-11-24T08:04:00.369804+00:00",
+   "ch": "kalshi",
+   "cost": 22,
+   "fee": 1.2,
+   "kick": "2026-11-30T01:20:00Z",
+   "text": "LV @ CLE under 31.5",
+   "units": 1,
+   "week": "12"
+  },
   "Khalil Shakir|Catches": {
    "actual": 5,
    "at": "2026-11-22T21:44:38.878462+00:00",
@@ -1871,9 +1944,14 @@
   "2026-11-21": 0,
   "2026-11-22": 19
  },
- "receipt_at": "2026-11-23T23:32:00.276574+00:00",
+ "receipt_at": "2026-11-24T08:04:00.369804+00:00",
  "receipted": [
+  "G|BUF|tot|Under",
+  "G|CLE|tot|Under",
+  "G|MIA|tot|Under",
+  "G|PIT|tot|Under",
   "G|SF|tot|Under",
+  "G|TB|tot|Under",
   "G|WAS|tot|Under",
   "Ja'Marr Chase|Catches",
   "Jauan Jennings|Catches",
@@ -1944,6 +2022,9 @@
   "KA|KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-80|No",
   "KA|KXNFLSPREAD-26NOV23CINWAS-CIN2|Yes",
   "KA|KXNFLSPREAD-26NOV23CINWAS-CIN3|Yes",
+  "KA|KXNFLSPREAD-26NOV29TENJAC-JAC10|Yes",
+  "KA|KXNFLSPREAD-26NOV29TENJAC-JAC14|Yes",
+  "KA|KXNFLSPREAD-26NOV29WASARI-WAS18|Yes",
   "KA|KXNFLTOTAL-26NOV22MINSF-37|Yes",
   "KA|KXNFLTOTAL-26NOV22MINSF-40|Yes",
   "KA|KXNFLTOTAL-26NOV22MINSF-43|Yes",
@@ -1952,7 +2033,22 @@
   "KA|KXNFLTOTAL-26NOV23CINWAS-53|Yes",
   "KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes",
   "KA|KXNFLTOTAL-26NOV23CINWAS-55|Yes",
-  "KA|KXNFLTOTAL-26NOV23CINWAS-68|Yes"
+  "KA|KXNFLTOTAL-26NOV23CINWAS-68|Yes",
+  "KA|KXNFLTOTAL-26NOV26CHIDET-41|Yes",
+  "KA|KXNFLTOTAL-26NOV26KCBUF-45|Yes",
+  "KA|KXNFLTOTAL-26NOV26KCBUF-48|Yes",
+  "KA|KXNFLTOTAL-26NOV26KCBUF-60|Yes",
+  "KA|KXNFLTOTAL-26NOV26KCBUF-63|Yes",
+  "KA|KXNFLTOTAL-26NOV27DENPIT-29|Yes",
+  "KA|KXNFLTOTAL-26NOV27DENPIT-32|Yes",
+  "KA|KXNFLTOTAL-26NOV29LVCLE-32|Yes",
+  "KA|KXNFLTOTAL-26NOV29LVCLE-41|Yes",
+  "KA|KXNFLTOTAL-26NOV29NYJMIA-36|Yes",
+  "KA|KXNFLTOTAL-26NOV29NYJMIA-41|Yes",
+  "KA|KXNFLTOTAL-26NOV29SEASF-46|Yes",
+  "KA|KXNFLTOTAL-26NOV29SEASF-47|Yes",
+  "KA|KXNFLTOTAL-26NOV30CARTB-41|Yes",
+  "KA|KXNFLTOTAL-26NOV30CARTB-42|Yes"
  ],
  "record": {
   "l": 11,
