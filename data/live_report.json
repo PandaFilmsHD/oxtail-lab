@@ -1,115 +1,115 @@
 {
  "team": {
-  "test_n": 13664,
-  "dev_model": 4.4906,
-  "dev_simple": 4.6648
+  "test_n": 13706,
+  "dev_model": 4.4879,
+  "dev_simple": 4.6613
  },
  "players": {
   "rush_yds": {
    "RB": {
-    "test_n": 30366,
-    "dev_model": 18.5457,
-    "dev_simple": 19.3689,
+    "test_n": 30457,
+    "dev_model": 18.5244,
+    "dev_simple": 19.3466,
     "weights": {
      "margin": -0.018,
      "margin_x_time_gone": 0.161,
      "log_time_left": 0.007,
      "usage_today": 0.225,
-     "usage_today_x_time_gone": 0.351
+     "usage_today_x_time_gone": 0.352
     }
    },
    "WR": {
-    "test_n": 5929,
-    "dev_model": 9.9407,
-    "dev_simple": 11.0452,
+    "test_n": 5936,
+    "dev_model": 9.9335,
+    "dev_simple": 11.0409,
     "weights": {
      "margin": -0.048,
-     "margin_x_time_gone": 0.183,
+     "margin_x_time_gone": 0.182,
      "log_time_left": 0.229,
      "usage_today": -0.167,
-     "usage_today_x_time_gone": -0.248
+     "usage_today_x_time_gone": -0.251
     }
    },
    "QB": {
-    "test_n": 12348,
-    "dev_model": 12.4557,
-    "dev_simple": 12.87,
+    "test_n": 12390,
+    "dev_model": 12.4496,
+    "dev_simple": 12.8575,
     "weights": {
      "margin": -0.018,
-     "margin_x_time_gone": -0.154,
-     "log_time_left": -0.071,
-     "usage_today": 0.197,
-     "usage_today_x_time_gone": 0.078
+     "margin_x_time_gone": -0.155,
+     "log_time_left": -0.07,
+     "usage_today": 0.196,
+     "usage_today_x_time_gone": 0.077
     }
    }
   },
   "rec_yds": {
    "WR": {
-    "test_n": 50085,
-    "dev_model": 22.3503,
-    "dev_simple": 22.8859,
+    "test_n": 50260,
+    "dev_model": 22.3497,
+    "dev_simple": 22.8963,
     "weights": {
      "margin": -0.035,
      "margin_x_time_gone": -0.182,
      "log_time_left": -0.043,
-     "usage_today": 0.068,
+     "usage_today": 0.069,
      "usage_today_x_time_gone": 0.179
     }
    },
    "TE": {
-    "test_n": 26152,
-    "dev_model": 15.0192,
-    "dev_simple": 15.4293,
+    "test_n": 26236,
+    "dev_model": 15.0356,
+    "dev_simple": 15.4428,
     "weights": {
      "margin": -0.029,
      "margin_x_time_gone": -0.203,
      "log_time_left": 0.008,
-     "usage_today": 0.116,
-     "usage_today_x_time_gone": -0.014
+     "usage_today": 0.114,
+     "usage_today_x_time_gone": -0.01
     }
    },
    "RB": {
-    "test_n": 24731,
-    "dev_model": 13.9949,
-    "dev_simple": 14.4743,
+    "test_n": 24829,
+    "dev_model": 13.9987,
+    "dev_simple": 14.4797,
     "weights": {
-     "margin": -0.013,
-     "margin_x_time_gone": -0.255,
+     "margin": -0.014,
+     "margin_x_time_gone": -0.254,
      "log_time_left": -0.016,
-     "usage_today": 0.184,
-     "usage_today_x_time_gone": 0.033
+     "usage_today": 0.187,
+     "usage_today_x_time_gone": 0.027
     }
    }
   },
   "rec": {
    "WR": {
-    "test_n": 48503,
-    "dev_model": 1.3029,
-    "dev_simple": 1.3437,
+    "test_n": 48664,
+    "dev_model": 1.3032,
+    "dev_simple": 1.3449,
     "weights": {
      "margin": -0.035,
      "margin_x_time_gone": -0.19,
      "log_time_left": -0.027,
      "usage_today": 0.048,
-     "usage_today_x_time_gone": 0.282
+     "usage_today_x_time_gone": 0.283
     }
    },
    "TE": {
-    "test_n": 25508,
-    "dev_model": 1.1646,
-    "dev_simple": 1.2114,
+    "test_n": 25578,
+    "dev_model": 1.1645,
+    "dev_simple": 1.2112,
     "weights": {
      "margin": -0.027,
      "margin_x_time_gone": -0.222,
-     "log_time_left": -0.0,
+     "log_time_left": 0.0,
      "usage_today": 0.089,
      "usage_today_x_time_gone": 0.033
     }
    },
    "RB": {
-    "test_n": 23037,
-    "dev_model": 1.2071,
-    "dev_simple": 1.2716,
+    "test_n": 23114,
+    "dev_model": 1.2068,
+    "dev_simple": 1.2708,
     "weights": {
      "margin": -0.022,
      "margin_x_time_gone": -0.26,
@@ -121,67 +121,67 @@
   },
   "pass_yds": {
    "QB": {
-    "test_n": 14994,
-    "dev_model": 36.2105,
-    "dev_simple": 41.1045,
+    "test_n": 15057,
+    "dev_model": 36.2431,
+    "dev_simple": 41.1617,
     "weights": {
      "margin": -0.067,
      "margin_x_time_gone": -0.17,
      "log_time_left": -0.013,
-     "usage_today": 0.084,
-     "usage_today_x_time_gone": 0.399
+     "usage_today": 0.085,
+     "usage_today_x_time_gone": 0.398
     }
    }
   },
   "pass_tds": {
    "QB": {
-    "test_n": 14854,
-    "dev_model": 0.9605,
-    "dev_simple": 0.9921,
+    "test_n": 14917,
+    "dev_model": 0.9602,
+    "dev_simple": 0.9916,
     "weights": {
      "margin": -0.024,
-     "margin_x_time_gone": -0.276,
+     "margin_x_time_gone": -0.277,
      "log_time_left": -0.061,
-     "usage_today": 0.141,
-     "usage_today_x_time_gone": 0.222
+     "usage_today": 0.143,
+     "usage_today_x_time_gone": 0.221
     }
    }
   },
   "td": {
    "RB": {
-    "test_n": 8407,
-    "dev_model": 0.7313,
-    "dev_simple": 1.3188,
+    "test_n": 8428,
+    "dev_model": 0.7317,
+    "dev_simple": 1.3165,
     "weights": {
-     "margin": -0.056,
-     "margin_x_time_gone": -0.002,
-     "log_time_left": -0.182,
-     "usage_today": -0.383,
-     "usage_today_x_time_gone": -1.818
+     "margin": -0.057,
+     "margin_x_time_gone": -0.004,
+     "log_time_left": -0.181,
+     "usage_today": -0.381,
+     "usage_today_x_time_gone": -1.813
     }
    },
    "WR": {
-    "test_n": 9898,
-    "dev_model": 0.6049,
-    "dev_simple": 1.5004,
+    "test_n": 9926,
+    "dev_model": 0.6044,
+    "dev_simple": 1.4991,
     "weights": {
      "margin": 0.019,
-     "margin_x_time_gone": -0.223,
-     "log_time_left": -0.285,
-     "usage_today": -0.737,
-     "usage_today_x_time_gone": -2.12
+     "margin_x_time_gone": -0.224,
+     "log_time_left": -0.284,
+     "usage_today": -0.734,
+     "usage_today_x_time_gone": -2.126
     }
    },
    "TE": {
-    "test_n": 3906,
-    "dev_model": 0.5785,
-    "dev_simple": 1.6643,
+    "test_n": 3913,
+    "dev_model": 0.5778,
+    "dev_simple": 1.6621,
     "weights": {
-     "margin": 0.022,
+     "margin": 0.021,
      "margin_x_time_gone": -0.173,
      "log_time_left": -0.292,
-     "usage_today": -0.932,
-     "usage_today_x_time_gone": -2.374
+     "usage_today": -0.93,
+     "usage_today_x_time_gone": -2.38
     }
    }
   }
