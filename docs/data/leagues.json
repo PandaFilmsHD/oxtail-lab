@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-24T18:05:02Z",
+   "at": "2026-11-24T18:32:49Z",
    "champ_pct": 15.1,
    "todo": [
     {
@@ -26,7 +26,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.3%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +2.0%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -43,8 +43,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T18:05:22Z",
-   "champ_pct": 14.2,
+   "at": "2026-11-24T18:33:13Z",
+   "champ_pct": 14.3,
    "todo": [
     {
      "urgent": false,
@@ -64,7 +64,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Deshaun Watson, drop DeMario Douglas",
-     "detail": "Fills a hole this week (+3.6 pts). You can drop him again after.",
+     "detail": "Fills a hole this week (+3.5 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
@@ -81,7 +81,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T18:05:31Z",
+   "at": "2026-11-24T18:33:26Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -112,8 +112,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T18:05:12Z",
-   "champ_pct": 23.6,
+   "at": "2026-11-24T18:33:00Z",
+   "champ_pct": 23.5,
    "todo": [
     {
      "urgent": false,
@@ -124,24 +124,24 @@
     },
     {
      "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Kenneth Walker III might not play (70%)",
+     "detail": "If he's ruled out, start Jaylen Warren (13.0).",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Jaguars D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.8%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.6%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
-     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Matchups: DeVonta Smith vs #31, Jaylen Warren vs #15 (32 = easiest).",
+     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 13.0. Matchups: DeVonta Smith vs #31, Jaylen Warren vs #15 (32 = easiest).",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +8.4%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
-     "tab": "trades"
     }
    ]
   }
