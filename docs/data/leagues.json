@@ -5,16 +5,9 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-24T13:00:47Z",
+   "at": "2026-11-24T13:55:07Z",
    "champ_pct": 14.9,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Brock Bowers",
-     "detail": "OUT \u2192 QUESTIONABLE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
@@ -33,7 +26,14 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +1.9%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot.",
+     "detail": "Title odds +2.0%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot.",
+     "tab": "trades"
+    },
+    {
+     "urgent": false,
+     "icon": "\u23f3",
+     "title": "Trade deadline in 8 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
    ]
@@ -43,7 +43,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T13:01:07Z",
+   "at": "2026-11-24T13:55:24Z",
    "champ_pct": 14.0,
    "todo": [
     {
@@ -64,7 +64,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Deshaun Watson, drop DeMario Douglas",
-     "detail": "Fills a hole this week (+3.4 pts). You can drop him again after.",
+     "detail": "Fills a hole this week (+3.5 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
@@ -81,7 +81,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T13:01:17Z",
+   "at": "2026-11-24T13:55:31Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -119,16 +119,9 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-24T13:00:57Z",
+   "at": "2026-11-24T13:55:15Z",
    "champ_pct": 23.6,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Kenneth Walker III",
-     "detail": "OUT \u2192 QUESTIONABLE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
@@ -149,6 +142,13 @@
      "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
      "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Keeping DeVonta Smith gives you a 60% chance to win vs 59% with Jaylen Warren.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
+     "detail": "Title odds +8.3%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
+     "tab": "trades"
     }
    ]
   }
