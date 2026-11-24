@@ -10,6 +10,13 @@
    "todo": [
     {
      "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer D'Andre Swift for Tony Pollard + Dalton Kincaid (King Henrys BBC)",
+     "detail": "Title odds +1.6%. Would you do D'Andre Swift for Tony Pollard and Dalton Kincaid? I think Swift slides right into your RB spot, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "tab": "trades"
+    },
+    {
+     "urgent": false,
      "icon": "\u23f3",
      "title": "Trade deadline in 9 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
@@ -36,7 +43,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Tyler Shough (Lo Siento Wilson)",
-     "detail": "Title odds +2.4%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
+     "detail": "Title odds +2.0%. Would you do Josh Downs for Tyler Shough? I think Shough is just sitting on your bench.",
      "tab": "trades"
     },
     {
@@ -76,8 +83,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Zay Flowers for Dak Prescott (Tyler's Talented Team)",
-     "detail": "Title odds +3.6%. Would you do Zay Flowers for Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and you're deep at QB so you can cover Prescott's spot.",
+     "title": "Offer Zay Flowers + Trevor Lawrence for C.J. Stroud + Dak Prescott (Tyler's Talented Team)",
+     "detail": "Title odds +3.1%. Would you do Zay Flowers and Trevor Lawrence for C.J. Stroud and Dak Prescott? I think Flowers slides right into your WR spot over Egbuka, and Stroud is just sitting on your bench.",
      "tab": "trades"
     },
     {
