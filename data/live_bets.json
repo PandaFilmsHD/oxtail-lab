@@ -361,5 +361,31 @@
    60.1
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLSPREAD-26NOV23CINWAS-CIN8",
+  "side": "Yes",
+  "label": "CIN by 8+",
+  "stat": "spread",
+  "strike": 7.5,
+  "cost": 36,
+  "fee": 2.0,
+  "p": 45.5,
+  "edge": 9.5,
+  "ev": 19.8,
+  "at": "2026-11-24T01:31:21+00:00",
+  "date": "2026-11-23",
+  "q": 1,
+  "clock": "9:01",
+  "score": "CIN 0, WAS 0",
+  "game": "CIN @ WSH",
+  "home": "WAS",
+  "away": "CIN",
+  "week": 11,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": "CIN",
+  "posted": true,
+  "msg": "1574598266295812291"
  }
 ]
