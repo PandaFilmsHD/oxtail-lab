@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 12,
    "at": "2026-11-24T16:39:41Z",
-   "champ_pct": 14.9,
+   "champ_pct": 15.0,
    "todo": [
     {
      "urgent": false,
@@ -26,7 +26,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot.",
+     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -44,7 +44,7 @@
    "team": "Alex's Astounding Team",
    "week": 12,
    "at": "2026-11-24T16:40:01Z",
-   "champ_pct": 14.0,
+   "champ_pct": 14.2,
    "todo": [
     {
      "urgent": false,
@@ -64,7 +64,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Deshaun Watson, drop DeMario Douglas",
-     "detail": "Fills a hole this week (+3.7 pts). You can drop him again after.",
+     "detail": "Fills a hole this week (+3.6 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
@@ -140,14 +140,14 @@
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: DeVonta Smith or Jaylen Warren",
-     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Keeping DeVonta Smith gives you a 60% chance to win vs 59% with Jaylen Warren.",
+     "detail": "DeVonta Smith 13.3 vs Jaylen Warren 12.9. Keeping DeVonta Smith gives you a 59% chance to win vs 59% with Jaylen Warren.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +8.3%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
+     "detail": "Title odds +8.4%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 3.6 pts a week, and Loveland slides right into your TE spot.",
      "tab": "trades"
     }
    ]

@@ -450,6 +450,7 @@
   "KA|KXNFLTOTAL-26NOV23CINWAS-53|Yes",
   "KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes"
  ],
+ "learn_week": "2026-W48",
  "live_done": {
   "KXNFLGAME-26NOV23CINWAS-WAS|Yes": {
    "actual": "20.0-22.0",
@@ -952,6 +953,11 @@
    "at": "2026-11-24T16:13:33.439705+00:00",
    "ch": "RESULTS",
    "id": "1574820279157268742"
+  },
+  {
+   "at": "2026-11-24T17:08:29.161621+00:00",
+   "ch": "RESULTS",
+   "id": "1574834102350119116"
   }
  ],
  "parlay_days": {
