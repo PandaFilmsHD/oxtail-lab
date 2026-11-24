@@ -483,5 +483,31 @@
    8.7
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLGAME-26NOV23CINWAS-WAS",
+  "side": "Yes",
+  "label": "WAS to win",
+  "stat": "ml",
+  "strike": null,
+  "cost": 25,
+  "fee": 2.0,
+  "p": 37.0,
+  "edge": 12.0,
+  "ev": 37.2,
+  "at": "2026-11-24T02:04:16+00:00",
+  "date": "2026-11-23",
+  "q": 2,
+  "clock": "8:34",
+  "score": "CIN 0, WAS 0",
+  "game": "CIN @ WSH",
+  "home": "WAS",
+  "away": "CIN",
+  "week": 11,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": "WAS",
+  "posted": true,
+  "msg": "1574606550318714984"
  }
 ]
