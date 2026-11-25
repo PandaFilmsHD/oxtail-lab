@@ -176,6 +176,11 @@
    "at": "2026-11-25T04:09:50.527886+00:00",
    "n": 4,
    "sha256": "64f8f0b92a43b82bc610d33181e2526254bccbf8ad4d5e22b1b58af3cd65df05"
+  },
+  {
+   "at": "2026-11-25T05:31:38.291778+00:00",
+   "n": 1,
+   "sha256": "f3799906666b9ba7b08db150d6d60188cc442d85ea77cdd2c1e7cced6717b9f5"
   }
  ],
  "kal_best": [
@@ -1028,6 +1033,11 @@
    "at": "2026-11-25T04:09:51.108890+00:00",
    "ch": "RECEIPTS",
    "id": "1575000539702235167"
+  },
+  {
+   "at": "2026-11-25T05:31:38.652740+00:00",
+   "ch": "RECEIPTS",
+   "id": "1575021123891101788"
   }
  ],
  "parlay_days": {
@@ -2076,7 +2086,7 @@
   "2026-11-22": 19,
   "2026-11-23": 1
  },
- "receipt_at": "2026-11-25T04:09:50.527886+00:00",
+ "receipt_at": "2026-11-25T05:31:38.291778+00:00",
  "receipted": [
   "G|BUF|tot|Under",
   "G|CIN|tot|Under",
@@ -2197,6 +2207,7 @@
   "KA|KXNFLTOTAL-26NOV29NYJMIA-36|Yes",
   "KA|KXNFLTOTAL-26NOV29NYJMIA-41|Yes",
   "KA|KXNFLTOTAL-26NOV29SEASF-38|Yes",
+  "KA|KXNFLTOTAL-26NOV29SEASF-44|Yes",
   "KA|KXNFLTOTAL-26NOV29SEASF-45|Yes",
   "KA|KXNFLTOTAL-26NOV29SEASF-46|Yes",
   "KA|KXNFLTOTAL-26NOV29SEASF-47|Yes",
