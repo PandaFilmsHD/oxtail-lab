@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-25T08:50:36Z",
-   "champ_pct": 16.0,
+   "at": "2026-11-25T09:17:52Z",
+   "champ_pct": 15.7,
    "todo": [
     {
      "urgent": false,
@@ -17,16 +17,9 @@
     },
     {
      "urgent": false,
-     "icon": "\u2702\ufe0f",
-     "title": "Brock Bowers is back: drop Michael Mayer",
-     "detail": "Michael Mayer was your fill-in while Brock Bowers sat. You only need one TE, so free up the spot.",
-     "tab": "waivers"
-    },
-    {
-     "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.0%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "title": "Offer KC Concepcion for Omar Cooper Jr. (JELQING MY KING JD5)",
+     "detail": "Title odds +2.0%. Would you do KC Concepcion for Omar Cooper Jr.? I think it bumps your lineup about 0.6 pts a week for the playoff push, and Concepcion slides right into your FLEX spot over Coker.",
      "tab": "trades"
     },
     {
@@ -85,17 +78,17 @@
    "champ_pct": 0.1,
    "todo": [
     {
-     "urgent": true,
+     "urgent": false,
      "icon": "\ud83d\udd12",
-     "title": "Set your lineup by Wed 5:00 PM PT",
-     "detail": "Kyren Williams plays first. Players lock when their game starts.",
+     "title": "Set your lineup by Thu 10:00 AM PT",
+     "detail": "Colston Loveland, Luther Burden III play first. Players lock when their game starts.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
-     "detail": "Kyren Williams 15.1 vs Tony Pollard 15.1. Tony Pollard has the higher ceiling (23.9 vs 19.6). Go with him if you need a big week.",
+     "title": "Toss-up at FLEX: Tony Pollard or Kyren Williams",
+     "detail": "Tony Pollard 15.1 vs Kyren Williams 14.7. Matchups: Tony Pollard vs #3, Kyren Williams vs #24 (32 = easiest).",
      "tab": "home"
     },
     {
@@ -126,7 +119,7 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Kenneth Walker III might not play (69%)",
-     "detail": "If he's ruled out, start Saquon Barkley (13.3).",
+     "detail": "If he's ruled out, start Saquon Barkley (12.4).",
      "tab": "home"
     },
     {
@@ -139,8 +132,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Jaylen Warren or Saquon Barkley",
-     "detail": "Jaylen Warren 13.4 vs Saquon Barkley 13.3. Matchups: Jaylen Warren vs #15, Saquon Barkley vs #32 (32 = easiest).",
+     "title": "Toss-up at FLEX: Jaylen Warren or DeVonta Smith",
+     "detail": "Jaylen Warren 13.4 vs DeVonta Smith 13.3. Matchups: Jaylen Warren vs #15, DeVonta Smith vs #31 (32 = easiest).",
      "tab": "home"
     }
    ]
