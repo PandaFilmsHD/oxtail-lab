@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-25T22:58:23Z",
-   "champ_pct": 15.7,
+   "at": "2026-11-25T23:25:43Z",
+   "champ_pct": 15.6,
    "todo": [
     {
      "urgent": true,
@@ -19,7 +19,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +1.8%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +2.4%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -36,14 +36,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T22:58:42Z",
-   "champ_pct": 12.2,
+   "at": "2026-11-25T23:26:00Z",
+   "champ_pct": 12.1,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Thu 5:20 PM PT",
-     "detail": "Emmett Johnson plays first. Players lock when their game starts.",
+     "detail": "Emmett Johnson, Rashee Rice play first. Players lock when their game starts.",
      "tab": "home"
     },
     {
@@ -64,7 +64,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Bo Nix, drop Fernando Mendoza",
-     "detail": "Real upgrade: about +5.2 pts a week in your lineup the rest of the way, title odds +3.4%.",
+     "detail": "Real upgrade: about +5.2 pts a week in your lineup the rest of the way, title odds +3.5%.",
      "tab": "waivers"
     }
    ]
@@ -74,7 +74,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T22:58:51Z",
+   "at": "2026-11-25T23:26:08Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -105,8 +105,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T22:58:33Z",
-   "champ_pct": 22.6,
+   "at": "2026-11-25T23:25:52Z",
+   "champ_pct": 22.5,
    "todo": [
     {
      "urgent": true,
@@ -119,21 +119,21 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim 49ers D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +2.1%.",
+     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +2.0%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Jaylen Warren or DeVonta Smith",
-     "detail": "Jaylen Warren 13.3 vs DeVonta Smith 13.2. Matchups: Jaylen Warren vs #15, DeVonta Smith vs #31 (32 = easiest).",
+     "title": "Toss-up at FLEX: Jaylen Warren or Rhamondre Stevenson",
+     "detail": "Jaylen Warren 13.3 vs Rhamondre Stevenson 12.6. Keeping Jaylen Warren gives you a 59% chance to win vs 58% with Rhamondre Stevenson.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Colston Loveland + Luther Burden III for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +6.3%. Would you do Colston Loveland and Luther Burden III for Trey McBride? I think it bumps your lineup about 6.3 pts a week, and Loveland slides right into your TE spot.",
+     "title": "Offer Colston Loveland + Zay Flowers for Trey McBride (Tyler's Talented Team)",
+     "detail": "Title odds +6.4%. Would you do Colston Loveland and Zay Flowers for Trey McBride? I think it bumps your lineup about 5.2 pts a week, and Loveland slides right into your TE spot.",
      "tab": "trades"
     }
    ]
