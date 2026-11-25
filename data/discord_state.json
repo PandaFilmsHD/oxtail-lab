@@ -191,6 +191,11 @@
    "at": "2026-11-25T08:24:36.634432+00:00",
    "n": 1,
    "sha256": "295d147461849bdd6e3d22e021b8f30cb50d743f689ad7013e8acc11ad32d210"
+  },
+  {
+   "at": "2026-11-25T09:46:54.946482+00:00",
+   "n": 1,
+   "sha256": "b7344ab26ffa565b558324c225e57c6b6c217730d5c4d8ca90b912d6dd014816"
   }
  ],
  "kal_best": [
@@ -1058,6 +1063,11 @@
    "at": "2026-11-25T08:24:37.029226+00:00",
    "ch": "RECEIPTS",
    "id": "1575064653804077119"
+  },
+  {
+   "at": "2026-11-25T09:46:55.232280+00:00",
+   "ch": "RECEIPTS",
+   "id": "1575085366392787046"
   }
  ],
  "parlay_days": {
@@ -2106,7 +2116,7 @@
   "2026-11-22": 19,
   "2026-11-23": 1
  },
- "receipt_at": "2026-11-25T08:24:36.634432+00:00",
+ "receipt_at": "2026-11-25T09:46:54.946482+00:00",
  "receipted": [
   "G|BUF|tot|Under",
   "G|CIN|tot|Under",
@@ -2219,6 +2229,7 @@
   "KA|KXNFLTOTAL-26NOV27DENPIT-32|Yes",
   "KA|KXNFLTOTAL-26NOV27DENPIT-35|Yes",
   "KA|KXNFLTOTAL-26NOV27DENPIT-39|Yes",
+  "KA|KXNFLTOTAL-26NOV27DENPIT-47|Yes",
   "KA|KXNFLTOTAL-26NOV29LVCLE-29|Yes",
   "KA|KXNFLTOTAL-26NOV29LVCLE-32|Yes",
   "KA|KXNFLTOTAL-26NOV29LVCLE-35|Yes",
