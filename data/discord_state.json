@@ -166,6 +166,11 @@
    "at": "2026-11-25T00:33:55.592677+00:00",
    "n": 1,
    "sha256": "5191f0356e1bf4be4bc11f6e9b0a1b2087f8ea5787d23f363f1951b9de6262c1"
+  },
+  {
+   "at": "2026-11-25T02:43:45.072098+00:00",
+   "n": 1,
+   "sha256": "238e53bc72f9bc7b5dd94d606e8d9fd67d95280e3fee7ee5a15db5e20e894dc8"
   }
  ],
  "kal_best": [
@@ -1008,6 +1013,11 @@
    "at": "2026-11-25T00:33:56.581485+00:00",
    "ch": "RECEIPTS",
    "id": "1574946203009810566"
+  },
+  {
+   "at": "2026-11-25T02:43:45.503954+00:00",
+   "ch": "RECEIPTS",
+   "id": "1574978874071195774"
   }
  ],
  "parlay_days": {
@@ -2056,7 +2066,7 @@
   "2026-11-22": 19,
   "2026-11-23": 1
  },
- "receipt_at": "2026-11-25T00:33:55.592677+00:00",
+ "receipt_at": "2026-11-25T02:43:45.072098+00:00",
  "receipted": [
   "G|BUF|tot|Under",
   "G|CIN|tot|Under",
@@ -2135,6 +2145,7 @@
   "KA|KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-80|No",
   "KA|KXNFLSPREAD-26NOV23CINWAS-CIN2|Yes",
   "KA|KXNFLSPREAD-26NOV23CINWAS-CIN3|Yes",
+  "KA|KXNFLSPREAD-26NOV26CHIDET-CHI5|Yes",
   "KA|KXNFLSPREAD-26NOV29BALHOU-HOU15|Yes",
   "KA|KXNFLSPREAD-26NOV29NELAC-NE11|Yes",
   "KA|KXNFLSPREAD-26NOV29NELAC-NE15|Yes",
