@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-25T04:35:53Z",
-   "champ_pct": 15.1,
+   "at": "2026-11-25T05:03:07Z",
+   "champ_pct": 16.0,
    "todo": [
     {
      "urgent": false,
@@ -25,8 +25,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Rhamondre Stevenson + KC Concepcion for Deebo Samuel Sr. + Denzel Boston (KoopKuppKlan)",
-     "detail": "Title odds +1.8%. Would you do Rhamondre Stevenson and KC Concepcion for Deebo Samuel Sr. and Denzel Boston? I think Stevenson slides right into your FLEX spot, and Boston is just sitting on your bench.",
+     "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
+     "detail": "Title odds +1.9%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -101,7 +101,7 @@
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 8 days",
+     "title": "Trade deadline in 7 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
