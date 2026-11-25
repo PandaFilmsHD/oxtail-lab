@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-25T13:48:12Z",
+   "at": "2026-11-25T14:15:24Z",
    "champ_pct": 15.7,
    "todo": [
     {
@@ -36,7 +36,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T13:48:29Z",
+   "at": "2026-11-25T14:15:43Z",
    "champ_pct": 14.1,
    "todo": [
     {
@@ -56,15 +56,15 @@
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
-     "title": "Claim Deshaun Watson, drop DeMario Douglas",
-     "detail": "Fills a hole this week (+3.8 pts). You can drop him again after.",
+     "title": "Claim Chargers D/ST, drop Bears D/ST",
+     "detail": "Fills a hole this week (+3.2 pts). You can drop him again after.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
-     "title": "Claim Chargers D/ST, drop Bears D/ST",
-     "detail": "Fills a hole this week (+3.2 pts). You can drop him again after.",
+     "title": "Claim Caleb Douglas, drop DeMario Douglas",
+     "detail": "Breakout radar gives him 59% to become a weekly starter. Cheap lottery ticket for DeMario Douglas.",
      "tab": "waivers"
     }
    ]
@@ -74,7 +74,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T13:48:37Z",
+   "at": "2026-11-25T14:15:52Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -105,7 +105,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T13:48:20Z",
+   "at": "2026-11-25T14:15:33Z",
    "champ_pct": 24.3,
    "todo": [
     {
