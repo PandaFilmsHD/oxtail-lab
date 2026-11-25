@@ -107,4 +107,4 @@ jobs:
           sleep $((WAIT * 60))
           newest=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/update.yml/runs?per_page=1" --jq '.workflow_runs[0].id')
           if [ "$newest" != "${{ github.run_id }}" ]; then echo "a newer run already exists, not starting another"; exit 0; fi
-          gh workflow run update.yml --ref main -R "$GITHUB_REPOSITORY" || echo "could not queue next run"
+          for i in 1 2 3 4 5; do gh workflow run update.yml --ref main -R "$GITHUB_REPOSITORY" && break; echo "queue failed, retry $i"; sleep $((i * 20)); done
