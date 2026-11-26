@@ -272,6 +272,11 @@
    "at": "2026-11-26T11:01:12.989819+00:00",
    "n": 10,
    "sha256": "01fdba54eed0d977231679479893082bc8124ea2237fe37c2c8809d7278064a3"
+  },
+  {
+   "at": "2026-11-26T12:26:36.372501+00:00",
+   "n": 1,
+   "sha256": "31196b293215d42a331c6efda6ceddb1c10f5258170104214eb317546eed67f0"
   }
  ],
  "kal_best": [
@@ -1358,6 +1363,11 @@
    "at": "2026-11-26T11:01:13.549303+00:00",
    "ch": "RECEIPTS",
    "id": "1575466452775862327"
+  },
+  {
+   "at": "2026-11-26T12:26:36.710473+00:00",
+   "ch": "RECEIPTS",
+   "id": "1575487941747281975"
   }
  ],
  "parlay_days": {
@@ -2456,7 +2466,7 @@
   "2026-11-23": 1,
   "2026-11-24": 0
  },
- "receipt_at": "2026-11-26T11:01:12.989819+00:00",
+ "receipt_at": "2026-11-26T12:26:36.372501+00:00",
  "receipted": [
   "Anthony Gould|Rec yds",
   "Anthony Richardson|Rush yds",
@@ -2689,6 +2699,7 @@
   "KA|KXNFLTOTAL-26NOV26KCBUF-57|Yes",
   "KA|KXNFLTOTAL-26NOV26KCBUF-60|Yes",
   "KA|KXNFLTOTAL-26NOV26KCBUF-63|Yes",
+  "KA|KXNFLTOTAL-26NOV27DENPIT-26|Yes",
   "KA|KXNFLTOTAL-26NOV27DENPIT-29|Yes",
   "KA|KXNFLTOTAL-26NOV27DENPIT-32|Yes",
   "KA|KXNFLTOTAL-26NOV27DENPIT-35|Yes",
