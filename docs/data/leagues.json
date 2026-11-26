@@ -5,21 +5,14 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-26T17:45:13Z",
-   "champ_pct": 15.8,
+   "at": "2026-11-26T18:14:24Z",
+   "champ_pct": 15.3,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udd12",
-     "title": "Set your lineup by Thu 10:00 AM PT",
-     "detail": "D'Andre Swift, Jahmyr Gibbs, Rome Odunze play first. Players lock when their game starts.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +1.8%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "title": "Offer KC Concepcion for Omar Cooper Jr. (JELQING MY KING JD5)",
+     "detail": "Title odds +2.0%. Would you do KC Concepcion for Omar Cooper Jr.? I think Concepcion slides right into your FLEX spot over Coker, and Cooper is just sitting on your bench.",
      "tab": "trades"
     },
     {
@@ -36,8 +29,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T17:45:29Z",
-   "champ_pct": 11.6,
+   "at": "2026-11-26T18:14:45Z",
+   "champ_pct": 11.9,
    "todo": [
     {
      "urgent": true,
@@ -49,7 +42,7 @@
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
-     "title": "Jaxon Smith-Njigba might not play (70%)",
+     "title": "Jaxon Smith-Njigba might not play (69%)",
      "detail": "If he's ruled out, start Rashee Rice (10.9).",
      "tab": "home"
     },
@@ -74,14 +67,14 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T17:45:40Z",
+   "at": "2026-11-26T18:14:55Z",
    "champ_pct": 0.1,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
-     "detail": "Kyren Williams 15.0 vs Tony Pollard 14.7. Keeping Kyren Williams gives you a 65% chance to win vs 64% with Tony Pollard.",
+     "detail": "Kyren Williams 15.0 vs Tony Pollard 14.7. Keeping Kyren Williams gives you a 64% chance to win vs 63% with Tony Pollard.",
      "tab": "home"
     },
     {
@@ -98,21 +91,14 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T17:45:21Z",
-   "champ_pct": 22.5,
+   "at": "2026-11-26T18:14:34Z",
+   "champ_pct": 22.7,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udd12",
-     "title": "Set your lineup by Thu 10:00 AM PT",
-     "detail": "Colston Loveland, Luther Burden III play first. Players lock when their game starts.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.4%.",
+     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
@@ -126,7 +112,14 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +8.3%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 4.0 pts a week, and Loveland slides right into your TE spot.",
+     "detail": "Title odds +8.5%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 4.1 pts a week, and Loveland slides right into your TE spot.",
+     "tab": "trades"
+    },
+    {
+     "urgent": false,
+     "icon": "\u23f3",
+     "title": "Trade deadline in 6 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
    ]
