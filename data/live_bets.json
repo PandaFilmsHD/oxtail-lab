@@ -1531,5 +1531,31 @@
    26.5
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLTOTAL-26NOV26PHIDAL-54",
+  "side": "No",
+  "label": "PHI @ DAL under 53.5",
+  "stat": "total",
+  "strike": 53.5,
+  "cost": 55,
+  "fee": 2.0,
+  "p": 71.4,
+  "edge": 16.4,
+  "ev": 25.2,
+  "at": "2026-11-26T22:59:43+00:00",
+  "date": "2026-11-26",
+  "q": 2,
+  "clock": "5:13",
+  "score": "PHI 3, DAL 14",
+  "game": "PHI @ DAL",
+  "home": "DAL",
+  "away": "PHI",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": null,
+  "posted": true,
+  "msg": "1575647269733011571"
  }
 ]
