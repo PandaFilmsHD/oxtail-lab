@@ -1103,5 +1103,31 @@
    29.1
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLGAME-26NOV26CHIDET-DET",
+  "side": "No",
+  "label": "DET to lose",
+  "stat": "ml",
+  "strike": null,
+  "cost": 37,
+  "fee": 2.0,
+  "p": 47.7,
+  "edge": 10.7,
+  "ev": 22.3,
+  "at": "2026-11-26T18:37:12+00:00",
+  "date": "2026-11-26",
+  "q": 1,
+  "clock": "1:12",
+  "score": "CHI 0, DET 3",
+  "game": "CHI @ DET",
+  "home": "DET",
+  "away": "CHI",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": "DET",
+  "posted": true,
+  "msg": "1575581205343113402"
  }
 ]
