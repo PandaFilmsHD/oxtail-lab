@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-25T23:53:11Z",
-   "champ_pct": 15.7,
+   "at": "2026-11-26T00:03:28Z",
+   "champ_pct": 15.6,
    "todo": [
     {
      "urgent": true,
@@ -19,7 +19,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.4%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +2.0%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -36,35 +36,35 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T23:53:30Z",
-   "champ_pct": 11.4,
+   "at": "2026-11-26T00:03:51Z",
+   "champ_pct": 11.5,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Jaxon Smith-Njigba",
-     "detail": "ACTIVE \u2192 QUESTIONABLE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Thu 5:20 PM PT",
-     "detail": "Emmett Johnson, Rashee Rice play first. Players lock when their game starts.",
-     "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Bhayshul Tuten might not play (70%)",
-     "detail": "If he's ruled out, start Travis Etienne Jr. (10.6).",
+     "detail": "Emmett Johnson plays first. Players lock when their game starts.",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Jaxon Smith-Njigba might not play (70%)",
-     "detail": "If he's ruled out, start KC Concepcion (10.2).",
+     "detail": "If he's ruled out, start Rashee Rice (11.0).",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Isaiah Likely might not play (70%)",
+     "detail": "Check his status before kickoff.",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\ude79",
+     "title": "Bhayshul Tuten might not play (70%)",
+     "detail": "If he's ruled out, start Travis Etienne Jr. (11.2).",
      "tab": "home"
     }
    ]
@@ -74,7 +74,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T23:53:40Z",
+   "at": "2026-11-26T00:04:03Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -87,8 +87,8 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at WR: Rashee Rice or Carnell Tate",
-     "detail": "Rashee Rice 10.8 vs Carnell Tate 10.7. Rashee Rice is safer (floor 11.3 vs 7.8).",
+     "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
+     "detail": "Kyren Williams 15.0 vs Tony Pollard 14.7. Keeping Kyren Williams gives you a 64% chance to win vs 64% with Tony Pollard.",
      "tab": "home"
     },
     {
@@ -105,7 +105,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-25T23:53:21Z",
+   "at": "2026-11-26T00:03:39Z",
    "champ_pct": 22.5,
    "todo": [
     {
@@ -125,15 +125,15 @@
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Jaylen Warren or Rhamondre Stevenson",
-     "detail": "Jaylen Warren 13.3 vs Rhamondre Stevenson 12.6. Keeping Jaylen Warren gives you a 59% chance to win vs 58% with Rhamondre Stevenson.",
+     "title": "Toss-up at FLEX: Jaylen Warren or Saquon Barkley",
+     "detail": "Jaylen Warren 13.3 vs Saquon Barkley 13.2. Matchups: Jaylen Warren vs #15, Saquon Barkley vs #32 (32 = easiest).",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Colston Loveland + Zay Flowers for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +6.2%. Would you do Colston Loveland and Zay Flowers for Trey McBride? I think it bumps your lineup about 5.2 pts a week, and Loveland slides right into your TE spot.",
+     "detail": "Title odds +6.1%. Would you do Colston Loveland and Zay Flowers for Trey McBride? I think it bumps your lineup about 5.2 pts a week, and Loveland slides right into your TE spot.",
      "tab": "trades"
     }
    ]
