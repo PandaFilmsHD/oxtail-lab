@@ -1388,6 +1388,11 @@
    "at": "2026-11-26T14:55:41.081460+00:00",
    "ch": "RECEIPTS",
    "id": "1575525457376579806"
+  },
+  {
+   "at": "2026-11-26T15:53:15.708965+00:00",
+   "ch": "KALSHI",
+   "id": "1575539947278958704"
   }
  ],
  "parlay_days": {
@@ -1526,6 +1531,12 @@
    "day": "2026-11-22",
    "week": "11",
    "who": "George Kittle"
+  },
+  "KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-15|Yes": {
+   "at": "2026-11-26T15:53:15.411611+00:00",
+   "day": "2026-11-26",
+   "week": "12",
+   "who": "Isaac TeSlaa"
   },
   "KA|KXNFLRSHYDS-26NOV22MINSF-MINJMASON27-60|Yes": {
    "at": "2026-11-22T22:02:31.122926+00:00",
@@ -2109,6 +2120,16 @@
    "text": "Tony Pollard under 10 rec yds",
    "units": 1,
    "week": "11"
+  },
+  "KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-15|Yes": {
+   "at": "2026-11-26T15:53:15.411611+00:00",
+   "ch": "kalshi",
+   "cost": 54,
+   "fee": 1.7,
+   "kick": "2026-11-26T18:00:00Z",
+   "text": "Isaac TeSlaa 15+ rec yds",
+   "units": 1,
+   "week": "12"
   },
   "KA|KXNFLRSHYDS-26NOV19INDHOU-HOUCSTROUD7-15|Yes": {
    "actual": 27,
