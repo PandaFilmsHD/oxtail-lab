@@ -252,6 +252,11 @@
    "at": "2026-11-26T05:13:32.864102+00:00",
    "n": 12,
    "sha256": "1f254872699f3cce1da2e65a48b55c2bdd38169deac869018a4c7ded5427777c"
+  },
+  {
+   "at": "2026-11-26T06:42:18.316615+00:00",
+   "n": 3,
+   "sha256": "b72c226eada9ca31b660e783f33ae5ffe288c6b622ef1973b907e305860d11b4"
   }
  ],
  "kal_best": [
@@ -1318,6 +1323,11 @@
    "at": "2026-11-26T06:13:18.119946+00:00",
    "ch": "RESULTS",
    "id": "1575393995927064627"
+  },
+  {
+   "at": "2026-11-26T06:42:18.567135+00:00",
+   "ch": "RECEIPTS",
+   "id": "1575401295546945568"
   }
  ],
  "parlay_days": {
@@ -2416,7 +2426,7 @@
   "2026-11-23": 1,
   "2026-11-24": 0
  },
- "receipt_at": "2026-11-26T05:13:32.864102+00:00",
+ "receipt_at": "2026-11-26T06:42:18.316615+00:00",
  "receipted": [
   "Anthony Gould|Rec yds",
   "Anthony Richardson|Rush yds",
@@ -2427,6 +2437,7 @@
   "Darius Cooper|Catches",
   "Deion Burks|Catches",
   "Denzel Boston|Catches",
+  "Emmett Johnson|Catches",
   "Fernando Mendoza|Pass yds",
   "Germie Bernard|Catches",
   "G|BUF|tot|Under",
@@ -2575,6 +2586,7 @@
   "KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-20|Yes",
   "KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-25|Yes",
   "KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-30|Yes",
+  "KA|KXNFLRSHYDS-26NOV26KCBUF-BUFJCOOK4-110|Yes",
   "KA|KXNFLRSHYDS-26NOV26KCBUF-BUFJCOOK4-120|Yes",
   "KA|KXNFLRSHYDS-26NOV26KCBUF-KCJOTT34-15|Yes",
   "KA|KXNFLRSHYDS-26NOV26KCBUF-KCPMAHOMES15-20|Yes",
@@ -2675,6 +2687,7 @@
   "Rome Odunze|Rec yds",
   "Tai Felton|Catches",
   "Ted Hurst III|Rec yds",
+  "Travis Kelce|Catches",
   "Trevor Lawrence|Pass yds",
   "Tyler Shough|Pass yds",
   "Woody Marks|Rush yds",
