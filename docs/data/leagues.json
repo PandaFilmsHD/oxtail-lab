@@ -5,8 +5,8 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-26T01:02:08Z",
-   "champ_pct": 15.6,
+   "at": "2026-11-26T01:30:31Z",
+   "champ_pct": 15.8,
    "todo": [
     {
      "urgent": true,
@@ -19,7 +19,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.5%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +1.9%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -36,11 +36,11 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T01:02:25Z",
-   "champ_pct": 11.5,
+   "at": "2026-11-26T01:30:47Z",
+   "champ_pct": 11.6,
    "todo": [
     {
-     "urgent": false,
+     "urgent": true,
      "icon": "\ud83d\udd12",
      "title": "Set your lineup by Thu 5:20 PM PT",
      "detail": "Emmett Johnson plays first. Players lock when their game starts.",
@@ -74,14 +74,14 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T01:02:33Z",
+   "at": "2026-11-26T01:30:56Z",
    "champ_pct": 0.1,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
-     "detail": "Kyren Williams 15.0 vs Tony Pollard 14.6. Keeping Kyren Williams gives you a 64% chance to win vs 63% with Tony Pollard.",
+     "detail": "Kyren Williams 15.1 vs Tony Pollard 14.7. Keeping Kyren Williams gives you a 64% chance to win vs 63% with Tony Pollard.",
      "tab": "home"
     },
     {
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T01:02:17Z",
-   "champ_pct": 22.5,
+   "at": "2026-11-26T01:30:39Z",
+   "champ_pct": 22.9,
    "todo": [
     {
      "urgent": true,
