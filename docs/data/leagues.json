@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-26T22:23:41Z",
+   "at": "2026-11-26T22:29:59Z",
    "champ_pct": 16.8,
    "todo": [
     {
@@ -29,8 +29,8 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T22:24:04Z",
-   "champ_pct": 11.9,
+   "at": "2026-11-26T22:30:23Z",
+   "champ_pct": 11.8,
    "todo": [
     {
      "urgent": true,
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T22:24:14Z",
+   "at": "2026-11-26T22:30:35Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T22:23:53Z",
-   "champ_pct": 21.5,
+   "at": "2026-11-26T22:30:11Z",
+   "champ_pct": 21.4,
    "todo": [
     {
      "urgent": false,
@@ -112,7 +112,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.5%.",
+     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.0%.",
      "tab": "waivers"
     },
     {
@@ -126,7 +126,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Christian McCaffrey for Dak Prescott + Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +7.5%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "detail": "Title odds +7.8%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
      "tab": "trades"
     }
    ]
