@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-26T03:41:22Z",
+   "at": "2026-11-26T04:10:46Z",
    "champ_pct": 15.8,
    "todo": [
     {
@@ -19,7 +19,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.0%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -36,7 +36,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T03:41:44Z",
+   "at": "2026-11-26T04:11:05Z",
    "champ_pct": 11.7,
    "todo": [
     {
@@ -74,14 +74,14 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T03:41:54Z",
+   "at": "2026-11-26T04:11:15Z",
    "champ_pct": 0.1,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
-     "detail": "Kyren Williams 15.0 vs Tony Pollard 14.7. Keeping Kyren Williams gives you a 64% chance to win vs 64% with Tony Pollard.",
+     "detail": "Kyren Williams 14.8 vs Tony Pollard 14.7. Tony Pollard has the higher ceiling (23.9 vs 19.6). Go with him if you need a big week.",
      "tab": "home"
     },
     {
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T03:41:33Z",
-   "champ_pct": 22.7,
+   "at": "2026-11-26T04:10:56Z",
+   "champ_pct": 22.6,
    "todo": [
     {
      "urgent": true,
@@ -119,14 +119,14 @@
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Jaylen Warren or Saquon Barkley",
-     "detail": "Jaylen Warren 13.4 vs Saquon Barkley 13.2. Matchups: Jaylen Warren vs #15, Saquon Barkley vs #32 (32 = easiest).",
+     "detail": "Jaylen Warren 13.4 vs Saquon Barkley 13.3. Matchups: Jaylen Warren vs #15, Saquon Barkley vs #32 (32 = easiest).",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
-     "title": "Offer Colston Loveland + Zay Flowers for Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +6.0%. Would you do Colston Loveland and Zay Flowers for Trey McBride? I think it bumps your lineup about 5.2 pts a week, and Loveland slides right into your TE spot.",
+     "title": "Offer Colston Loveland + Saquon Barkley for Trey McBride (Tyler's Talented Team)",
+     "detail": "Title odds +7.8%. Would you do Colston Loveland and Saquon Barkley for Trey McBride? I think it bumps your lineup about 4.1 pts a week, and Loveland slides right into your TE spot.",
      "tab": "trades"
     }
    ]
