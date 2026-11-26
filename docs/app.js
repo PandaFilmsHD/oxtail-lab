@@ -160,8 +160,7 @@ function renderLive() {
     h('div', { class: 'lhead' }, L.final ? h('span', { class: 'lst done big' }, won ? '🏆 YOU WON' : 'FINAL') : h('span', { class: 'lst live big' }, '● LIVE'), h('span', { class: 'mut' }, `Week ${L.week}`)),
     h('div', { class: 'lscore' }, me, h('div', { class: 'lvs' }, 'vs'), op),
     h('div', { class: 'lwin' }, h('span', {}, 'Chance you win'), h('b', { class: 'lwp' }, '0%')), bar,
-    h('div', { class: 'k', style: 'margin:6px 0 2px;text-align:center' }, L.final ? '' : `${live_n} playing now · ${pre_n} still to play${upd != null ? ` · updated ${upd} min ago` : ''}`),
-    table));
+    h('div', { class: 'k', style: 'margin:6px 0 2px;text-align:center' }, L.final ? '' : `${live_n} playing now · ${pre_n} still to play${upd != null ? ` · updated ${upd} min ago` : ''}`)));
   countUp($('.lpts', me), L.me.pts, v => v.toFixed(1)); countUp($('.lpts', op), L.opp.pts, v => v.toFixed(1)); countUp($('.lwp', box), L.win_pct);
   requestAnimationFrame(() => requestAnimationFrame(() => { $('i', bar).style.width = L.win_pct + '%'; }));
   const k_ = `won:${LID}:${L.week}`;
