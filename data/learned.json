@@ -1,5 +1,5 @@
 {
- "at": "2026-11-26T05:13:32+00:00",
+ "at": "2026-11-26T05:42:04+00:00",
  "buckets": {
   "GL|tot": {
    "evidence": 0.011,
@@ -307,6 +307,15 @@
    "said_pct": 37.0,
    "u": 2.7
   },
+  "LV|ml|Yes|50-75c": {
+   "evidence": 0.014,
+   "hit_pct": 100.0,
+   "k": 1.039,
+   "n": 1,
+   "price_pct": 55.0,
+   "said_pct": 66.7,
+   "u": 0.75
+  },
   "LV|pass_yds|No|25-50c": {
    "evidence": 0.044,
    "hit_pct": 50.0,
@@ -398,22 +407,22 @@
    "u": -1.0
   },
   "LV|spread|Yes|25-50c": {
-   "evidence": 0.023,
-   "hit_pct": 50.0,
-   "k": 1.002,
-   "n": 2,
-   "price_pct": 38.5,
+   "evidence": 0.037,
+   "hit_pct": 66.7,
+   "k": 1.06,
+   "n": 3,
+   "price_pct": 38.0,
    "said_pct": 49.0,
-   "u": 0.33
+   "u": 1.89
   },
   "LV|total|No|25-50c": {
-   "evidence": 0.011,
+   "evidence": 0.023,
    "hit_pct": 100.0,
-   "k": 1.045,
-   "n": 1,
-   "price_pct": 47.0,
-   "said_pct": 57.7,
-   "u": 1.04
+   "k": 1.097,
+   "n": 2,
+   "price_pct": 44.0,
+   "said_pct": 54.9,
+   "u": 2.37
   },
   "LV|total|Yes|25-50c": {
    "evidence": 0.012,
