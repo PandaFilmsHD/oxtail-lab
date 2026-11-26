@@ -1330,5 +1330,40 @@
    58.6
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLRECYDS-26NOV26CHIDET-CHIKRAYMOND14-25",
+  "side": "No",
+  "label": "Kalif Raymond under 25 rec yds",
+  "stat": "rec_yds",
+  "strike": 24.5,
+  "cost": 26,
+  "fee": 2.0,
+  "p": 41.7,
+  "edge": 15.7,
+  "ev": 48.8,
+  "at": "2026-11-26T19:37:59+00:00",
+  "date": "2026-11-26",
+  "q": 2,
+  "clock": "0:00",
+  "score": "CHI 10, DET 19",
+  "game": "CHI @ DET",
+  "home": "DET",
+  "away": "CHI",
+  "week": 12,
+  "how": "\ud83e\uddee Halftime re-sim: the rest of the game from CHI 10, DET 19 (model trained on 10 seasons of play-by-play)",
+  "player": "Kalif Raymond",
+  "team": "CHI",
+  "had": 17.0,
+  "proj_full": 31.9,
+  "proj_left": 20.4,
+  "line": 25,
+  "need": 7.5,
+  "range": [
+   0.0,
+   11.9,
+   30.5
+  ],
+  "posted": false
  }
 ]
