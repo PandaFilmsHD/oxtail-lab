@@ -407,6 +407,16 @@
   "11|KA|KXNFLTOTAL-26NOV22NOCHI-47|Yes",
   "11|KA|KXNFLTOTAL-26NOV23CINWAS-53|Yes",
   "11|KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes",
+  "12|KA|KXNFLPASSTDS-26NOV25GBLAR-LARMSTAFFORD9-1|Yes",
+  "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARDALLEN87-30|Yes",
+  "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARKWILLIAMS23-50|No",
+  "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARKWILLIAMS23-60|No",
+  "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARXSMITH19-10|No",
+  "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARXSMITH19-15|No",
+  "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARXSMITH19-20|No",
+  "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARXSMITH19-25|No",
+  "12|KA|KXNFLRSHYDS-26NOV25GBLAR-GBCBROOKS30-15|Yes",
+  "12|KA|KXNFLRSHYDS-26NOV25GBLAR-GBCBROOKS30-20|Yes",
   "12|KA|KXNFLTOTAL-26NOV25GBLAR-46|Yes"
  ],
  "kal_shown": [
@@ -601,6 +611,18 @@
    "u": -1,
    "win": false
   },
+  "KXNFLPASSYDS-26NOV25GBLAR-GBJLOVE10-325|Yes": {
+   "actual": 198,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLPASSYDS-26NOV25GBLAR-LARMSTAFFORD9-200|No": {
+   "actual": 140,
+   "kind": "player",
+   "u": 1.273,
+   "win": true
+  },
   "KXNFLREC-26NOV22MINSF-MINJJEFFERSON18-7|No": {
    "actual": 7,
    "kind": "player",
@@ -619,6 +641,12 @@
    "u": -1,
    "win": false
   },
+  "KXNFLREC-26NOV25GBLAR-LARKWILLIAMS23-6|No": {
+   "actual": 4,
+   "kind": "player",
+   "u": 1.381,
+   "win": true
+  },
   "KXNFLRECYDS-26NOV22MINSF-MINJJEFFERSON18-60|No": {
    "actual": 86,
    "kind": "player",
@@ -636,6 +664,12 @@
    "kind": "player",
    "u": -1,
    "win": false
+  },
+  "KXNFLRECYDS-26NOV25GBLAR-LARKWILLIAMS23-20|No": {
+   "actual": 19,
+   "kind": "player",
+   "u": 6.143,
+   "win": true
   },
   "KXNFLRSHYDS-26NOV22MINSF-MINAJONES33-30|No": {
    "actual": 30,
@@ -669,6 +703,30 @@
   },
   "KXNFLRSHYDS-26NOV23CINWAS-WASJDANIELS5-40|No": {
    "actual": 55,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV25GBLAR-GBCBROOKS30-5|Yes": {
+   "actual": 4,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV25GBLAR-GBMLLOYD32-20|Yes": {
+   "actual": 10,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV25GBLAR-LARBCORUM24-50|No": {
+   "actual": 184,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV25GBLAR-LARKWILLIAMS23-25|No": {
+   "actual": 46,
    "kind": "player",
    "u": -1,
    "win": false
@@ -711,9 +769,9 @@
   }
  },
  "live_rec": {
-  "l": 11,
-  "u": 14.906,
-  "w": 12
+  "l": 16,
+  "u": 18.703,
+  "w": 15
  },
  "msgs": [
   {
@@ -1245,6 +1303,21 @@
    "at": "2026-11-26T05:13:34.952530+00:00",
    "ch": "RESULTS",
    "id": "1575378966909296713"
+  },
+  {
+   "at": "2026-11-26T06:13:16.305818+00:00",
+   "ch": "RESULTS",
+   "id": "1575393988339302441"
+  },
+  {
+   "at": "2026-11-26T06:13:17.288992+00:00",
+   "ch": "RESULTS",
+   "id": "1575393992441466942"
+  },
+  {
+   "at": "2026-11-26T06:13:18.119946+00:00",
+   "ch": "RESULTS",
+   "id": "1575393995927064627"
   }
  ],
  "parlay_days": {
@@ -2634,6 +2707,7 @@
   "2026-11-22T21:05:00Z": "2026-11-23T01:06:23.271484+00:00",
   "2026-11-22T21:25:00Z": "2026-11-23T03:10:05.355737+00:00",
   "2026-11-23T01:20:00Z": "2026-11-23T06:09:09.187062+00:00",
-  "2026-11-24T01:15:00Z": "2026-11-24T06:08:22.391208+00:00"
+  "2026-11-24T01:15:00Z": "2026-11-24T06:08:22.391208+00:00",
+  "2026-11-26T01:00:00Z": "2026-11-26T06:13:16.065743+00:00"
  }
 }
