@@ -126,24 +126,55 @@ function stateChip(r) {
   if (r.state === 'bye') return h('span', { class: 'lst bye' }, 'BYE');
   return h('span', { class: 'lst pre' }, r.kick ? new Date(r.kick).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '');
 }
+const SLOT_LBL = { 0: 'QB', 2: 'RB', 3: 'RB/WR', 4: 'WR', 5: 'WR/TE', 6: 'TE', 7: 'OP', 16: 'D/ST', 17: 'K', 23: 'FLEX' };
+const SLOT_ORD = [0, 2, 3, 4, 5, 6, 7, 23, 16, 17];
+function gChip(r) {
+  if (r.state === 'bye') return h('span', { class: 'lst bye' }, 'BYE');
+  if (r.state === 'live') return h('span', { class: 'lst live' }, r.game || 'LIVE');
+  if (r.state === 'done') return h('span', { class: 'lst done' }, 'FINAL');
+  return h('span', { class: 'lst pre' }, r.kick ? new Date(r.kick).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '');
+}
 function renderLive() {
   const L = D.live, box = $('#livebox');
   if (!L || !(L.active || L.final)) { box.replaceChildren(); return; }
-  const side = (x, cls) => h('div', { class: 'lside ' + cls }, h('div', { class: 'lname' }, x.name), h('div', { class: 'lpts', 'data-v': x.pts }, '0.0'), h('div', { class: 'lleft' }, L.final ? 'final' : `${f1(x.left)} still to come`));
+  const fin = x => x.pts + (L.final ? 0 : x.left);
+  const side = (x, cls) => h('div', { class: 'lside ' + cls }, h('div', { class: 'lname' }, cls === 'me' ? 'YOU' : x.name),
+    h('div', { class: 'lpts', 'data-v': x.pts }, '0.0'), h('div', { class: 'lleft' }, L.final ? 'final' : `proj ${f1(fin(x))}`));
   const me = side(L.me, 'me'), op = side(L.opp, 'op');
   const bar = h('div', { class: 'lbar' }, h('i', { style: 'width:50%' }));
-  const rows = x => h('div', { class: 'lrows' }, x.rows.map(r => h('div', { class: 'lrow st-' + r.state }, h('span', { class: 'mut lpos' }, r.pos), h('span', { class: 'lpl' }, plS(r.player)), stateChip(r), h('b', { class: 'lp' }, f1(r.pts)))));
-  const det = h('details', { class: 'ldet' }, h('summary', {}, 'Player by player'), h('div', { class: 'grid2', style: 'gap:10px;margin-top:8px' }, h('div', {}, h('div', { class: 'k' }, 'YOU'), rows(L.me)), h('div', {}, h('div', { class: 'k' }, L.opp.name.toUpperCase()), rows(L.opp))));
+  // pair the two lineups slot by slot, like ESPN
+  const bySlot = rs => { const m = {}; rs.forEach(r => (m[r.slot] = m[r.slot] || []).push(r)); return m; };
+  const A = bySlot(L.me.rows), B = bySlot(L.opp.rows), pairs = [];
+  const slots = [...new Set([...SLOT_ORD, ...Object.keys(A).map(Number), ...Object.keys(B).map(Number)])].filter(x => A[x] || B[x]);
+  slots.forEach(sl => { const n = Math.max((A[sl] || []).length, (B[sl] || []).length); for (let i = 0; i < n; i++) pairs.push([sl, (A[sl] || [])[i], (B[sl] || [])[i]]); });
+  const cell = (r, right) => r ? h('div', { class: 'mcell' + (right ? ' r' : '') + ' st-' + r.state },
+      h('div', { class: 'mtop' }, h('span', { class: 'mname' }, plS(r.player)), h('b', { class: 'mpts' }, f1(r.pts))),
+      h('div', { class: 'mbot' }, h('span', { class: 'k' }, `${r.nfl}${r.opp ? ' vs ' + r.opp : ''}`), gChip(r), h('span', { class: 'k' }, r.state === 'done' ? '' : `proj ${f1(r.pts + r.left)}`)))
+    : h('div', { class: 'mcell empty' + (right ? ' r' : '') }, '—');
+  const table = h('div', { class: 'mtable' }, ...pairs.map(([sl, a, b_]) => h('div', { class: 'mrow' + (a && b_ && a.pts > b_.pts ? ' lead' : a && b_ && b_.pts > a.pts ? ' trail' : '') },
+    cell(a, false), h('div', { class: 'mslot' }, SLOT_LBL[sl] || ''), cell(b_, true))));
   const won = L.final && L.me.pts > L.opp.pts;
+  const live_n = [...L.me.rows, ...L.opp.rows].filter(r => r.state === 'live').length, pre_n = [...L.me.rows, ...L.opp.rows].filter(r => r.state === 'pre').length;
+  const upd = D.summary && D.summary.at ? Math.max(0, Math.round((Date.now() - new Date(D.summary.at)) / 60000)) : null;
   box.replaceChildren(h('div', { class: 'box livecard' + (L.final ? ' fin' : '') },
     h('div', { class: 'lhead' }, L.final ? h('span', { class: 'lst done big' }, won ? '🏆 YOU WON' : 'FINAL') : h('span', { class: 'lst live big' }, '● LIVE'), h('span', { class: 'mut' }, `Week ${L.week}`)),
     h('div', { class: 'lscore' }, me, h('div', { class: 'lvs' }, 'vs'), op),
-    h('div', { class: 'lwin' }, h('span', {}, 'Chance you win'), h('b', { class: 'lwp' }, '0%')), bar, det));
+    h('div', { class: 'lwin' }, h('span', {}, 'Chance you win'), h('b', { class: 'lwp' }, '0%')), bar,
+    h('div', { class: 'k', style: 'margin:6px 0 2px;text-align:center' }, L.final ? '' : `${live_n} playing now · ${pre_n} still to play${upd != null ? ` · updated ${upd} min ago` : ''}`),
+    table));
   countUp($('.lpts', me), L.me.pts, v => v.toFixed(1)); countUp($('.lpts', op), L.opp.pts, v => v.toFixed(1)); countUp($('.lwp', box), L.win_pct);
   requestAnimationFrame(() => requestAnimationFrame(() => { $('i', bar).style.width = L.win_pct + '%'; }));
   const k_ = `won:${LID}:${L.week}`;
   if (won && !LSG(k_)) { LSS(k_, '1'); setTimeout(() => confetti(140), 600); }
 }
+// while a game is on, quietly re-check for new numbers every minute
+setInterval(async () => {
+  try {
+    if (document.hidden || !D || !D.live || !D.live.active) return;
+    const nd = await fetch(BASE + 'latest.json?v=' + Date.now()).then(r => r.json());
+    if (nd.summary && D.summary && nd.summary.at !== D.summary.at) { D = nd; renderLive(); }
+  } catch (e) {}
+}, 60000);
 function muPairs() {
   const tw = D.summary.this_week, o = tw.opp_id != null && D.teams ? D.teams[String(tw.opp_id)] : null;
   if (!o || !o.this_week) return null;

@@ -604,3 +604,17 @@ body.loading #home .box:after{content:"";position:absolute;inset:0;background:li
 .tag.lost{background:#ff5a6e22;color:#ff6b7d;border:2px solid #ff5a6e66}
 .kseg{display:flex;flex-wrap:wrap;margin:0 0 8px;width:fit-content;max-width:100%}.kseg button{padding:5px 10px;font-size:13px}
 .kbet .ll b{font-size:14px}.kbet .k{margin-top:2px;font-size:11.5px}.kbet{align-items:center}
+
+.mtable{display:grid;gap:5px;margin-top:10px}
+.mrow{display:grid;grid-template-columns:1fr 46px 1fr;gap:6px;align-items:stretch}
+.mslot{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#8a8fb8;letter-spacing:.5px}
+.mcell{background:#0f1138;border-radius:10px;padding:7px 9px;min-width:0}
+.mcell.r{text-align:right}.mcell.empty{color:#5a5f8a;display:flex;align-items:center;justify-content:center}
+.mcell.st-live{box-shadow:inset 3px 0 #3ddc84}.mcell.r.st-live{box-shadow:inset -3px 0 #3ddc84}
+.mtop{display:flex;justify-content:space-between;gap:6px;align-items:baseline}.mcell.r .mtop{flex-direction:row-reverse}
+.mname{font-weight:800;font-size:13px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mpts{font-family:'Lilita One',sans-serif;font-size:20px;color:#fff}
+.mbot{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px;font-size:11px}.mcell.r .mbot{justify-content:flex-end}
+.mbot .lst{font-size:10px;padding:1px 6px}
+.mrow.lead .mcell:first-child .mpts{color:#ffc83d}.mrow.trail .mcell.r .mpts{color:#ffc83d}
+.mcell.st-bye{opacity:.55}

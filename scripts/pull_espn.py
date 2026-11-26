@@ -57,6 +57,23 @@ def pro_schedule():
     return games, abbr
 
 
+def nfl_now():
+    """ESPN's live scoreboard: for every team playing this week, kickoff, status, quarter and clock."""
+    out = {}
+    try:
+        j = requests.get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", timeout=20).json()
+        for e in j.get("events", []):
+            c = e["competitions"][0]; st = c["status"]; tp = st["type"]
+            sc = {t["team"]["abbreviation"]: t.get("score") for t in c["competitors"]}
+            for t in c["competitors"]:
+                ab = t["team"]["abbreviation"]; opp = [x for x in sc if x != ab][0]
+                out[ab] = {"kick": e["date"], "state": tp.get("state"), "period": st.get("period"), "clock": st.get("clock"),
+                           "detail": tp.get("shortDetail"), "home": t.get("homeAway") == "home", "opp": opp, "score": f"{sc.get(ab)}-{sc.get(opp)}"}
+    except Exception as ex:
+        print("  nfl_now skipped:", type(ex).__name__)
+    return out
+
+
 def discover():
     """Every ESPN football league on this account for this season: {league_id: {name, team_id}}."""
     out = {}
@@ -339,7 +356,7 @@ def pull_league(LEAGUE, games, abbr, want_team=None):
     except Exception as e:
         print(f"  fantasycalc: skipped ({e})")
     model = {"my_team": me, "league_name": settings.get("name"), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "season": SEASON, "league_id": LEAGUE, "cur": cur,
-             "reg_end": reg_end, "po_teams": po_teams, "settings": settings, "teams": teams, "sched": sched, "sched_past": sched_past, "live": live, "games": games, "rank": rank, "players": players}
+             "reg_end": reg_end, "po_teams": po_teams, "settings": settings, "teams": teams, "sched": sched, "sched_past": sched_past, "live": live, "games": games, "rank": rank, "players": players, "nfl_now": nfl_now()}
     out = ROOT / "data" / str(LEAGUE) / "model.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists():

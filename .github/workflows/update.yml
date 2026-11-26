@@ -103,6 +103,8 @@ jobs:
           D=$(date -u +%u); H=$((10#$(date -u +%H)))
           # game windows (UTC): Sun 16-23, Mon/Tue/Fri 0-5 (Sun/Mon/Thu night games) -> every 10 min, else every 30
           if { [ "$D" = 7 ] && [ $H -ge 16 ]; } || { [[ "$D" =~ ^(1|2|5)$ ]] && [ $H -le 5 ]; }; then WAIT=7; else WAIT=25; fi
+          # any NFL game live right now (Thanksgiving, Saturdays, Christmas...) -> every 10 min too
+          if curl -s --max-time 15 "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard" | grep -q '"state":"in"'; then WAIT=7; fi
           echo "next run in about $WAIT min"
           sleep $((WAIT * 60))
           newest=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/update.yml/runs?per_page=1" --jq '.workflow_runs[0].id')

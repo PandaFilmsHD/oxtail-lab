@@ -1893,7 +1893,19 @@ try:
             nfl = P[n]["nfl"] if n else None
             k_ = _kick.get(nfl)
             proj = ev(n, CUR) if n else 0.0
-            if not k_:
+            g_ = (M.get("nfl_now") or {}).get(nfl) or (M.get("nfl_now") or {}).get({"WAS": "WSH", "LA": "LAR"}.get(nfl or "", ""))
+            gdet = None
+            if g_:   # ESPN's real game status beats guessing from the kickoff time
+                k_ = g_.get("kick") or k_
+                gdet = g_.get("detail")
+                if g_["state"] == "pre":
+                    state, frac = "pre", 1.0
+                elif g_["state"] == "in":
+                    per, clk = int(g_.get("period") or 1), float(g_.get("clock") or 0)
+                    state, frac = "live", max(0.0, ((4 - per) * 900 + clk) / 3600) if per <= 4 else 0.02
+                else:
+                    state, frac = "done", 0.0
+            elif not k_:
                 state, frac = ("done" if played else "bye"), 0.0
             else:
                 el = (_nowl - _dtl.datetime.fromisoformat(k_.replace("Z", "+00:00"))).total_seconds() / 3600
@@ -1902,7 +1914,8 @@ try:
             n_pre += state == "pre"; n_live += state == "live"
             left = proj * frac
             have += pts; rem += left; var += (p_sd(n, proj) ** 2 * frac) if n and proj > 0 else 0
-            rows.append({"pid": pid, "player": n or f"#{pid}", "pos": P[n]["pos"] if n else "", "nfl": nfl or "", "pts": round(pts, 1), "proj": r1(proj), "left": r1(left), "state": state, "kick": k_})
+            rows.append({"pid": pid, "player": n or f"#{pid}", "pos": P[n]["pos"] if n else "", "nfl": nfl or "", "pts": round(pts, 1), "proj": r1(proj), "left": r1(left), "state": state, "kick": k_,
+                         "slot": sid, "game": gdet, "opp": (g_ or {}).get("opp")})
         return {"pts": round(d_.get("pts") or have, 1), "left": r1(rem), "var": var, "rows": rows, "pre": n_pre, "live": n_live}
     if my_game and LV and str(ME) in LV and str(o) in LV:
         a_, b_ = side_live(ME), side_live(o)
