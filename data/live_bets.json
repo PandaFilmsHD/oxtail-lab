@@ -1435,5 +1435,31 @@
    30.2
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLSPREAD-26NOV26PHIDAL-DAL11",
+  "side": "Yes",
+  "label": "DAL by 11+",
+  "stat": "spread",
+  "strike": 10.5,
+  "cost": 50,
+  "fee": 2.0,
+  "p": 60.9,
+  "edge": 10.9,
+  "ev": 17.0,
+  "at": "2026-11-26T22:16:26+00:00",
+  "date": "2026-11-26",
+  "q": 1,
+  "clock": "5:16",
+  "score": "PHI 0, DAL 7",
+  "game": "PHI @ DAL",
+  "home": "DAL",
+  "away": "PHI",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": "DAL",
+  "posted": true,
+  "msg": "1575636377369051338"
  }
 ]
