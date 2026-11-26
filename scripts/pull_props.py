@@ -36,10 +36,11 @@ def main():
         age = (now - datetime.datetime.fromisoformat(old["at"])).total_seconds() / 86400
         if age < 6:   # one full pull a week (about 85 credits) keeps us inside 500 a month
             print(f"props: have week {cur} from {age:.1f} days ago, skipping"); return
-    if not have_raw and (now.weekday() in (0, 1, 2) or (now.weekday() == 3 and now.hour < 15)):
-        print("props: props for the new week aren't fully posted until Thursday, skipping"); return
-    ev = requests.get(f"{API}/events", params={"apiKey": KEY}, timeout=30)
+    ev = requests.get(f"{API}/events", params={"apiKey": KEY}, timeout=30)   # the events list is free
     ev.raise_for_status()
+    soon = any(0 < (datetime.datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")) - now).total_seconds() < 26 * 3600 for e in ev.json())
+    if not have_raw and not soon and (now.weekday() in (0, 1, 2) or (now.weekday() == 3 and now.hour < 15)):
+        print("props: props for the new week aren't fully posted until Thursday, skipping"); return
     if int(ev.headers.get("x-requests-remaining") or 999) < 100:
         print("props: under 100 credits left this month, skipping"); return
     events = [e for e in ev.json() if 0 < (datetime.datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")) - now).total_seconds() < 7 * 86400]
