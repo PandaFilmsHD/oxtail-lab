@@ -5,14 +5,14 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-26T19:13:15Z",
+   "at": "2026-11-26T19:42:31Z",
    "champ_pct": 15.5,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +1.9%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +1.8%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T19:13:33Z",
+   "at": "2026-11-26T19:42:52Z",
    "champ_pct": 12.0,
    "todo": [
     {
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T19:13:42Z",
+   "at": "2026-11-26T19:43:03Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -81,7 +81,7 @@
      "urgent": false,
      "icon": "\ud83e\udd14",
      "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
-     "detail": "Kyren Williams 15.0 vs Tony Pollard 14.8. Keeping Kyren Williams gives you a 62% chance to win vs 62% with Tony Pollard.",
+     "detail": "Kyren Williams 15.0 vs Tony Pollard 14.8. Keeping Kyren Williams gives you a 63% chance to win vs 62% with Tony Pollard.",
      "tab": "home"
     },
     {
@@ -98,16 +98,9 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T19:13:24Z",
+   "at": "2026-11-26T19:42:42Z",
    "champ_pct": 22.1,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Colston Loveland",
-     "detail": "QUESTIONABLE \u2192 OUT. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -119,15 +112,22 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +2.1%.",
+     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +2.0%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Jaylen Warren or Saquon Barkley",
-     "detail": "Jaylen Warren 13.3 vs Saquon Barkley 13.3. Matchups: Jaylen Warren vs #15, Saquon Barkley vs #32 (32 = easiest).",
+     "title": "Toss-up at FLEX: Saquon Barkley or Jaylen Warren",
+     "detail": "Saquon Barkley 13.3 vs Jaylen Warren 13.3. Jaylen Warren has the higher ceiling (20.6 vs 12.4). Go with him if you need a big week.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Luther Burden III + Christian McCaffrey for Parker Washington + Dak Prescott (Tyler's Talented Team)",
+     "detail": "Title odds +1.6%. Would you do Luther Burden III and Christian McCaffrey for Parker Washington and Dak Prescott? I think it bumps your lineup about 1.8 pts a week, and Burden slides right into your WR spot.",
+     "tab": "trades"
     }
    ]
   }
