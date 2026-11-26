@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-26T21:58:53Z",
+   "at": "2026-11-26T22:10:00Z",
    "champ_pct": 16.7,
    "todo": [
     {
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T21:59:11Z",
+   "at": "2026-11-26T22:10:19Z",
    "champ_pct": 11.9,
    "todo": [
     {
@@ -67,16 +67,9 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T21:59:20Z",
+   "at": "2026-11-26T22:10:31Z",
    "champ_pct": 0.1,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Colston Loveland",
-     "detail": "OUT \u2192 QUESTIONABLE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -105,23 +98,9 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-26T21:59:02Z",
-   "champ_pct": 22.1,
+   "at": "2026-11-26T22:10:10Z",
+   "champ_pct": 21.4,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Zay Flowers",
-     "detail": "QUESTIONABLE \u2192 ACTIVE. Recheck your lineup.",
-     "tab": "home"
-    },
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Colston Loveland",
-     "detail": "OUT \u2192 QUESTIONABLE. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -133,8 +112,22 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.6%.",
+     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.7%.",
      "tab": "waivers"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at FLEX: Luther Burden III or Jaylen Warren",
+     "detail": "Luther Burden III 13.4 vs Jaylen Warren 13.3. ",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Christian McCaffrey for Dak Prescott + Trey McBride (Tyler's Talented Team)",
+     "detail": "Title odds +7.2%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "tab": "trades"
     }
    ]
   }

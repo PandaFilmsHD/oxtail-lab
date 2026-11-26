@@ -480,6 +480,8 @@
   "11|KA|KXNFLTOTAL-26NOV23CINWAS-53|Yes",
   "11|KA|KXNFLTOTAL-26NOV23CINWAS-54|Yes",
   "12|KA|KXNFLPASSTDS-26NOV25GBLAR-LARMSTAFFORD9-1|Yes",
+  "12|KA|KXNFLREC-26NOV26CHIDET-CHICLOVELAND84-6|Yes",
+  "12|KA|KXNFLREC-26NOV26CHIDET-DETASTBROWN14-10|Yes",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARDALLEN87-30|Yes",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARKWILLIAMS23-50|No",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARKWILLIAMS23-60|No",
@@ -487,8 +489,15 @@
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARXSMITH19-15|No",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARXSMITH19-20|No",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARXSMITH19-25|No",
+  "12|KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-10|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-15|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-60|No",
+  "12|KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-70|No",
   "12|KA|KXNFLRSHYDS-26NOV25GBLAR-GBCBROOKS30-15|Yes",
   "12|KA|KXNFLRSHYDS-26NOV25GBLAR-GBCBROOKS30-20|Yes",
+  "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETJGIBBS0-70|No",
+  "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-25|Yes",
+  "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-30|Yes",
   "12|KA|KXNFLTOTAL-26NOV25GBLAR-46|Yes"
  ],
  "kal_shown": [
@@ -677,6 +686,12 @@
    "u": 0.754,
    "win": true
   },
+  "KXNFLGAME-26NOV26CHIDET-DET|No": {
+   "actual": "39.0-35.0",
+   "kind": "game",
+   "u": 1.564,
+   "win": true
+  },
   "KXNFLPASSYDS-26NOV22MINSF-MINKCOUSINS8-250|No": {
    "actual": 235,
    "kind": "player",
@@ -755,6 +770,42 @@
    "u": 6.143,
    "win": true
   },
+  "KXNFLRECYDS-26NOV26CHIDET-CHICLOVELAND84-20|Yes": {
+   "actual": 5,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV26CHIDET-CHIKMONANGAI25-5|Yes": {
+   "actual": 14,
+   "kind": "player",
+   "u": 1.222,
+   "win": true
+  },
+  "KXNFLRECYDS-26NOV26CHIDET-CHIKRAYMOND14-25|No": {
+   "actual": 20,
+   "kind": "player",
+   "u": 2.571,
+   "win": true
+  },
+  "KXNFLRECYDS-26NOV26CHIDET-CHIRODUNZE15-60|No": {
+   "actual": 87,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV26CHIDET-DETBWRIGHT89-5|Yes": {
+   "actual": 0,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV26CHIDET-DETSVAKI33-5|Yes": {
+   "actual": -4,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLRSHYDS-26NOV22MINSF-MINAJONES33-30|No": {
    "actual": 30,
    "kind": "player",
@@ -815,6 +866,18 @@
    "u": -1,
    "win": false
   },
+  "KXNFLRSHYDS-26NOV26CHIDET-DETJGOFF16-5|Yes": {
+   "actual": 10,
+   "kind": "player",
+   "u": 1.703,
+   "win": true
+  },
+  "KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-30|Yes": {
+   "actual": 19,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLSPREAD-26NOV22MINSF-SF8|Yes": {
    "actual": "10.0-35.0",
    "kind": "game",
@@ -833,6 +896,12 @@
    "u": 1.564,
    "win": true
   },
+  "KXNFLSPREAD-26NOV26CHIDET-DET8|Yes": {
+   "actual": "39.0-35.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
+  },
   "KXNFLTOTAL-26NOV22MINSF-55|No": {
    "actual": "10.0-35.0",
    "kind": "game",
@@ -850,12 +919,18 @@
    "kind": "game",
    "u": 1.326,
    "win": true
+  },
+  "KXNFLTOTAL-26NOV26CHIDET-50|No": {
+   "actual": "39.0-35.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
   }
  },
  "live_rec": {
-  "l": 16,
-  "u": 18.703,
-  "w": 15
+  "l": 23,
+  "u": 18.763,
+  "w": 19
  },
  "msgs": [
   {
@@ -1517,6 +1592,21 @@
    "at": "2026-11-26T22:01:57.341045+00:00",
    "ch": "KALSHI",
    "id": "1575632732300648590"
+  },
+  {
+   "at": "2026-11-26T22:12:28.634886+00:00",
+   "ch": "RESULTS",
+   "id": "1575635380105908345"
+  },
+  {
+   "at": "2026-11-26T22:12:30.319213+00:00",
+   "ch": "RESULTS",
+   "id": "1575635387328766044"
+  },
+  {
+   "at": "2026-11-26T22:12:31.237796+00:00",
+   "ch": "RESULTS",
+   "id": "1575635390960762941"
   }
  ],
  "parlay_days": {
@@ -1649,10 +1739,11 @@
    "fair": -227,
    "legs": [
     {
+     "actual": 6,
      "kick": "2026-11-26T18:00:00Z",
      "label": "Rome Odunze Over 1.5 catches",
      "p": 83.4,
-     "res": null,
+     "res": true,
      "type": "prop"
     },
     {
@@ -3048,6 +3139,7 @@
   "2026-11-22T21:25:00Z": "2026-11-23T03:10:05.355737+00:00",
   "2026-11-23T01:20:00Z": "2026-11-23T06:09:09.187062+00:00",
   "2026-11-24T01:15:00Z": "2026-11-24T06:08:22.391208+00:00",
-  "2026-11-26T01:00:00Z": "2026-11-26T06:13:16.065743+00:00"
+  "2026-11-26T01:00:00Z": "2026-11-26T06:13:16.065743+00:00",
+  "2026-11-26T18:00:00Z": "2026-11-26T22:12:28.359586+00:00"
  }
 }
