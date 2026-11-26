@@ -841,5 +841,31 @@
   "team": null,
   "posted": true,
   "msg": "1575329828423340033"
+ },
+ {
+  "ticker": "KXNFLGAME-26NOV25GBLAR-LAR",
+  "side": "Yes",
+  "label": "LA to win",
+  "stat": "ml",
+  "strike": null,
+  "cost": 55,
+  "fee": 2.0,
+  "p": 66.7,
+  "edge": 11.7,
+  "ev": 17.0,
+  "at": "2026-11-26T02:24:54+00:00",
+  "date": "2026-11-25",
+  "q": 2,
+  "clock": "4:00",
+  "score": "GB 10, LA 13",
+  "game": "GB @ LAR",
+  "home": "LA",
+  "away": "GB",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": "LA",
+  "posted": true,
+  "msg": "1575336521152733386"
  }
 ]
