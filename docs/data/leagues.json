@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-27T02:24:56Z",
+   "at": "2026-11-27T02:35:17Z",
    "champ_pct": 16.6,
    "todo": [
     {
@@ -29,14 +29,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T02:25:14Z",
-   "champ_pct": 11.6,
+   "at": "2026-11-27T02:35:35Z",
+   "champ_pct": 11.7,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Jaxon Smith-Njigba might not play (69%)",
-     "detail": "If he's ruled out, start Rashee Rice (10.5).",
+     "detail": "If he's ruled out, start Rashee Rice (10.2).",
      "tab": "home"
     },
     {
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T02:25:22Z",
+   "at": "2026-11-27T02:35:44Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T02:25:05Z",
-   "champ_pct": 23.1,
+   "at": "2026-11-27T02:35:26Z",
+   "champ_pct": 23.8,
    "todo": [
     {
      "urgent": false,
@@ -112,21 +112,21 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.3 pts a week in your lineup the rest of the way, title odds +1.2%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.2%.",
      "tab": "waivers"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83e\udd14",
-     "title": "Toss-up at WR: DeVonta Smith or Luther Burden III",
-     "detail": "DeVonta Smith 13.4 vs Luther Burden III 13.3. ",
-     "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Christian McCaffrey for Dak Prescott + Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +8.6%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "detail": "Title odds +8.5%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "tab": "trades"
+    },
+    {
+     "urgent": false,
+     "icon": "\u23f3",
+     "title": "Trade deadline in 6 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
    ]
