@@ -2116,5 +2116,40 @@
    62.7
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLREC-26NOV26KCBUF-BUFDKINCAID86-3",
+  "side": "No",
+  "label": "Dalton Kincaid under 3 catches",
+  "stat": "rec",
+  "strike": 2.5,
+  "cost": 48,
+  "fee": 2.0,
+  "p": 73.4,
+  "edge": 25.4,
+  "ev": 46.9,
+  "at": "2026-11-27T03:45:20+00:00",
+  "date": "2026-11-26",
+  "q": 4,
+  "clock": "11:58",
+  "score": "KC 10, BUF 10",
+  "game": "KC @ BUF",
+  "home": "BUF",
+  "away": "KC",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": "Dalton Kincaid",
+  "team": "BUF",
+  "had": 2.0,
+  "proj_full": 3.2,
+  "proj_left": 0.7,
+  "line": 3,
+  "need": 0.5,
+  "range": [
+   0.0,
+   0.0,
+   1.1
+  ],
+  "posted": false
  }
 ]
