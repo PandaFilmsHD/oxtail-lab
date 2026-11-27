@@ -546,6 +546,9 @@
   "12|KA|KXNFLPASSTDS-26NOV25GBLAR-LARMSTAFFORD9-1|Yes",
   "12|KA|KXNFLREC-26NOV26CHIDET-CHICLOVELAND84-6|Yes",
   "12|KA|KXNFLREC-26NOV26CHIDET-DETASTBROWN14-10|Yes",
+  "12|KA|KXNFLREC-26NOV26KCBUF-BUFKCOLEMAN0-2|Yes",
+  "12|KA|KXNFLREC-26NOV26KCBUF-KCXWORTHY1-2|Yes",
+  "12|KA|KXNFLREC-26NOV26KCBUF-KCXWORTHY1-3|Yes",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARDALLEN87-30|Yes",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARKWILLIAMS23-50|No",
   "12|KA|KXNFLRECYDS-26NOV25GBLAR-LARKWILLIAMS23-60|No",
@@ -557,11 +560,27 @@
   "12|KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-15|Yes",
   "12|KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-60|No",
   "12|KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-70|No",
+  "12|KA|KXNFLRECYDS-26NOV26KCBUF-BUFDKINCAID86-10|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26KCBUF-BUFDKINCAID86-15|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26KCBUF-BUFDKINCAID86-20|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26KCBUF-BUFDKINCAID86-25|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26KCBUF-BUFKCOLEMAN0-40|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26KCBUF-BUFTJOHNSON26-40|No",
+  "12|KA|KXNFLRECYDS-26NOV26KCBUF-KCXWORTHY1-50|No",
+  "12|KA|KXNFLRECYDS-26NOV26PHIDAL-DALBSPANNFORD89-30|Yes",
+  "12|KA|KXNFLRECYDS-26NOV26PHIDAL-DALKTURPIN9-20|No",
+  "12|KA|KXNFLRECYDS-26NOV26PHIDAL-DALKTURPIN9-40|No",
   "12|KA|KXNFLRSHYDS-26NOV25GBLAR-GBCBROOKS30-15|Yes",
   "12|KA|KXNFLRSHYDS-26NOV25GBLAR-GBCBROOKS30-20|Yes",
   "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETJGIBBS0-70|No",
   "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-25|Yes",
   "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-30|Yes",
+  "12|KA|KXNFLRSHYDS-26NOV26KCBUF-BUFJCOOK4-60|No",
+  "12|KA|KXNFLRSHYDS-26NOV26KCBUF-BUFJCOOK4-70|No",
+  "12|KA|KXNFLRSHYDS-26NOV26KCBUF-BUFRDAVIS7-5|Yes",
+  "12|KA|KXNFLRSHYDS-26NOV26PHIDAL-DALDPRESCOTT4-40|No",
+  "12|KA|KXNFLRSHYDS-26NOV26PHIDAL-PHIWSHIPLEY28-25|Yes",
+  "12|KA|KXNFLRSHYDS-26NOV26PHIDAL-PHIWSHIPLEY28-30|Yes",
   "12|KA|KXNFLTOTAL-26NOV25GBLAR-46|Yes",
   "12|KA|KXNFLTOTAL-26NOV26KCBUF-42|Yes",
   "12|KA|KXNFLTOTAL-26NOV26KCBUF-45|Yes",
@@ -819,6 +838,24 @@
    "u": 1.273,
    "win": true
   },
+  "KXNFLPASSYDS-26NOV26KCBUF-BUFJALLEN17-100|No": {
+   "actual": 81,
+   "kind": "player",
+   "u": 2.333,
+   "win": true
+  },
+  "KXNFLPASSYDS-26NOV26KCBUF-KCPMAHOMES15-150|No": {
+   "actual": 174,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLPASSYDS-26NOV26PHIDAL-PHIJMILTON10-200|No": {
+   "actual": 331,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLREC-26NOV22MINSF-MINJJEFFERSON18-7|No": {
    "actual": 7,
    "kind": "player",
@@ -841,6 +878,36 @@
    "actual": 4,
    "kind": "player",
    "u": 1.381,
+   "win": true
+  },
+  "KXNFLREC-26NOV26KCBUF-BUFDKINCAID86-3|No": {
+   "actual": 2,
+   "kind": "player",
+   "u": 1.0,
+   "win": true
+  },
+  "KXNFLREC-26NOV26KCBUF-BUFJCOOK4-2|Yes": {
+   "actual": 1,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLREC-26NOV26KCBUF-KCEJOHNSON10-3|No": {
+   "actual": 4,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLREC-26NOV26PHIDAL-PHIWSHIPLEY28-1|No": {
+   "actual": 0,
+   "kind": "player",
+   "u": 0.961,
+   "win": true
+  },
+  "KXNFLREC-26NOV26PHIDAL-PHIZERTZ86-1|No": {
+   "actual": 0,
+   "kind": "player",
+   "u": 2.704,
    "win": true
   },
   "KXNFLRECYDS-26NOV22MINSF-MINJJEFFERSON18-60|No": {
@@ -902,6 +969,36 @@
    "kind": "player",
    "u": -1,
    "win": false
+  },
+  "KXNFLRECYDS-26NOV26KCBUF-KCEJOHNSON10-20|No": {
+   "actual": 24,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV26PHIDAL-DALKTURPIN9-50|Yes": {
+   "actual": 31,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV26PHIDAL-PHIDSMITH6-100|No": {
+   "actual": 200,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV26PHIDAL-PHIWSHIPLEY28-10|No": {
+   "actual": 0,
+   "kind": "player",
+   "u": 0.754,
+   "win": true
+  },
+  "KXNFLRECYDS-26NOV26PHIDAL-PHIZERTZ86-5|No": {
+   "actual": 0,
+   "kind": "player",
+   "u": 1.778,
+   "win": true
   },
   "KXNFLRSHYDS-26NOV22MINSF-MINAJONES33-30|No": {
    "actual": 30,
@@ -974,6 +1071,36 @@
    "kind": "player",
    "u": -1,
    "win": false
+  },
+  "KXNFLRSHYDS-26NOV26KCBUF-BUFJALLEN17-15|No": {
+   "actual": 43,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV26KCBUF-BUFJCOOK4-60|No": {
+   "actual": 117,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV26KCBUF-BUFRDAVIS7-5|Yes": {
+   "actual": 6,
+   "kind": "player",
+   "u": 1.174,
+   "win": true
+  },
+  "KXNFLRSHYDS-26NOV26KCBUF-KCEJOHNSON10-70|No": {
+   "actual": 72,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV26PHIDAL-PHIWSHIPLEY28-30|Yes": {
+   "actual": 46,
+   "kind": "player",
+   "u": 6.143,
+   "win": true
   },
   "KXNFLSPREAD-26NOV22MINSF-SF8|Yes": {
    "actual": "10.0-35.0",
@@ -1049,9 +1176,9 @@
   }
  },
  "live_rec": {
-  "l": 28,
-  "u": 29.43,
-  "w": 20
+  "l": 38,
+  "u": 36.277,
+  "w": 28
  },
  "msgs": [
   {
@@ -1838,6 +1965,31 @@
    "at": "2026-11-27T05:31:32.930640+00:00",
    "ch": "RECEIPTS",
    "id": "1575745875605721260"
+  },
+  {
+   "at": "2026-11-27T06:03:44.544072+00:00",
+   "ch": "RESULTS",
+   "id": "1575753978048675891"
+  },
+  {
+   "at": "2026-11-27T06:03:45.392308+00:00",
+   "ch": "RESULTS",
+   "id": "1575753981572161537"
+  },
+  {
+   "at": "2026-11-27T06:03:46.221469+00:00",
+   "ch": "RESULTS",
+   "id": "1575753984810029110"
+  },
+  {
+   "at": "2026-11-27T06:03:47.030286+00:00",
+   "ch": "RESULTS",
+   "id": "1575753988324859978"
+  },
+  {
+   "at": "2026-11-27T06:03:47.895392+00:00",
+   "ch": "RESULTS",
+   "id": "1575753991969833061"
   }
  ],
  "parlay_days": {
@@ -1848,8 +2000,8 @@
  },
  "parlay_rec": {
   "l": 0,
-  "u": 2.047,
-  "w": 4
+  "u": 2.488,
+  "w": 5
  },
  "parlays": [
   {
@@ -1968,6 +2120,7 @@
    "at": "2026-11-26T16:21:46.390255+00:00",
    "day": "2026-11-26",
    "fair": -227,
+   "graded_at": "2026-11-27T06:03:44.324354+00:00",
    "legs": [
     {
      "actual": 6,
@@ -1978,14 +2131,17 @@
      "type": "prop"
     },
     {
+     "actual": 331,
      "kick": "2026-11-26T21:30:00Z",
      "label": "Joe Milton Over 138.5 pass yds",
      "p": 83.2,
-     "res": null,
+     "res": true,
      "type": "prop"
     }
    ],
    "p": 69.4,
+   "result": "win",
+   "u": 0.441,
    "week": "12"
   }
  ],
@@ -3438,6 +3594,8 @@
   "2026-11-23T01:20:00Z": "2026-11-23T06:09:09.187062+00:00",
   "2026-11-24T01:15:00Z": "2026-11-24T06:08:22.391208+00:00",
   "2026-11-26T01:00:00Z": "2026-11-26T06:13:16.065743+00:00",
-  "2026-11-26T18:00:00Z": "2026-11-26T22:12:28.359586+00:00"
+  "2026-11-26T18:00:00Z": "2026-11-26T22:12:28.359586+00:00",
+  "2026-11-26T21:30:00Z": "2026-11-27T06:03:44.324354+00:00",
+  "2026-11-27T01:20:00Z": "2026-11-27T06:03:44.324354+00:00"
  }
 }
