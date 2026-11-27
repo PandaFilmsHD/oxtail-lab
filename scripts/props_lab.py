@@ -361,8 +361,29 @@ def main():
         if v and t_:   # skip retired/teamless duplicates that share a name
             SLK[(key(n_), t_)] = v
 
+    def carries_mean(p):
+        """Carries: walk-forward-tested model (fit_carries.py) using his carries and share, team run rate, Vegas, wind, opponent, home."""
+        C = DIST.get("rush_att_v2") or {}
+        M_ = (C.get("pos") or {}).get(p["pos"]); pl = (C.get("players") or {}).get(p["name"])
+        L_ = lines.get(p["team"]) or {}
+        if not M_ or not pl or not L_:
+            return None
+        g_ = next((g for g in GAMES_ if p["team"] in (g["home"], g["away"])), None)
+        wind = ((g_ or {}).get("weather") or {}).get("wind", 0) if (g_ or {}).get("roof") not in ("dome", "closed") else 0
+        lg = C.get("lg_team", 27.0)
+        x = {"log_c": math.log(max(pl["c"], 0) + 0.5), "share": pl["sh"], "log_team": math.log(max((C.get("team") or {}).get(p["team"], lg), 1) / lg),
+             "spread": (L_.get("spread") or 0) / 7, "imp": ((L_.get("it") or 22) - 22) / 7, "wind": wind / 10,
+             "opp": math.log(max((C.get("allow") or {}).get(L_.get("opp"), lg), 1) / lg), "home": 1 if (g_ or {}).get("home") == p["team"] else 0,
+             "log_last3": math.log(max(pl.get("last3", pl["c"]), 0) + 0.5)}
+        z = sum(c * (x[f] - m) / sd for f, c, m, sd in zip(C["feats"], M_["coef"], M_["mean"], M_["scale"]))
+        return float(math.exp(M_["icpt"] + z))
+
     def our_mean(p, st):
         """Season average + last 3, regressed the way 10 seasons of games say (prop_dists.json)."""
+        if st == "rush_att":
+            cm_ = carries_mean(p)
+            if cm_ is not None:
+                return cm_
         fit = DIST.get(f"{st}|{p['pos']}")
         if not fit:
             return None
@@ -690,6 +711,7 @@ def main():
         if big_gap:
             W_.append("⚠️ Our number is far from the market's, which usually means the market knows something (injury, role change). No play.")
         return W_
+    GAMES_ = games
     def price_props(CORR, RAT):
         props, legs = [], []
         longs = LONGS if RAT is None else []
