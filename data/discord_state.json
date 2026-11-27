@@ -431,6 +431,11 @@
    "at": "2026-11-27T19:54:54.405759+00:00",
    "n": 7,
    "sha256": "f33d71d1a35e5ef2b90c876a865cccd3ec401a8b21f7d0bb1533330e97d8e656"
+  },
+  {
+   "at": "2026-11-27T20:56:03.748233+00:00",
+   "n": 11,
+   "sha256": "0905e59c28a6826ac9906996db0527b84458cca3d452226741e4720a43085e12"
   }
  ],
  "kal_best": [
@@ -2132,6 +2137,11 @@
    "at": "2026-11-27T19:54:54.902245+00:00",
    "ch": "RECEIPTS",
    "id": "1575963148928811151"
+  },
+  {
+   "at": "2026-11-27T20:56:04.068689+00:00",
+   "ch": "RECEIPTS",
+   "id": "1575978538719252572"
   }
  ],
  "parlay_days": {
@@ -3375,7 +3385,7 @@
   "2026-11-25": 0,
   "2026-11-26": 1
  },
- "receipt_at": "2026-11-27T19:54:54.405759+00:00",
+ "receipt_at": "2026-11-27T20:56:03.748233+00:00",
  "receipted": [
   "Anthony Gould|Rec yds",
   "Anthony Richardson|Rush yds",
@@ -3388,6 +3398,7 @@
   "Cam Skattebo|Carries",
   "Chris Godwin|Catches",
   "Dalton Kincaid|Catches",
+  "Dalton Schultz|Rec yds",
   "Darius Cooper|Catches",
   "Deion Burks|Catches",
   "Deion Burks|Rec yds",
@@ -3407,6 +3418,7 @@
   "G|TB|tot|Under",
   "G|WAS|tot|Under",
   "Ja'Marr Chase|Catches",
+  "Jakobi Meyers|Anytime TD",
   "Jakobi Meyers|Catches",
   "Jakobi Meyers|Rec yds",
   "Jalen Nailor|Catches",
@@ -3481,12 +3493,14 @@
   "KA|KXNFLREC-26NOV26KCBUF-KCXWORTHY1-3|Yes",
   "KA|KXNFLREC-26NOV26PHIDAL-DALCLAMB88-10|Yes",
   "KA|KXNFLREC-26NOV29BALHOU-HOUNCOLLINS12-6|Yes",
+  "KA|KXNFLREC-26NOV29BALHOU-HOUNCOLLINS12-8|Yes",
   "KA|KXNFLREC-26NOV29BALHOU-HOUTDELL1-3|Yes",
   "KA|KXNFLREC-26NOV29LVCLE-CLEHFANNIN44-4|No",
   "KA|KXNFLREC-26NOV29LVCLE-CLEHFANNIN44-5|No",
   "KA|KXNFLREC-26NOV29LVCLE-CLEJJEUDY3-2|No",
   "KA|KXNFLREC-26NOV29LVCLE-CLEJJEUDY3-3|No",
   "KA|KXNFLREC-26NOV29LVCLE-LVAJEANTY2-6|Yes",
+  "KA|KXNFLREC-26NOV29LVCLE-LVJNAILOR9-2|No",
   "KA|KXNFLREC-26NOV29NOCIN-CINJCHASE1-11|Yes",
   "KA|KXNFLREC-26NOV29NOCIN-NOCOLAVE12-8|Yes",
   "KA|KXNFLREC-26NOV29NOCIN-NOCOLAVE12-9|Yes",
@@ -3597,6 +3611,7 @@
   "KA|KXNFLRECYDS-26NOV29BALHOU-HOUTDELL1-30|Yes",
   "KA|KXNFLRECYDS-26NOV29BALHOU-HOUTDELL1-40|Yes",
   "KA|KXNFLRECYDS-26NOV29BALHOU-HOUTDELL1-50|Yes",
+  "KA|KXNFLRECYDS-26NOV29BALHOU-HOUXHUTCHINSON19-40|Yes",
   "KA|KXNFLRECYDS-26NOV29BALHOU-HOUXHUTCHINSON19-50|Yes",
   "KA|KXNFLRECYDS-26NOV29LVCLE-CLEJJEUDY3-20|No",
   "KA|KXNFLRECYDS-26NOV29LVCLE-LVAJEANTY2-60|No",
@@ -3633,6 +3648,7 @@
   "KA|KXNFLRECYDS-26NOV29SEASF-SEAJSMITHNJIGBA11-130|Yes",
   "KA|KXNFLRECYDS-26NOV29SEASF-SEAJSMITHNJIGBA11-140|Yes",
   "KA|KXNFLRECYDS-26NOV29SEASF-SEAJSMITHNJIGBA11-150|Yes",
+  "KA|KXNFLRECYDS-26NOV29TENJAC-JACBSTRANGE85-25|No",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACBSTRANGE85-30|No",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACBSTRANGE85-40|No",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACBSTRANGE85-60|No",
@@ -3749,6 +3765,7 @@
   "KA|KXNFLRSHYDS-26NOV29WASARI-WASAEKELER30-40|Yes",
   "KA|KXNFLRSHYDS-26NOV29WASARI-WASJDANIELS5-15|Yes",
   "KA|KXNFLRSHYDS-26NOV29WASARI-WASJDANIELS5-20|Yes",
+  "KA|KXNFLRSHYDS-26NOV30CARTB-CARBYOUNG9-20|Yes",
   "KA|KXNFLRSHYDS-26NOV30CARTB-TBKGAINWELL1-40|Yes",
   "KA|KXNFLSPREAD-26NOV23CINWAS-CIN2|Yes",
   "KA|KXNFLSPREAD-26NOV23CINWAS-CIN3|Yes",
@@ -3844,6 +3861,8 @@
   "Michael Mayer|Catches",
   "Michael Pittman Jr.|Catches",
   "Mike Evans|Catches",
+  "Nico Collins|Catches",
+  "Nico Collins|Rec yds",
   "Omarion Hampton|Rush yds",
   "Patrick Mahomes|Pass yds",
   "Quinshon Judkins|Catches",
@@ -3851,6 +3870,7 @@
   "Rome Odunze|Catches",
   "Rome Odunze|Rec yds",
   "Tai Felton|Catches",
+  "Tai Felton|Rec yds",
   "Ted Hurst III|Catches",
   "Ted Hurst III|Rec yds",
   "Tommy DeVito|Pass yds",
@@ -3860,6 +3880,7 @@
   "Trevor Lawrence|Pass yds",
   "Tyler Shough|Pass yds",
   "Woody Marks|Rush yds",
+  "Xavier Hutchinson|Catches",
   "Xavier Hutchinson|Rec yds",
   "Xavier Worthy|Rec yds",
   "Zach Charbonnet|Carries",
