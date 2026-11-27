@@ -1662,5 +1662,40 @@
    1.2
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLREC-26NOV26PHIDAL-PHIWSHIPLEY28-1",
+  "side": "No",
+  "label": "Will Shipley under 1 catches",
+  "stat": "rec",
+  "strike": 0.5,
+  "cost": 49,
+  "fee": 2.0,
+  "p": 71.7,
+  "edge": 22.7,
+  "ev": 40.5,
+  "at": "2026-11-27T00:21:09+00:00",
+  "date": "2026-11-26",
+  "q": 3,
+  "clock": "0:15",
+  "score": "PHI 17, DAL 31",
+  "game": "PHI @ DAL",
+  "home": "DAL",
+  "away": "PHI",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": "Will Shipley",
+  "team": "PHI",
+  "had": 0.0,
+  "proj_full": 1.3,
+  "proj_left": 0.5,
+  "line": 1,
+  "need": 0.5,
+  "range": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "posted": false
  }
 ]
