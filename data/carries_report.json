@@ -1,0 +1,12 @@
+{
+ "RB": {
+  "test_n": 2473,
+  "mae_model": 4.117,
+  "mae_season_avg": 4.171
+ },
+ "QB": {
+  "test_n": 1336,
+  "mae_model": 1.799,
+  "mae_season_avg": 1.827
+ }
+}
