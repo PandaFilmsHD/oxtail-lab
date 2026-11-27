@@ -557,7 +557,11 @@
   "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETJGIBBS0-70|No",
   "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-25|Yes",
   "12|KA|KXNFLRSHYDS-26NOV26CHIDET-DETSVAKI33-30|Yes",
-  "12|KA|KXNFLTOTAL-26NOV25GBLAR-46|Yes"
+  "12|KA|KXNFLTOTAL-26NOV25GBLAR-46|Yes",
+  "12|KA|KXNFLTOTAL-26NOV26KCBUF-42|Yes",
+  "12|KA|KXNFLTOTAL-26NOV26KCBUF-45|Yes",
+  "12|KA|KXNFLTOTAL-26NOV26KCBUF-57|Yes",
+  "12|KA|KXNFLTOTAL-26NOV26KCBUF-60|Yes"
  ],
  "kal_shown": [
   "KA|KXNFLPASSTDS-26NOV19INDHOU-INDDJONES17-2|No",
@@ -767,6 +771,12 @@
    "kind": "game",
    "u": 1.564,
    "win": true
+  },
+  "KXNFLGAME-26NOV26KCBUF-KC|Yes": {
+   "actual": "10.0-13.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
   },
   "KXNFLGAME-26NOV26PHIDAL-PHI|Yes": {
    "actual": "39.0-38.0",
@@ -984,6 +994,12 @@
    "u": -1,
    "win": false
   },
+  "KXNFLSPREAD-26NOV26KCBUF-BUF3|No": {
+   "actual": "10.0-13.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
+  },
   "KXNFLSPREAD-26NOV26PHIDAL-DAL11|Yes": {
    "actual": "39.0-38.0",
    "kind": "game",
@@ -1014,6 +1030,12 @@
    "u": -1,
    "win": false
   },
+  "KXNFLTOTAL-26NOV26KCBUF-49|Yes": {
+   "actual": "10.0-13.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
+  },
   "KXNFLTOTAL-26NOV26PHIDAL-54|No": {
    "actual": "39.0-38.0",
    "kind": "game",
@@ -1022,8 +1044,8 @@
   }
  },
  "live_rec": {
-  "l": 25,
-  "u": 32.43,
+  "l": 28,
+  "u": 29.43,
   "w": 20
  },
  "msgs": [
@@ -1791,6 +1813,21 @@
    "at": "2026-11-27T04:30:05.793142+00:00",
    "ch": "RECEIPTS",
    "id": "1575730410527399940"
+  },
+  {
+   "at": "2026-11-27T05:11:01.877475+00:00",
+   "ch": "RESULTS",
+   "id": "1575740712606105641"
+  },
+  {
+   "at": "2026-11-27T05:11:02.851337+00:00",
+   "ch": "RESULTS",
+   "id": "1575740716359880705"
+  },
+  {
+   "at": "2026-11-27T05:11:03.878509+00:00",
+   "ch": "RESULTS",
+   "id": "1575740720818692128"
   }
  ],
  "parlay_days": {
@@ -2046,11 +2083,15 @@
    "week": "11"
   },
   "G|BUF|tot|Under": {
+   "actual": null,
    "at": "2026-11-26T23:47:35.826403+00:00",
    "ch": "best",
+   "graded_at": "2026-11-27T05:11:01.621581+00:00",
    "kick": "2026-11-27T01:20:00Z",
    "price": -117,
+   "result": "win",
    "text": "KC @ BUF: Under 45.5",
+   "u": 0.427,
    "units": 0.5,
    "week": "12"
   },
@@ -3357,8 +3398,8 @@
  "record": {
   "l": 11,
   "p": 0,
-  "u": 1.337,
-  "w": 9
+  "u": 1.764,
+  "w": 10
  },
  "record_by": {
   "best": {

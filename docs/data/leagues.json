@@ -6,7 +6,7 @@
    "team": "They Hit The Second Bower",
    "week": 12,
    "at": "2026-11-27T04:38:06Z",
-   "champ_pct": 16.6,
+   "champ_pct": 16.5,
    "todo": [
     {
      "urgent": false,
@@ -36,7 +36,7 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Jaxon Smith-Njigba might not play (69%)",
-     "detail": "If he's ruled out, start Rashee Rice (10.4).",
+     "detail": "If he's ruled out, start Rashee Rice (11.0).",
      "tab": "home"
     },
     {
@@ -50,7 +50,7 @@
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Bhayshul Tuten might not play (56%)",
-     "detail": "If he's ruled out, start Travis Etienne Jr. (11.2).",
+     "detail": "If he's ruled out, start Travis Etienne Jr. (11.1).",
      "tab": "home"
     },
     {
@@ -87,7 +87,7 @@
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 6 days",
+     "title": "Trade deadline in 5 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
@@ -99,7 +99,7 @@
    "team": "Alex's Astounding Team",
    "week": 12,
    "at": "2026-11-27T04:38:15Z",
-   "champ_pct": 23.9,
+   "champ_pct": 24.0,
    "todo": [
     {
      "urgent": false,
@@ -112,7 +112,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.4 pts a week in your lineup the rest of the way, title odds +1.7%.",
+     "detail": "Real upgrade: about +1.4 pts a week in your lineup the rest of the way, title odds +1.8%.",
      "tab": "waivers"
     },
     {
@@ -125,7 +125,7 @@
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 6 days",
+     "title": "Trade deadline in 5 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
