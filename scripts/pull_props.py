@@ -11,7 +11,7 @@ KEY = os.environ.get("ODDS_API_KEY", "").strip()
 OUT = ROOT / "data" / "props.json"
 RAW = ROOT / "data" / "props_raw.json"      # the actual lines + best prices, for the Prop Lab tab
 GODDS = ROOT / "data" / "game_odds.json"
-MARKETS = ["player_pass_yds", "player_pass_tds", "player_rush_yds", "player_reception_yds", "player_receptions", "player_anytime_td"]
+MARKETS = ["player_pass_yds", "player_pass_tds", "player_rush_yds", "player_rush_attempts", "player_reception_yds", "player_receptions", "player_anytime_td"]
 API = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl"
 CONSENSUS = ("fanduel", "draftkings", "betmgm", "williamhill_us", "fanatics")       # two-way, normal juice: the 'market'
 VENUES = ("kalshi", "polymarket", "prizepicks", "underdog", "pick6")               # where Alex can bet from CA
@@ -113,9 +113,9 @@ def main():
                 continue
             pt = statistics.median(a for a, _ in L); po = statistics.median(b for _, b in L)
             # the line is roughly the median outcome; nudge by how lopsided the over is, and add the usual mean-over-median skew
-            skew = {"player_pass_yds": 1.02, "player_rush_yds": 1.08, "player_reception_yds": 1.08, "player_receptions": 1.03, "player_pass_tds": 1.0}[k]
+            skew = {"player_pass_yds": 1.02, "player_rush_yds": 1.08, "player_rush_attempts": 1.01, "player_reception_yds": 1.08, "player_receptions": 1.03, "player_pass_tds": 1.0}[k]
             val = pt * (1 + (po - 0.5) * 0.25) * skew
-            x[{"player_pass_yds": "pass_yds", "player_pass_tds": "pass_tds", "player_rush_yds": "rush_yds", "player_reception_yds": "rec_yds", "player_receptions": "rec"}[k]] = round(val, 2)
+            x[{"player_pass_yds": "pass_yds", "player_pass_tds": "pass_tds", "player_rush_yds": "rush_yds", "player_rush_attempts": "rush_att", "player_reception_yds": "rec_yds", "player_receptions": "rec"}[k]] = round(val, 2)
         players[nm] = x
     OUT.write_text(json.dumps({"week": cur, "at": now.isoformat(), "players": players}, sort_keys=True, separators=(",", ":")))
     # main line = the number most books hang; best price at that number; no-vig consensus chance of the over

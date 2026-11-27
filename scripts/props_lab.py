@@ -39,11 +39,11 @@ FULL = {"Arizona Cardinals": "ARI", "Atlanta Falcons": "ATL", "Baltimore Ravens"
         "Los Angeles Chargers": "LAC", "Los Angeles Rams": "LA", "Miami Dolphins": "MIA", "Minnesota Vikings": "MIN", "New England Patriots": "NE",
         "New Orleans Saints": "NO", "New York Giants": "NYG", "New York Jets": "NYJ", "Philadelphia Eagles": "PHI", "Pittsburgh Steelers": "PIT",
         "San Francisco 49ers": "SF", "Seattle Seahawks": "SEA", "Tampa Bay Buccaneers": "TB", "Tennessee Titans": "TEN", "Washington Commanders": "WAS"}
-MK = {"player_pass_yds": ("pass_yds", "Pass yds"), "player_pass_tds": ("pass_tds", "Pass TDs"), "player_rush_yds": ("rush_yds", "Rush yds"),
+MK = {"player_pass_yds": ("pass_yds", "Pass yds"), "player_pass_tds": ("pass_tds", "Pass TDs"), "player_rush_yds": ("rush_yds", "Rush yds"), "player_rush_attempts": ("rush_att", "Carries"),
       "player_reception_yds": ("rec_yds", "Rec yds"), "player_receptions": ("rec", "Catches"), "td": ("td", "Anytime TD")}
-USE = {"pass_yds": "passyd", "pass_tds": "ptd", "rush_yds": "rushyd", "rec_yds": "recyd", "rec": "rec"}
-SLP = {"pass_yds": "pass_yd", "pass_tds": "pass_td", "rush_yds": "rush_yd", "rec_yds": "rec_yd", "rec": "rec"}
-BETA = {"pass_yds": 0.21, "pass_tds": 1.17, "rush_yds": 0.13, "rec_yds": 0.25, "rec": 0.11, "td": 1.18}   # fallback only (v2 has its own): fitted elasticity to team points, 2016-25
+USE = {"pass_yds": "passyd", "pass_tds": "ptd", "rush_yds": "rushyd", "rush_att": "car", "rec_yds": "recyd", "rec": "rec"}
+SLP = {"pass_yds": "pass_yd", "pass_tds": "pass_td", "rush_yds": "rush_yd", "rush_att": "rush_att", "rec_yds": "rec_yd", "rec": "rec"}
+BETA = {"pass_yds": 0.21, "pass_tds": 1.17, "rush_yds": 0.13, "rush_att": 0.10, "rec_yds": 0.25, "rec": 0.11, "td": 1.18}   # fallback only (v2 has its own): fitted elasticity to team points, 2016-25
 
 
 def key(n):
@@ -651,7 +651,7 @@ def main():
         """Plain-English reasons behind a prop's number, biggest effects first."""
         W_ = []
         L_ = lines.get(tm, {})
-        unit = {"pass_yds": "yds", "rush_yds": "yds", "rec_yds": "yds", "rec": "catches", "pass_tds": "TDs", "td": "TDs"}[st]
+        unit = {"pass_yds": "yds", "rush_yds": "yds", "rush_att": "carries", "rec_yds": "yds", "rec": "catches", "pass_tds": "TDs", "td": "TDs"}[st]
         if st == "td":
             W_.append(f"📊 Market: books give him about {round(100 * p_mkt)}% to score (about {mm:.2f} TDs a game).")
         else:
@@ -714,7 +714,7 @@ def main():
                     continue   # game over, or already projected: nothing to do
                 def proj(model):
                     om_ = None
-                    if model is not None:
+                    if model is not None and st != "rush_att":
                         try:
                             om_ = model.our_mean(p, st)
                         except Exception:
@@ -744,9 +744,9 @@ def main():
                 else:
                     line = x["line"]; p_mkt = x["p_over"]
                 # game script: he does more when his team scores more
-                bet_ = (DIST2.get(f"{st}|{p['pos']}") or {}).get("beta_gs") if V2A else None
+                bet_ = (DIST2.get(f"{st}|{p['pos']}") or {}).get("beta_gs") if V2A and st != "rush_att" else None
                 f = (np.maximum(own, 1) / max(1, pts_mean)) ** (bet_ if bet_ is not None else BETA[st])
-                if st == "rush_yds" and p["pos"] == "RB":
+                if st in ("rush_yds", "rush_att") and p["pos"] == "RB":
                     f = f * (np.exp(V2A.RB_MARGIN * np.clip(mar, -21, 21)) if V2A else (1 + 0.008 * np.clip(mar, -21, 21)))
                 f = f / f.mean()
                 if st in ("pass_tds", "td", "rec"):   # counts: Poisson around his mean, mixed over the game sims
@@ -769,7 +769,7 @@ def main():
                     lat_ = (LATQ if (st == "pass_yds" and p["pos"] == "QB") else LATR if (st == "rec_yds" and p["pos"] != "QB") else {}).get(key(nm))
                     ru = np.minimum(ndtr(lat_.astype(float)), 1 - 1e-9) if lat_ is not None else rng.random(N)   # same draws for every shape; latent = same-game link
                     def mkP(bm):
-                        r_ = (V2A.ratios(st, p["pos"], max(bm, 1)) if V2A else None)
+                        r_ = (V2A.ratios(st, p["pos"], max(bm, 1)) if V2A and st != "rush_att" else None)
                         r_ = r_ if r_ is not None else ratios(st, p["pos"], max(bm, 1))
                         b_ = r_[(ru * len(r_)).astype(int)] * f
                         return b_, (lambda m, b_=b_, line=line: float(np.mean(m * b_ > line)))
@@ -1293,7 +1293,7 @@ def main():
                         s_ = stat_by.get((key(x["player"]), w_))
                         if not s_:
                             continue
-                        stv = {"Pass yds": s_.get("passyd", 0), "Pass TDs": s_.get("ptd", 0), "Rush yds": s_.get("rushyd", 0), "Rec yds": s_.get("recyd", 0),
+                        stv = {"Pass yds": s_.get("passyd", 0), "Pass TDs": s_.get("ptd", 0), "Rush yds": s_.get("rushyd", 0), "Carries": s_.get("car", 0), "Rec yds": s_.get("recyd", 0),
                                "Catches": s_.get("rec", 0), "Anytime TD": (s_.get("rutd", 0) or 0) + (s_.get("retd", 0) or 0)}[x["market"]]
                         x["actual"] = stv; x["result"] = (stv > x["strike"]) == (x["side"] == "Yes"); x["graded"] = True
                 if x.get("graded") and x.get("result") is not None:
@@ -1332,7 +1332,7 @@ def main():
                         if k2 and (now - datetime.datetime.fromisoformat(k2.replace("Z", "+00:00"))).days >= 2 and (U.get("lines") or {}).get(w_, {}).get(x["team"], {}).get("pts") is not None:
                             x["result"] = None; x["graded"] = True; x["void"] = True   # didn't play: bet is refunded
                         continue
-                    stv = {"Pass yds": s_.get("passyd", 0), "Pass TDs": s_.get("ptd", 0), "Rush yds": s_.get("rushyd", 0), "Rec yds": s_.get("recyd", 0),
+                    stv = {"Pass yds": s_.get("passyd", 0), "Pass TDs": s_.get("ptd", 0), "Rush yds": s_.get("rushyd", 0), "Carries": s_.get("car", 0), "Rec yds": s_.get("recyd", 0),
                            "Catches": s_.get("rec", 0), "Anytime TD": (s_.get("rutd", 0) or 0) + (s_.get("retd", 0) or 0)}[x["market"]]
                     x["actual"] = stv
                     x["result"] = (stv >= 1) if x["market"] == "Anytime TD" else (None if stv == x["line"] else ((stv > x["line"]) == (x["side"] == "Over")))
