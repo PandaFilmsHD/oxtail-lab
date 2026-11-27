@@ -2046,5 +2046,40 @@
    3.1
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLREC-26NOV26KCBUF-BUFJCOOK4-2",
+  "side": "Yes",
+  "label": "James Cook III 2+ catches",
+  "stat": "rec",
+  "strike": 1.5,
+  "cost": 46,
+  "fee": 2.0,
+  "p": 60.3,
+  "edge": 14.3,
+  "ev": 25.7,
+  "at": "2026-11-27T03:07:46+00:00",
+  "date": "2026-11-26",
+  "q": 3,
+  "clock": "14:50",
+  "score": "KC 3, BUF 7",
+  "game": "KC @ BUF",
+  "home": "BUF",
+  "away": "KC",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": "James Cook III",
+  "team": "BUF",
+  "had": 1.0,
+  "proj_full": 1.5,
+  "proj_left": 0.8,
+  "line": 2,
+  "need": 0.5,
+  "range": [
+   0.0,
+   0.7,
+   1.1
+  ],
+  "posted": false
  }
 ]
