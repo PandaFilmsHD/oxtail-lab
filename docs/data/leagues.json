@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-27T17:29:56Z",
+   "at": "2026-11-27T17:58:07Z",
    "champ_pct": 16.7,
    "todo": [
     {
@@ -29,7 +29,7 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T17:30:16Z",
+   "at": "2026-11-27T17:58:29Z",
    "champ_pct": 11.8,
    "todo": [
     {
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T17:30:26Z",
+   "at": "2026-11-27T17:58:37Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -105,16 +105,9 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T17:30:06Z",
+   "at": "2026-11-27T17:58:20Z",
    "champ_pct": 24.1,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udce3",
-     "title": "Status change: Colston Loveland",
-     "detail": "QUESTIONABLE \u2192 DOUBTFUL. Recheck your lineup.",
-     "tab": "home"
-    },
     {
      "urgent": true,
      "icon": "\ud83e\ude79",
@@ -133,7 +126,14 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Christian McCaffrey for Dak Prescott + Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +8.7%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "detail": "Title odds +8.6%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "tab": "trades"
+    },
+    {
+     "urgent": false,
+     "icon": "\u23f3",
+     "title": "Trade deadline in 5 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
    ]
