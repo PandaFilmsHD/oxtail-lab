@@ -441,6 +441,11 @@
    "at": "2026-11-27T22:00:25.404498+00:00",
    "n": 4,
    "sha256": "0465cc2d484d2b3b5051417766b0f3012142ec1bcf9a417a95310f2cf796d427"
+  },
+  {
+   "at": "2026-11-27T23:24:49.869056+00:00",
+   "n": 11,
+   "sha256": "2a3eaaf4294b3dd734d611780ba9d66ba12ee04eb66ba8c839db3d4ef9a86d47"
   }
  ],
  "kal_best": [
@@ -648,7 +653,9 @@
   "12|KA|KXNFLTOTAL-26NOV26KCBUF-42|Yes",
   "12|KA|KXNFLTOTAL-26NOV26KCBUF-45|Yes",
   "12|KA|KXNFLTOTAL-26NOV26KCBUF-57|Yes",
-  "12|KA|KXNFLTOTAL-26NOV26KCBUF-60|Yes"
+  "12|KA|KXNFLTOTAL-26NOV26KCBUF-60|Yes",
+  "12|KA|KXNFLTOTAL-26NOV27DENPIT-26|Yes",
+  "12|KA|KXNFLTOTAL-26NOV27DENPIT-29|Yes"
  ],
  "kal_shown": [
   "KA|KXNFLPASSTDS-26NOV19INDHOU-INDDJONES17-2|No",
@@ -874,6 +881,12 @@
    "kind": "game",
    "u": 15.667,
    "win": true
+  },
+  "KXNFLGAME-26NOV27DENPIT-PIT|No": {
+   "actual": "5.0-27.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
   },
   "KXNFLPASSYDS-26NOV22MINSF-MINKCOUSINS8-250|No": {
    "actual": 235,
@@ -1205,6 +1218,12 @@
    "u": -1,
    "win": false
   },
+  "KXNFLSPREAD-26NOV27DENPIT-PIT2|No": {
+   "actual": "5.0-27.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
+  },
   "KXNFLTOTAL-26NOV22MINSF-55|No": {
    "actual": "10.0-35.0",
    "kind": "game",
@@ -1240,12 +1259,18 @@
    "kind": "game",
    "u": -1,
    "win": false
+  },
+  "KXNFLTOTAL-26NOV27DENPIT-44|No": {
+   "actual": "5.0-27.0",
+   "kind": "game",
+   "u": 1.083,
+   "win": true
   }
  },
  "live_rec": {
-  "l": 38,
-  "u": 36.277,
-  "w": 28
+  "l": 40,
+  "u": 35.36,
+  "w": 29
  },
  "msgs": [
   {
@@ -2152,6 +2177,26 @@
    "at": "2026-11-27T22:00:25.812389+00:00",
    "ch": "RECEIPTS",
    "id": "1575994735791833221"
+  },
+  {
+   "at": "2026-11-27T23:24:50.300897+00:00",
+   "ch": "RECEIPTS",
+   "id": "1576015977483604090"
+  },
+  {
+   "at": "2026-11-27T23:24:51.114940+00:00",
+   "ch": "RESULTS",
+   "id": "1576015981803868191"
+  },
+  {
+   "at": "2026-11-27T23:24:51.921727+00:00",
+   "ch": "RESULTS",
+   "id": "1576015985226293519"
+  },
+  {
+   "at": "2026-11-27T23:24:52.849536+00:00",
+   "ch": "RESULTS",
+   "id": "1576015989039038596"
   }
  ],
  "parlay_days": {
@@ -2471,11 +2516,15 @@
    "week": "11"
   },
   "G|PIT|tot|Under": {
+   "actual": null,
    "at": "2026-11-27T18:29:19.969978+00:00",
    "ch": "best",
+   "graded_at": "2026-11-27T23:24:49.869056+00:00",
    "kick": "2026-11-27T20:00:00Z",
    "price": -103,
+   "result": "win",
    "text": "DEN @ PIT: Under 37.5",
+   "u": 0.485,
    "units": 0.5,
    "week": "12"
   },
@@ -3395,7 +3444,7 @@
   "2026-11-25": 0,
   "2026-11-26": 1
  },
- "receipt_at": "2026-11-27T22:00:25.404498+00:00",
+ "receipt_at": "2026-11-27T23:24:49.869056+00:00",
  "receipted": [
   "Anthony Gould|Rec yds",
   "Anthony Richardson|Rush yds",
@@ -3407,6 +3456,7 @@
   "Caleb Douglas|Catches",
   "Cam Skattebo|Carries",
   "Chris Godwin|Catches",
+  "Christian McCaffrey|Rec yds",
   "Dalton Kincaid|Catches",
   "Dalton Schultz|Rec yds",
   "Darius Cooper|Catches",
@@ -3414,6 +3464,7 @@
   "Deion Burks|Rec yds",
   "Denzel Boston|Catches",
   "Derrick Henry|Carries",
+  "Deshaun Watson|Pass TDs",
   "Emmett Johnson|Catches",
   "Fernando Mendoza|Pass yds",
   "Garrett Wilson|Rec yds",
@@ -3440,6 +3491,7 @@
   "Jonah Coleman|Carries",
   "Jonathan Taylor|Carries",
   "Jordan Mason|Carries",
+  "Jordan Watkins|Catches",
   "Jordyn Tyson|Catches",
   "Josh Cameron|Anytime TD",
   "Josh Cameron|Catches",
@@ -3509,6 +3561,7 @@
   "KA|KXNFLREC-26NOV29LVCLE-CLEHFANNIN44-5|No",
   "KA|KXNFLREC-26NOV29LVCLE-CLEJJEUDY3-2|No",
   "KA|KXNFLREC-26NOV29LVCLE-CLEJJEUDY3-3|No",
+  "KA|KXNFLREC-26NOV29LVCLE-CLEKCONCEPCION1-5|No",
   "KA|KXNFLREC-26NOV29LVCLE-LVAJEANTY2-6|Yes",
   "KA|KXNFLREC-26NOV29LVCLE-LVJNAILOR9-2|No",
   "KA|KXNFLREC-26NOV29NOCIN-CINJCHASE1-11|Yes",
@@ -3529,6 +3582,7 @@
   "KA|KXNFLREC-26NOV29TENJAC-JACJCAMERON19-3|No",
   "KA|KXNFLREC-26NOV29TENJAC-JACJCAMERON19-4|No",
   "KA|KXNFLREC-26NOV29TENJAC-JACJCAMERON19-5|No",
+  "KA|KXNFLREC-26NOV29TENJAC-JACJMEYERS3-5|No",
   "KA|KXNFLREC-26NOV29TENJAC-JACTHUNTER12-2|No",
   "KA|KXNFLREC-26NOV29TENJAC-JACTHUNTER12-3|No",
   "KA|KXNFLREC-26NOV29TENJAC-JACTHUNTER12-4|No",
@@ -3625,6 +3679,7 @@
   "KA|KXNFLRECYDS-26NOV29BALHOU-HOUTDELL1-50|Yes",
   "KA|KXNFLRECYDS-26NOV29BALHOU-HOUXHUTCHINSON19-40|Yes",
   "KA|KXNFLRECYDS-26NOV29BALHOU-HOUXHUTCHINSON19-50|Yes",
+  "KA|KXNFLRECYDS-26NOV29LVCLE-CLEJJEUDY3-15|No",
   "KA|KXNFLRECYDS-26NOV29LVCLE-CLEJJEUDY3-20|No",
   "KA|KXNFLRECYDS-26NOV29LVCLE-LVAJEANTY2-60|No",
   "KA|KXNFLRECYDS-26NOV29LVCLE-LVJNAILOR9-25|Yes",
@@ -3678,6 +3733,7 @@
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACJCAMERON19-50|No",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACJCAMERON19-60|No",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACJCAMERON19-70|No",
+  "KA|KXNFLRECYDS-26NOV29TENJAC-JACJMEYERS3-60|No",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACPWASHINGTON11-30|Yes",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACPWASHINGTON11-50|Yes",
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACTHUNTER12-10|No",
@@ -3754,6 +3810,7 @@
   "KA|KXNFLRSHYDS-26NOV29ATLMIN-ATLKHERBERT25-25|Yes",
   "KA|KXNFLRSHYDS-26NOV29LVCLE-CLEDSAMPSON22-10|Yes",
   "KA|KXNFLRSHYDS-26NOV29LVCLE-LVMWASHINGTON4-50|Yes",
+  "KA|KXNFLRSHYDS-26NOV29NELAC-LACKVIDAL28-10|Yes",
   "KA|KXNFLRSHYDS-26NOV29NELAC-NECKINER9-50|Yes",
   "KA|KXNFLRSHYDS-26NOV29NELAC-NECKINER9-60|Yes",
   "KA|KXNFLRSHYDS-26NOV29NOCIN-NOTSHOUGH6-30|Yes",
@@ -3865,7 +3922,9 @@
   "Kaelon Black|Rush yds",
   "Kaleb Johnson|Rush yds",
   "Kayshon Boutte|Rec yds",
+  "Kimani Vidal|Rush yds",
   "Kirk Cousins|Pass yds",
+  "Kyle Juszczyk|Catches",
   "Kyren Williams|Catches",
   "Kyren Williams|Rec yds",
   "Marvin Harrison Jr.|Catches",
@@ -3875,6 +3934,7 @@
   "Michael Mayer|Catches",
   "Michael Pittman Jr.|Catches",
   "Mike Evans|Catches",
+  "Mike Evans|Rec yds",
   "Nico Collins|Catches",
   "Nico Collins|Rec yds",
   "Omarion Hampton|Rush yds",
@@ -3904,8 +3964,8 @@
  "record": {
   "l": 11,
   "p": 0,
-  "u": 1.764,
-  "w": 10
+  "u": 2.249,
+  "w": 11
  },
  "record_by": {
   "best": {

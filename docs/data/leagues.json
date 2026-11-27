@@ -5,14 +5,21 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-27T22:53:06Z",
+   "at": "2026-11-27T23:21:53Z",
    "champ_pct": 16.9,
    "todo": [
     {
      "urgent": false,
+     "icon": "\ud83e\udd14",
+     "title": "Toss-up at D: 49ers D/ST or Seahawks D/ST",
+     "detail": "49ers D/ST 6.8 vs Seahawks D/ST 6.7. Matchups: 49ers D/ST vs #23, Seahawks D/ST vs #2 (32 = easiest).",
+     "tab": "home"
+    },
+    {
+     "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +1.9%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -29,14 +36,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T22:53:24Z",
+   "at": "2026-11-27T23:22:12Z",
    "champ_pct": 13.1,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Bo Nix, drop Fernando Mendoza",
-     "detail": "Real upgrade: about +5.0 pts a week in your lineup the rest of the way, title odds +3.3%.",
+     "detail": "Real upgrade: about +5.0 pts a week in your lineup the rest of the way, title odds +3.2%.",
      "tab": "waivers"
     },
     {
@@ -67,8 +74,8 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T22:53:33Z",
-   "champ_pct": 0.0,
+   "at": "2026-11-27T23:22:22Z",
+   "champ_pct": 0.1,
    "todo": [
     {
      "urgent": false,
@@ -105,8 +112,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T22:53:14Z",
-   "champ_pct": 23.0,
+   "at": "2026-11-27T23:22:02Z",
+   "champ_pct": 22.7,
    "todo": [
     {
      "urgent": true,
@@ -124,16 +131,16 @@
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Saquon Barkley or Rhamondre Stevenson",
-     "detail": "Saquon Barkley 11.7 vs Rhamondre Stevenson 12.7. Starting Rhamondre Stevenson raises your chance to beat Tyler's Talented Team from 58% to 59%.",
-     "tab": "home"
+     "icon": "\ud83e\udd1d",
+     "title": "Offer Christian McCaffrey for Dak Prescott + Trey McBride (Tyler's Talented Team)",
+     "detail": "Title odds +9.6%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "tab": "trades"
     },
     {
      "urgent": false,
-     "icon": "\ud83e\udd1d",
-     "title": "Offer Christian McCaffrey for Dak Prescott + Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +10.2%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "icon": "\u23f3",
+     "title": "Trade deadline in 5 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
    ]
