@@ -1,12 +1,132 @@
 {
  "RB": {
-  "test_n": 2473,
-  "mae_model": 4.117,
-  "mae_season_avg": 4.171
+  "by_season": [
+   {
+    "season": 2019,
+    "n": 953,
+    "mae_model": 3.937,
+    "mae_simple": 3.979,
+    "mae_season_avg": 3.947
+   },
+   {
+    "season": 2020,
+    "n": 979,
+    "mae_model": 4.129,
+    "mae_simple": 4.176,
+    "mae_season_avg": 4.2
+   },
+   {
+    "season": 2021,
+    "n": 1028,
+    "mae_model": 4.258,
+    "mae_simple": 4.349,
+    "mae_season_avg": 4.489
+   },
+   {
+    "season": 2022,
+    "n": 1025,
+    "mae_model": 4.1,
+    "mae_simple": 4.163,
+    "mae_season_avg": 4.15
+   },
+   {
+    "season": 2023,
+    "n": 1020,
+    "mae_model": 4.104,
+    "mae_simple": 4.145,
+    "mae_season_avg": 4.228
+   },
+   {
+    "season": 2024,
+    "n": 1031,
+    "mae_model": 4.06,
+    "mae_simple": 4.136,
+    "mae_season_avg": 4.187
+   },
+   {
+    "season": 2025,
+    "n": 982,
+    "mae_model": 3.952,
+    "mae_simple": 3.938,
+    "mae_season_avg": 4.016
+   },
+   {
+    "season": 2026,
+    "n": 572,
+    "mae_model": 4.058,
+    "mae_simple": 4.117,
+    "mae_season_avg": 4.2
+   }
+  ],
+  "all_years": {
+   "mae_model": 4.077,
+   "mae_simple": 4.128,
+   "mae_season_avg": 4.179
+  }
  },
  "QB": {
-  "test_n": 1336,
-  "mae_model": 1.799,
-  "mae_season_avg": 1.827
+  "by_season": [
+   {
+    "season": 2019,
+    "n": 489,
+    "mae_model": 1.633,
+    "mae_simple": 1.665,
+    "mae_season_avg": 1.67
+   },
+   {
+    "season": 2020,
+    "n": 521,
+    "mae_model": 1.794,
+    "mae_simple": 1.84,
+    "mae_season_avg": 1.924
+   },
+   {
+    "season": 2021,
+    "n": 553,
+    "mae_model": 1.797,
+    "mae_simple": 1.877,
+    "mae_season_avg": 1.899
+   },
+   {
+    "season": 2022,
+    "n": 535,
+    "mae_model": 1.837,
+    "mae_simple": 1.866,
+    "mae_season_avg": 1.93
+   },
+   {
+    "season": 2023,
+    "n": 556,
+    "mae_model": 1.817,
+    "mae_simple": 1.893,
+    "mae_season_avg": 1.944
+   },
+   {
+    "season": 2024,
+    "n": 569,
+    "mae_model": 1.769,
+    "mae_simple": 1.781,
+    "mae_season_avg": 1.853
+   },
+   {
+    "season": 2025,
+    "n": 558,
+    "mae_model": 1.738,
+    "mae_simple": 1.772,
+    "mae_season_avg": 1.867
+   },
+   {
+    "season": 2026,
+    "n": 310,
+    "mae_model": 1.716,
+    "mae_simple": 1.791,
+    "mae_season_avg": 1.929
+   }
+  ],
+  "all_years": {
+   "mae_model": 1.767,
+   "mae_simple": 1.813,
+   "mae_season_avg": 1.876
+  }
  }
 }
