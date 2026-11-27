@@ -32,7 +32,8 @@ def main():
     old = json.loads(OUT.read_text()) if OUT.exists() else {}
     raw_old = json.loads(RAW.read_text()) if RAW.exists() else {}
     have_raw = raw_old.get("week") == cur and raw_old.get("v") == 2   # v2 = has DraftKings + Kalshi/Polymarket/pick'em lines
-    if old.get("week") == cur and old.get("at") and have_raw:
+    has_all = any(set(MARKETS) - {"player_anytime_td"} <= set(v) for v in (raw_old.get("props") or {}).values())   # a market was added since the last pull
+    if old.get("week") == cur and old.get("at") and have_raw and has_all:
         age = (now - datetime.datetime.fromisoformat(old["at"])).total_seconds() / 86400
         if age < 6:   # one full pull a week (about 85 credits) keeps us inside 500 a month
             print(f"props: have week {cur} from {age:.1f} days ago, skipping"); return
