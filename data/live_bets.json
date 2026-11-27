@@ -2081,5 +2081,40 @@
    1.1
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLPASSYDS-26NOV26KCBUF-BUFJALLEN17-100",
+  "side": "No",
+  "label": "Josh Allen under 100 pass yds",
+  "stat": "pass_yds",
+  "strike": 99.5,
+  "cost": 28,
+  "fee": 2.0,
+  "p": 47.3,
+  "edge": 19.3,
+  "ev": 57.6,
+  "at": "2026-11-27T03:44:02+00:00",
+  "date": "2026-11-26",
+  "q": 4,
+  "clock": "12:24",
+  "score": "KC 10, BUF 7",
+  "game": "KC @ BUF",
+  "home": "BUF",
+  "away": "KC",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": "Josh Allen",
+  "team": "BUF",
+  "had": 70.0,
+  "proj_full": 221.7,
+  "proj_left": 38.7,
+  "line": 100,
+  "need": 29.5,
+  "range": [
+   7.0,
+   32.5,
+   62.7
+  ],
+  "posted": false
  }
 ]
