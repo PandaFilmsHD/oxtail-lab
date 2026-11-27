@@ -1819,5 +1819,31 @@
   "team": null,
   "posted": true,
   "msg": "1575689520970465414"
+ },
+ {
+  "ticker": "KXNFLSPREAD-26NOV26KCBUF-BUF3",
+  "side": "No",
+  "label": "BUF not by 3+",
+  "stat": "spread",
+  "strike": 2.5,
+  "cost": 38,
+  "fee": 2.0,
+  "p": 50.7,
+  "edge": 12.7,
+  "ev": 26.7,
+  "at": "2026-11-27T01:57:47+00:00",
+  "date": "2026-11-26",
+  "q": 1,
+  "clock": "2:12",
+  "score": "KC 0, BUF 0",
+  "game": "KC @ BUF",
+  "home": "BUF",
+  "away": "KC",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": "BUF",
+  "posted": true,
+  "msg": "1575692085003034686"
  }
 ]
