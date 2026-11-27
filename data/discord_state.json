@@ -753,6 +753,12 @@
    "u": 1.564,
    "win": true
   },
+  "KXNFLGAME-26NOV26PHIDAL-PHI|Yes": {
+   "actual": "39.0-38.0",
+   "kind": "game",
+   "u": 15.667,
+   "win": true
+  },
   "KXNFLPASSYDS-26NOV22MINSF-MINKCOUSINS8-250|No": {
    "actual": 235,
    "kind": "player",
@@ -963,6 +969,12 @@
    "u": -1,
    "win": false
   },
+  "KXNFLSPREAD-26NOV26PHIDAL-DAL11|Yes": {
+   "actual": "39.0-38.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
+  },
   "KXNFLTOTAL-26NOV22MINSF-55|No": {
    "actual": "10.0-35.0",
    "kind": "game",
@@ -986,12 +998,18 @@
    "kind": "game",
    "u": -1,
    "win": false
+  },
+  "KXNFLTOTAL-26NOV26PHIDAL-54|No": {
+   "actual": "39.0-38.0",
+   "kind": "game",
+   "u": -1,
+   "win": false
   }
  },
  "live_rec": {
-  "l": 23,
-  "u": 18.763,
-  "w": 19
+  "l": 25,
+  "u": 32.43,
+  "w": 20
  },
  "msgs": [
   {
@@ -1738,6 +1756,11 @@
    "at": "2026-11-27T01:16:30.272360+00:00",
    "ch": "RECEIPTS",
    "id": "1575681691580768382"
+  },
+  {
+   "at": "2026-11-27T02:06:06.286995+00:00",
+   "ch": "RESULTS",
+   "id": "1575694174316138580"
   }
  ],
  "parlay_days": {
