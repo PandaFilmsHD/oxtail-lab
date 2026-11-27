@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-27T04:12:46Z",
+   "at": "2026-11-27T04:23:48Z",
    "champ_pct": 16.6,
    "todo": [
     {
@@ -29,14 +29,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T04:13:08Z",
+   "at": "2026-11-27T04:24:05Z",
    "champ_pct": 11.7,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
      "title": "Jaxon Smith-Njigba might not play (69%)",
-     "detail": "If he's ruled out, start Rashee Rice (10.0).",
+     "detail": "If he's ruled out, start Rashee Rice (10.1).",
      "tab": "home"
     },
     {
@@ -57,7 +57,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Bo Nix, drop Fernando Mendoza",
-     "detail": "Real upgrade: about +5.2 pts a week in your lineup the rest of the way, title odds +3.4%.",
+     "detail": "Real upgrade: about +5.2 pts a week in your lineup the rest of the way, title odds +3.3%.",
      "tab": "waivers"
     }
    ]
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T04:13:17Z",
+   "at": "2026-11-27T04:24:13Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T04:12:57Z",
-   "champ_pct": 23.9,
+   "at": "2026-11-27T04:23:57Z",
+   "champ_pct": 24.0,
    "todo": [
     {
      "urgent": false,
