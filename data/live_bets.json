@@ -1697,5 +1697,31 @@
    1.0
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLGAME-26NOV26PHIDAL-PHI",
+  "side": "Yes",
+  "label": "PHI to win",
+  "stat": "ml",
+  "strike": null,
+  "cost": 5,
+  "fee": 1.0,
+  "p": 17.8,
+  "edge": 12.8,
+  "ev": 195.9,
+  "at": "2026-11-27T00:38:58+00:00",
+  "date": "2026-11-26",
+  "q": 4,
+  "clock": "10:19",
+  "score": "PHI 24, DAL 31",
+  "game": "PHI @ DAL",
+  "home": "DAL",
+  "away": "PHI",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": "PHI",
+  "posted": true,
+  "msg": "1575672247450992832"
  }
 ]
