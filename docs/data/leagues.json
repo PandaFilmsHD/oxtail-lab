@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-27T01:14:00Z",
+   "at": "2026-11-27T01:20:34Z",
    "champ_pct": 16.5,
    "todo": [
     {
@@ -29,16 +29,9 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T01:14:21Z",
+   "at": "2026-11-27T01:20:54Z",
    "champ_pct": 11.6,
    "todo": [
-    {
-     "urgent": true,
-     "icon": "\ud83d\udd12",
-     "title": "Set your lineup by Thu 5:20 PM PT",
-     "detail": "Emmett Johnson plays first. Players lock when their game starts.",
-     "tab": "home"
-    },
     {
      "urgent": false,
      "icon": "\ud83e\ude79",
@@ -59,6 +52,13 @@
      "title": "Bhayshul Tuten might not play (56%)",
      "detail": "If he's ruled out, start Travis Etienne Jr. (11.1).",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\ud83d\udce5",
+     "title": "Claim Bo Nix, drop Fernando Mendoza",
+     "detail": "Real upgrade: about +5.2 pts a week in your lineup the rest of the way, title odds +3.6%.",
+     "tab": "waivers"
     }
    ]
   },
@@ -67,7 +67,7 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T01:14:31Z",
+   "at": "2026-11-27T01:21:03Z",
    "champ_pct": 0.1,
    "todo": [
     {
@@ -98,8 +98,8 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-27T01:14:11Z",
-   "champ_pct": 23.0,
+   "at": "2026-11-27T01:20:45Z",
+   "champ_pct": 23.1,
    "todo": [
     {
      "urgent": false,
@@ -112,21 +112,21 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.7%.",
+     "detail": "Real upgrade: about +1.2 pts a week in your lineup the rest of the way, title odds +1.3%.",
      "tab": "waivers"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd14",
-     "title": "Toss-up at FLEX: Luther Burden III or Jaylen Warren",
-     "detail": "Luther Burden III 13.4 vs Jaylen Warren 13.2. ",
+     "title": "Toss-up at WR: DeVonta Smith or Luther Burden III",
+     "detail": "DeVonta Smith 13.7 vs Luther Burden III 13.3. ",
      "tab": "home"
     },
     {
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Christian McCaffrey for Dak Prescott + Trey McBride (Tyler's Talented Team)",
-     "detail": "Title odds +9.2%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
+     "detail": "Title odds +9.0%. Would you do Christian McCaffrey for Dak Prescott and Trey McBride? I think McCaffrey slides right into your RB spot over Corum, and you turn two guys into the best player in the deal and open a roster spot for a waiver pickup.",
      "tab": "trades"
     }
    ]
