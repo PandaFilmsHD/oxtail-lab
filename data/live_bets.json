@@ -1793,5 +1793,31 @@
    124.2
   ],
   "posted": false
+ },
+ {
+  "ticker": "KXNFLTOTAL-26NOV26KCBUF-49",
+  "side": "Yes",
+  "label": "KC @ BUF over 48.5",
+  "stat": "total",
+  "strike": 48.5,
+  "cost": 23,
+  "fee": 2.0,
+  "p": 33.3,
+  "edge": 10.3,
+  "ev": 33.2,
+  "at": "2026-11-27T01:47:36+00:00",
+  "date": "2026-11-26",
+  "q": 1,
+  "clock": "7:18",
+  "score": "KC 0, BUF 0",
+  "game": "KC @ BUF",
+  "home": "BUF",
+  "away": "KC",
+  "week": 12,
+  "how": "\u26a1 Live update (model trained on 10 seasons of play-by-play)",
+  "player": null,
+  "team": null,
+  "posted": true,
+  "msg": "1575689520970465414"
  }
 ]
