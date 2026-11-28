@@ -5,7 +5,7 @@
    "name": "Od from oxtail",
    "team": "They Hit The Second Bower",
    "week": 12,
-   "at": "2026-11-28T17:14:52Z",
+   "at": "2026-11-28T17:43:13Z",
    "champ_pct": 16.9,
    "todo": [
     {
@@ -19,7 +19,7 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer KC Concepcion for Caleb Douglas (Faiz's Fantastic Team)",
-     "detail": "Title odds +2.2%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
+     "detail": "Title odds +2.1%. Would you do KC Concepcion for Caleb Douglas? I think Concepcion slides right into your FLEX spot, and you're deep at WR so you can cover Douglas' spot.",
      "tab": "trades"
     },
     {
@@ -36,14 +36,14 @@
    "name": "Andrew League",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-28T17:15:17Z",
-   "champ_pct": 13.1,
+   "at": "2026-11-28T17:43:31Z",
+   "champ_pct": 13.0,
    "todo": [
     {
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Bo Nix, drop Fernando Mendoza",
-     "detail": "Real upgrade: about +5.0 pts a week in your lineup the rest of the way, title odds +3.5%.",
+     "detail": "Real upgrade: about +5.0 pts a week in your lineup the rest of the way, title odds +3.0%.",
      "tab": "waivers"
     },
     {
@@ -74,22 +74,15 @@
    "name": "BGC Gang ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-28T17:15:30Z",
+   "at": "2026-11-28T17:43:41Z",
    "champ_pct": 0.1,
    "todo": [
     {
-     "urgent": false,
-     "icon": "\ud83e\ude79",
-     "title": "Darren Waller might not play (69%)",
-     "detail": "If he's ruled out, start Colston Loveland (12.3).",
+     "urgent": true,
+     "icon": "\ud83d\udce3",
+     "title": "Status change: Darren Waller",
+     "detail": "QUESTIONABLE \u2192 ACTIVE. Recheck your lineup.",
      "tab": "home"
-    },
-    {
-     "urgent": false,
-     "icon": "\ud83d\udce5",
-     "title": "Claim Kyle Pitts Sr., drop Darren Waller",
-     "detail": "Fills a hole this week (+3.5 pts). You can drop him again after.",
-     "tab": "waivers"
     },
     {
      "urgent": false,
@@ -104,6 +97,13 @@
      "title": "Toss-up at FLEX: Kyren Williams or Tony Pollard",
      "detail": "Kyren Williams 15.0 vs Tony Pollard 14.8. Tony Pollard has the higher ceiling (23.9 vs 19.6). Go with him if you need a big week.",
      "tab": "home"
+    },
+    {
+     "urgent": false,
+     "icon": "\u23f3",
+     "title": "Trade deadline in 4 days",
+     "detail": "After that, trades lock for the season. Send any offers you want before then.",
+     "tab": "trades"
     }
    ]
   },
@@ -112,7 +112,7 @@
    "name": "Family Fantasy ",
    "team": "Alex's Astounding Team",
    "week": 12,
-   "at": "2026-11-28T17:15:04Z",
+   "at": "2026-11-28T17:43:22Z",
    "champ_pct": 22.5,
    "todo": [
     {
@@ -126,7 +126,7 @@
      "urgent": false,
      "icon": "\ud83d\udce5",
      "title": "Claim Seahawks D/ST, drop Commanders D/ST",
-     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.8%.",
+     "detail": "Real upgrade: about +1.5 pts a week in your lineup the rest of the way, title odds +1.9%.",
      "tab": "waivers"
     },
     {
