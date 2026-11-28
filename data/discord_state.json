@@ -2257,6 +2257,21 @@
    "at": "2026-11-28T07:54:11.455699+00:00",
    "ch": "RECEIPTS",
    "id": "1576144152276508822"
+  },
+  {
+   "at": "2026-11-28T08:23:15.023896+00:00",
+   "ch": "KALSHI",
+   "id": "1576151473610424422"
+  },
+  {
+   "at": "2026-11-28T08:23:16.022521+00:00",
+   "ch": "KALSHI",
+   "id": "1576151477712322651"
+  },
+  {
+   "at": "2026-11-28T08:23:17.637126+00:00",
+   "ch": "KALSHI",
+   "id": "1576151482162487440"
   }
  ],
  "parlay_days": {
@@ -2426,6 +2441,12 @@
    "week": "11",
    "who": "George Kittle"
   },
+  "KA|KXNFLREC-26NOV29TENJAC-JACJCAMERON19-3|No": {
+   "at": "2026-11-28T08:23:14.672051+00:00",
+   "day": "2026-11-28",
+   "week": "12",
+   "who": "Josh Cameron"
+  },
   "KA|KXNFLRECYDS-26NOV26CHIDET-DETITESLAA18-15|Yes": {
    "at": "2026-11-26T15:53:15.411611+00:00",
    "day": "2026-11-26",
@@ -2438,11 +2459,23 @@
    "week": "12",
    "who": "Ja'Kobi Lane"
   },
+  "KA|KXNFLRECYDS-26NOV29BALHOU-HOUMHARRISON18-25|No": {
+   "at": "2026-11-28T08:23:14.672051+00:00",
+   "day": "2026-11-28",
+   "week": "12",
+   "who": "Marvin Harrison Jr."
+  },
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACBTHOMAS7-25|No": {
    "at": "2026-11-27T15:38:36.114045+00:00",
    "day": "2026-11-27",
    "week": "12",
    "who": "Brian Thomas Jr"
+  },
+  "KA|KXNFLRECYDS-26NOV30CARTB-TBTJOHNSON15-10|Yes": {
+   "at": "2026-11-28T08:23:14.672051+00:00",
+   "day": "2026-11-28",
+   "week": "12",
+   "who": "Tez Johnson"
   },
   "KA|KXNFLRSHYDS-26NOV22MINSF-MINJMASON27-60|Yes": {
    "at": "2026-11-22T22:02:31.122926+00:00",
@@ -2856,6 +2889,16 @@
    "units": 1,
    "week": "11"
   },
+  "KA|KXNFLREC-26NOV29TENJAC-JACJCAMERON19-3|No": {
+   "at": "2026-11-28T08:23:14.672051+00:00",
+   "ch": "kalshi",
+   "cost": 35,
+   "fee": 1.6,
+   "kick": "2026-11-29T18:00:00Z",
+   "text": "Josh Cameron under 3 catches",
+   "units": 1,
+   "week": "12"
+  },
   "KA|KXNFLRECYDS-26NOV19INDHOU-INDADULIN16-10|Yes": {
    "actual": 30,
    "at": "2026-11-22T21:44:38.878462+00:00",
@@ -3086,6 +3129,16 @@
    "units": 1,
    "week": "12"
   },
+  "KA|KXNFLRECYDS-26NOV29BALHOU-HOUMHARRISON18-25|No": {
+   "at": "2026-11-28T08:23:14.672051+00:00",
+   "ch": "kalshi",
+   "cost": 47,
+   "fee": 1.7,
+   "kick": "2026-11-29T18:00:00Z",
+   "text": "Marvin Harrison Jr. under 25 rec yds",
+   "units": 1,
+   "week": "12"
+  },
   "KA|KXNFLRECYDS-26NOV29TENJAC-JACBTHOMAS7-25|No": {
    "at": "2026-11-27T15:38:36.114045+00:00",
    "ch": "kalshi",
@@ -3093,6 +3146,16 @@
    "fee": 1.7,
    "kick": "2026-11-29T18:00:00Z",
    "text": "Brian Thomas Jr under 25 rec yds",
+   "units": 1,
+   "week": "12"
+  },
+  "KA|KXNFLRECYDS-26NOV30CARTB-TBTJOHNSON15-10|Yes": {
+   "at": "2026-11-28T08:23:14.672051+00:00",
+   "ch": "kalshi",
+   "cost": 52,
+   "fee": 1.7,
+   "kick": "2026-12-01T01:15:00Z",
+   "text": "Tez Johnson 10+ rec yds",
    "units": 1,
    "week": "12"
   },
