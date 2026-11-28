@@ -971,6 +971,18 @@
    "u": -1,
    "win": false
   },
+  "KXNFLPASSYDS-26NOV27DENPIT-DENBNIX10-200|No": {
+   "actual": 169,
+   "kind": "player",
+   "u": 1.778,
+   "win": true
+  },
+  "KXNFLPASSYDS-26NOV27DENPIT-PITMRUDOLPH2-275|Yes": {
+   "actual": 142,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLREC-26NOV22MINSF-MINJJEFFERSON18-7|No": {
    "actual": 7,
    "kind": "player",
@@ -1023,6 +1035,12 @@
    "actual": 0,
    "kind": "player",
    "u": 2.704,
+   "win": true
+  },
+  "KXNFLREC-26NOV27DENPIT-DENTFRANKLIN11-1|Yes": {
+   "actual": 1,
+   "kind": "player",
+   "u": 0.754,
    "win": true
   },
   "KXNFLRECYDS-26NOV22MINSF-MINJJEFFERSON18-60|No": {
@@ -1114,6 +1132,18 @@
    "kind": "player",
    "u": 1.778,
    "win": true
+  },
+  "KXNFLRECYDS-26NOV27DENPIT-DENTFRANKLIN11-15|Yes": {
+   "actual": 1,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRECYDS-26NOV27DENPIT-PITRDOWDLE13-5|Yes": {
+   "actual": 3,
+   "kind": "player",
+   "u": -1,
+   "win": false
   },
   "KXNFLRSHYDS-26NOV22MINSF-MINAJONES33-30|No": {
    "actual": 30,
@@ -1217,6 +1247,18 @@
    "u": 6.143,
    "win": true
   },
+  "KXNFLRSHYDS-26NOV27DENPIT-PITMRUDOLPH2-5|Yes": {
+   "actual": 0,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
+  "KXNFLRSHYDS-26NOV27DENPIT-PITRDOWDLE13-25|No": {
+   "actual": 71,
+   "kind": "player",
+   "u": -1,
+   "win": false
+  },
   "KXNFLSPREAD-26NOV22MINSF-SF8|Yes": {
    "actual": "10.0-35.0",
    "kind": "game",
@@ -1303,9 +1345,9 @@
   }
  },
  "live_rec": {
-  "l": 40,
-  "u": 35.36,
-  "w": 29
+  "l": 45,
+  "u": 32.892,
+  "w": 31
  },
  "msgs": [
   {
@@ -2282,6 +2324,11 @@
    "at": "2026-11-28T09:20:49.654713+00:00",
    "ch": "RECEIPTS",
    "id": "1576165963668132011"
+  },
+  {
+   "at": "2026-11-28T10:19:12.645561+00:00",
+   "ch": "RESULTS",
+   "id": "1576180656512172226"
   }
  ],
  "parlay_days": {
