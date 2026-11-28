@@ -481,6 +481,11 @@
    "at": "2026-11-28T09:20:49.310812+00:00",
    "n": 4,
    "sha256": "828b3e6964dda0f854823ef5dbed548df9059294c05e8096eff76223d5ac0c28"
+  },
+  {
+   "at": "2026-11-28T10:47:44.443196+00:00",
+   "n": 1,
+   "sha256": "02b307ae55cc685a7d7a39742d33ebc46f169de797e34ffda90a0b319bb69cf9"
   }
  ],
  "kal_best": [
@@ -2329,6 +2334,11 @@
    "at": "2026-11-28T10:19:12.645561+00:00",
    "ch": "RESULTS",
    "id": "1576180656512172226"
+  },
+  {
+   "at": "2026-11-28T10:47:44.738008+00:00",
+   "ch": "RECEIPTS",
+   "id": "1576187837118812184"
   }
  ],
  "parlay_days": {
@@ -3624,7 +3634,7 @@
   "2026-11-25": 0,
   "2026-11-26": 1
  },
- "receipt_at": "2026-11-28T09:20:49.310812+00:00",
+ "receipt_at": "2026-11-28T10:47:44.443196+00:00",
  "receipted": [
   "Anthony Gould|Rec yds",
   "Anthony Richardson|Rush yds",
@@ -3738,6 +3748,7 @@
   "KA|KXNFLREC-26NOV26KCBUF-KCXWORTHY1-3|Yes",
   "KA|KXNFLREC-26NOV26PHIDAL-DALCLAMB88-10|Yes",
   "KA|KXNFLREC-26NOV29BALHOU-HOUNCOLLINS12-6|Yes",
+  "KA|KXNFLREC-26NOV29BALHOU-HOUNCOLLINS12-7|Yes",
   "KA|KXNFLREC-26NOV29BALHOU-HOUNCOLLINS12-8|Yes",
   "KA|KXNFLREC-26NOV29BALHOU-HOUTDELL1-3|Yes",
   "KA|KXNFLREC-26NOV29BALHOU-HOUTDELL1-5|Yes",
