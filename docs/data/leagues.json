@@ -57,13 +57,13 @@
      "urgent": false,
      "icon": "\ud83e\udd1d",
      "title": "Offer Josh Downs for Deshaun Watson (the glitch b1tch)",
-     "detail": "Title odds +2.6%. Would you do Josh Downs for Deshaun Watson? I think Watson is just sitting on your bench.",
+     "detail": "Title odds +2.5%. Would you do Josh Downs for Deshaun Watson? I think Watson is just sitting on your bench.",
      "tab": "trades"
     },
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 5 days",
+     "title": "Trade deadline in 4 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
@@ -139,7 +139,7 @@
     {
      "urgent": false,
      "icon": "\u23f3",
-     "title": "Trade deadline in 5 days",
+     "title": "Trade deadline in 4 days",
      "detail": "After that, trades lock for the season. Send any offers you want before then.",
      "tab": "trades"
     }
